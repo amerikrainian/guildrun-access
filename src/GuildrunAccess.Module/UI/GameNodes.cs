@@ -37,12 +37,10 @@ namespace GuildrunAccess.Module.UI
         public static NodeAnnouncement TooltipPart(Func<string> description)
             => new NodeAnnouncement(description, kind: AnnouncementKinds.Tooltip);
 
-        /// <summary>Speak a control's description (Space); with none, read the control itself again,
-        /// as Space does on controls without a tooltip.</summary>
+        /// <summary>Speak a control's description (Space); with none, say nothing.</summary>
         public static void SayTooltip(string text)
         {
-            if (string.IsNullOrWhiteSpace(text)) Core.UI.Navigation.AnnounceCurrent();
-            else Core.Speech.Say(text, interrupt: true);
+            if (!string.IsNullOrWhiteSpace(text)) Core.Speech.Say(text, interrupt: true);
         }
 
         /// <summary>What a control shows on hover (its HoverFeedbackComponent's objects' text), or null:

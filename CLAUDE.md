@@ -122,7 +122,7 @@ runs; spoken text is still captured. The game already runs in the background whe
 
 ## Keys (focus mode on at launch; Ctrl+Shift+A toggles it)
 Arrows navigate, Tab/Shift+Tab cycle control groups, Enter activates, Backspace is the secondary
-action, Escape backs out, Home/End jump, Space reads a description (the control again when it has none), Ctrl+Up/Down jump sections, typing letters searches the focused group.
+action, Escape backs out, Home/End jump, Space reads a description (silent when there is none), Ctrl+Up/Down jump sections, typing letters searches the focused group.
 
 ## Hard rules
 - **All speech through `Speech.Say`** (Core) -> the host `SpeechPipeline`; never call Prism directly.

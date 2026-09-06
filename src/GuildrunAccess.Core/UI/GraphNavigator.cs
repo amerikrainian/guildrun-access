@@ -277,11 +277,10 @@ namespace GuildrunAccess.Core.UI
                     return Screen != null && Screen.InvokeAction(ActionIds.Back);
                 case UiActions.Tooltip:
                 {
-                    // The description when the control has one; the control itself again otherwise.
+                    // The description when the control has one; nothing otherwise.
                     var node = _graph?.CurrentNode;
                     if (node == null) return false;
-                    if (node.Vtable.OnTooltip != null) { _graph.Tooltip(); return true; }
-                    AnnounceCurrent();
+                    if (node.Vtable.OnTooltip != null) _graph.Tooltip();
                     return true;
                 }
                 case UiActions.Drag:
