@@ -24,7 +24,7 @@ namespace GuildrunAccess.Module.Screens
         public override string Key => "settings";
         public override int Layer => 27; // above the run's pause menu, which opens it
         public override bool Exclusive => true;
-        public override object InitialFocusStop => "body";
+        public override object InitialFocusStop => "tabs"; // the section tabs first, as the panel opens on them
 
         private SettingsUIController _controller;
         private const int SearchEvery = 30;

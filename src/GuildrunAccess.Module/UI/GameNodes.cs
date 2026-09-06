@@ -166,7 +166,8 @@ namespace GuildrunAccess.Module.UI
         }
 
         /// <summary>A TMP dropdown as a combo box: "label, combo box, current option"; left/right step
-        /// through the options (the game applies each through onValueChanged), Enter cycles forward.</summary>
+        /// through the options (the game applies each through onValueChanged); Enter opens the options
+        /// as a list landing on the current one, where Enter picks and Escape leaves the value alone.</summary>
         public static NodeVtable Dropdown(TMP_Dropdown dropdown, Func<string> label)
         {
             Func<string> current = () =>
@@ -199,17 +200,30 @@ namespace GuildrunAccess.Module.UI
                 },
                 SearchText = label,
                 OnAdjust = (sign, large) => step(sign),
-                OnActivate = () =>
-                {
-                    if (!dropdown.interactable) return;
-                    var options = dropdown.options;
-                    int count = options != null ? options.Count : 0;
-                    if (count == 0) return;
-                    dropdown.value = (dropdown.value + 1) % count;
-                    dropdown.RefreshShownValue();
-                },
-                StateText = current,
+                OnActivate = () => OpenOptions(dropdown, label),
             };
+        }
+
+        // The dropdown's options as a child screen: a fresh snapshot per open, the current one marked.
+        private static void OpenOptions(TMP_Dropdown dropdown, Func<string> label)
+        {
+            if (!dropdown.interactable) return;
+            var options = dropdown.options;
+            int count = options != null ? options.Count : 0;
+            if (count == 0) return;
+            var choices = new List<Core.Screens.ChoiceOption>();
+            for (int i = 0; i < count; i++)
+            {
+                int index = i;
+                string text = options[i].text;
+                choices.Add(new Core.Screens.ChoiceOption(string.IsNullOrWhiteSpace(text) ? index.ToString() : text, () =>
+                {
+                    if (!dropdown.interactable || dropdown.value == index) return;
+                    dropdown.value = index;
+                    dropdown.RefreshShownValue();
+                }));
+            }
+            Core.Screens.ChoiceSubmenuScreen.Open(label != null ? label() : null, choices, dropdown.value);
         }
 
         /// <summary>The caption of a settings-style row: the TMP text named "Title" found by walking up
