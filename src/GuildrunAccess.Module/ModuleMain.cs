@@ -105,7 +105,6 @@ namespace GuildrunAccess.Module
             InputManager.Register(UiActions.Tooltip, "Read description", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Space));
             InputManager.Register(UiActions.RegionPrev, "Previous section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, ctrl: true));
             InputManager.Register(UiActions.RegionNext, "Next section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, ctrl: true));
-            InputManager.Register(UiActions.ReadFocus, "Read current control", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Space, ctrl: true));
 
             // Global: always live, so the player can hand the keyboard back to the game and reclaim it.
             InputManager.Register("mod.focus", "Toggle navigation", InputCategory.Global, ToggleFocus)

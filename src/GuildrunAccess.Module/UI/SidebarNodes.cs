@@ -47,7 +47,7 @@ namespace GuildrunAccess.Module.UI
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => EnemyLine(enemy)) },
                     SearchText = () => enemy._nameText != null ? enemy._nameText.text : null,
-                    OnTooltip = () => Core.Speech.Say(HeroCardNodes.AbilitiesTooltips(enemy) ?? Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip(HeroCardNodes.AbilitiesTooltips(enemy)),
                 });
                 b.AddItem(ControlId.Structural(keyPrefix + ":enemy:abilities"), new NodeVtable
                 {
@@ -56,7 +56,7 @@ namespace GuildrunAccess.Module.UI
                         new NodeAnnouncement(() => Strings.HeroAbilities),
                         GameNodes.LabelPart(() => HeroCardNodes.AbilitiesLine(enemy)),
                     },
-                    OnTooltip = () => Core.Speech.Say(HeroCardNodes.AbilitiesTooltips(enemy) ?? Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip(HeroCardNodes.AbilitiesTooltips(enemy)),
                 });
                 b.AddItem(ControlId.Structural(keyPrefix + ":enemy:stats"), new NodeVtable
                 {
@@ -65,7 +65,7 @@ namespace GuildrunAccess.Module.UI
                         new NodeAnnouncement(() => Strings.HeroStats),
                         GameNodes.LabelPart(() => Stats(enemy)),
                     },
-                    OnTooltip = () => Core.Speech.Say(StatTooltips(enemy) ?? Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip(StatTooltips(enemy)),
                 });
                 b.PopContext();
             }

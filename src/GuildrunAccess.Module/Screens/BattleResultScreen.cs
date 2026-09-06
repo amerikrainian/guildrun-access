@@ -132,7 +132,7 @@ namespace GuildrunAccess.Module.Screens
                     {
                         Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => MiniCardLine(c)) },
                         SearchText = () => c._name != null ? c._name.text : null,
-                        OnTooltip = () => Core.Speech.Say(MiniCardTooltips(c) ?? Strings.NoTooltip, interrupt: true),
+                        OnTooltip = () => GameNodes.SayTooltip(MiniCardTooltips(c)),
                     });
                 }
                 if (shown > 0) b.PopContext();
@@ -151,7 +151,7 @@ namespace GuildrunAccess.Module.Screens
                     {
                         Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => TrackerLine(h)) },
                         SearchText = () => HeroName(h),
-                        OnTooltip = () => Core.Speech.Say(StatusTooltips(h) ?? Strings.NoTooltip, interrupt: true),
+                        OnTooltip = () => GameNodes.SayTooltip(StatusTooltips(h)),
                     });
                 }
                 b.PopContext();

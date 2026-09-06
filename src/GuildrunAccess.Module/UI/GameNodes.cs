@@ -37,6 +37,35 @@ namespace GuildrunAccess.Module.UI
         public static NodeAnnouncement TooltipPart(Func<string> description)
             => new NodeAnnouncement(description, kind: AnnouncementKinds.Tooltip);
 
+        /// <summary>Speak a control's description (Space); with none, read the control itself again,
+        /// as Space does on controls without a tooltip.</summary>
+        public static void SayTooltip(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) Core.UI.Navigation.AnnounceCurrent();
+            else Core.Speech.Say(text, interrupt: true);
+        }
+
+        /// <summary>What a control shows on hover (its HoverFeedbackComponent's objects' text), or null:
+        /// the demo's Co-Op button explains itself that way.</summary>
+        public static string HoverText(Component widget)
+        {
+            var hover = widget != null ? widget.GetComponent<Ember.Utilities.UI.HoverFeedbackComponent>() : null;
+            var objects = hover != null ? hover._showOnHoverObjects : null;
+            if (objects == null) return null;
+            var sb = new System.Text.StringBuilder();
+            foreach (var go in objects)
+            {
+                if (go == null) continue;
+                foreach (var tmp in go.GetComponentsInChildren<TMP_Text>(true))
+                {
+                    if (tmp == null || string.IsNullOrWhiteSpace(tmp.text)) continue;
+                    if (sb.Length > 0) sb.Append(". ");
+                    sb.Append(tmp.text.Trim());
+                }
+            }
+            return sb.Length > 0 ? sb.ToString() : null;
+        }
+
         /// <summary>A plain read-only text line.</summary>
         public static NodeVtable Text(Func<string> text) => new NodeVtable
         {
@@ -83,8 +112,12 @@ namespace GuildrunAccess.Module.UI
         /// <summary>A uGUI Button: label from its TMP child (or the given override), enabled from
         /// interactable, activation through its onClick so the game's own handler runs.</summary>
         public static NodeVtable Button(UnityEngine.UI.Button button, Func<string> label = null, ControlType type = null)
-            => Button(label ?? (() => LabelOf(button)), () => button.onClick.Invoke(),
+        {
+            var vt = Button(label ?? (() => LabelOf(button)), () => button.onClick.Invoke(),
                 () => button != null && button.interactable, type);
+            vt.OnTooltip = () => SayTooltip(HoverText(button)); // its hover popup, when it has one
+            return vt;
+        }
 
         /// <summary>A uGUI Toggle: "label, toggle, on/off"; activation flips it through isOn so the game's
         /// onValueChanged runs.</summary>
@@ -104,6 +137,7 @@ namespace GuildrunAccess.Module.UI
                 SearchText = lbl,
                 OnActivate = () => { if (toggle.interactable) toggle.isOn = !toggle.isOn; },
                 StateText = () => toggle.isOn ? Strings.StateOn : Strings.StateOff,
+                OnTooltip = () => SayTooltip(HoverText(toggle)),
             };
         }
 

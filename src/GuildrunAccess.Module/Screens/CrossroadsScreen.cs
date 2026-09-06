@@ -53,8 +53,7 @@ namespace GuildrunAccess.Module.Screens
                     },
                     SearchText = () => g._titleText != null ? g._titleText.text : null,
                     OnActivate = () => Select(c, g),
-                    OnTooltip = () => Core.Speech.Say(g._descriptionText != null && !string.IsNullOrWhiteSpace(g._descriptionText.text)
-                        ? g._descriptionText.text : Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip(g._descriptionText != null ? g._descriptionText.text : null),
                 });
             }
             b.PopContext();

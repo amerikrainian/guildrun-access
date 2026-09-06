@@ -185,7 +185,7 @@ namespace GuildrunAccess.Module.Screens
                 OnTooltip = () =>
                 {
                     var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null;
-                    Core.Speech.Say((view != null ? SlotTooltips(view) : null) ?? Strings.NoTooltip, interrupt: true);
+                    GameNodes.SayTooltip((view != null ? SlotTooltips(view) : null));
                 },
             };
         }
@@ -314,7 +314,7 @@ namespace GuildrunAccess.Module.Screens
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => u.Name,
-                    OnTooltip = () => Core.Speech.Say(ItemsOn(u.Bar) ?? Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip(ItemsOn(u.Bar)),
                 });
             }
             b.PopContext();
@@ -366,7 +366,7 @@ namespace GuildrunAccess.Module.Screens
                     },
                     SearchText = () => SlotSummary(view),
                     OnActivate = () => OpenHeroMenu(view, reserve),
-                    OnTooltip = () => Core.Speech.Say(SlotTooltips(view) ?? Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip(SlotTooltips(view)),
                 });
             }
             b.PopContext();
@@ -561,7 +561,7 @@ namespace GuildrunAccess.Module.Screens
                 },
                 SearchText = label,
                 OnTooltip = tooltip == null ? (Action)null
-                    : () => Core.Speech.Say(TooltipReader.Describe(tooltip) ?? Strings.NoTooltip, interrupt: true),
+                    : () => GameNodes.SayTooltip(TooltipReader.Describe(tooltip)),
             });
         }
 
@@ -596,7 +596,7 @@ namespace GuildrunAccess.Module.Screens
                         new NodeAnnouncement(() => IsCurrent(node) ? Strings.RunMapCurrent : null, live: true, kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => NodeTitle(node),
-                    OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(node.TooltipRaycastTarget) ?? Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(node.TooltipRaycastTarget)),
                 });
             }
             b.PopContext();

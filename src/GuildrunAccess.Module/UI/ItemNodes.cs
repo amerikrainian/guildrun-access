@@ -87,7 +87,7 @@ namespace GuildrunAccess.Module.UI
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => ItemName(slot) ?? Strings.RunItemSlotEmpty) },
                 SearchText = () => ItemName(slot),
                 OnActivate = activate,
-                OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(slot._tooltipRaycastTarget) ?? Strings.NoTooltip, interrupt: true),
+                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(slot._tooltipRaycastTarget)),
             };
         }
 
@@ -108,7 +108,7 @@ namespace GuildrunAccess.Module.UI
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => RelicName(relic)) },
                 SearchText = () => RelicName(relic),
                 OnActivate = activate,
-                OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(relic._tooltipRaycastTarget) ?? Strings.NoTooltip, interrupt: true),
+                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(relic._tooltipRaycastTarget)),
             };
         }
     }

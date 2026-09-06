@@ -106,7 +106,7 @@ namespace GuildrunAccess.Module.Screens
                     if (!string.IsNullOrEmpty(own)) sb.Append(own);
                     string rewards = Rewards(threshold, true);
                     if (!string.IsNullOrEmpty(rewards)) { if (sb.Length > 0) sb.Append(". "); sb.Append(rewards); }
-                    Core.Speech.Say(sb.Length > 0 ? sb.ToString() : Strings.NoTooltip, interrupt: true);
+                    GameNodes.SayTooltip(sb.Length > 0 ? sb.ToString() : null);
                 },
             };
         }

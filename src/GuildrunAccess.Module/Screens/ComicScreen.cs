@@ -50,7 +50,7 @@ namespace GuildrunAccess.Module.Screens
                 ControlType = ControlTypes.Button,
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Strings.ComicContinue) },
                 OnActivate = () => SyntheticMouse.ClickCenter(),
-                OnTooltip = () => Core.Speech.Say(VisibleText(c) ?? Strings.NoTooltip, interrupt: true),
+                OnTooltip = () => GameNodes.SayTooltip(VisibleText(c)),
             });
             b.PopContext();
         }

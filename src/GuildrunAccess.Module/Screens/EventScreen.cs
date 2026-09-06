@@ -154,7 +154,7 @@ namespace GuildrunAccess.Module.Screens
                 {
                     string text = item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
                         : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null;
-                    Core.Speech.Say(text ?? Strings.NoTooltip, interrupt: true);
+                    GameNodes.SayTooltip(text);
                 },
             };
         }
@@ -176,7 +176,7 @@ namespace GuildrunAccess.Module.Screens
                 {
                     string text = item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
                         : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null;
-                    Core.Speech.Say(text ?? Strings.NoTooltip, interrupt: true);
+                    GameNodes.SayTooltip(text);
                 },
             };
         }

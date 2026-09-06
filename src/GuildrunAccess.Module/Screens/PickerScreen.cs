@@ -115,8 +115,8 @@ namespace GuildrunAccess.Module.Screens
                 },
                 SearchText = () => choice._nameText != null ? choice._nameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(choice._tooltipRaycastTarget)
-                    ?? (choice._descriptionText != null ? choice._descriptionText.text : null) ?? Strings.NoTooltip, interrupt: true),
+                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(choice._tooltipRaycastTarget)
+                    ?? (choice._descriptionText != null ? choice._descriptionText.text : null)),
             };
         }
 
@@ -134,8 +134,8 @@ namespace GuildrunAccess.Module.Screens
                 },
                 SearchText = () => choice._itemNameText != null ? choice._itemNameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(choice._tooltipRaycastTarget)
-                    ?? (choice._modifierDescriptionText != null ? choice._modifierDescriptionText.text : null) ?? Strings.NoTooltip, interrupt: true),
+                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(choice._tooltipRaycastTarget)
+                    ?? (choice._modifierDescriptionText != null ? choice._modifierDescriptionText.text : null)),
             };
         }
 

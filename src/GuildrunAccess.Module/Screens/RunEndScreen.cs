@@ -144,7 +144,7 @@ namespace GuildrunAccess.Module.Screens
                 OnTooltip = () =>
                 {
                     string t = tooltip != null ? tooltip(card) : null;
-                    Core.Speech.Say(string.IsNullOrWhiteSpace(t) ? Strings.NoTooltip : t, interrupt: true);
+                    GameNodes.SayTooltip(t);
                 },
             };
         }
@@ -212,7 +212,7 @@ namespace GuildrunAccess.Module.Screens
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => BackupName(v)) },
                     SearchText = () => BackupName(v),
-                    OnTooltip = () => Core.Speech.Say((hero != null ? HeroCardNodes.AbilitiesTooltips(hero._abilitiesView) : null) ?? Strings.NoTooltip, interrupt: true),
+                    OnTooltip = () => GameNodes.SayTooltip((hero != null ? HeroCardNodes.AbilitiesTooltips(hero._abilitiesView) : null)),
                 });
             }
             if (n > 0) b.PopContext();

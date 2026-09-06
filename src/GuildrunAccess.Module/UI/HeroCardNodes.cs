@@ -253,7 +253,7 @@ namespace GuildrunAccess.Module.UI
                 OnTooltip = () =>
                 {
                     string t = tooltip != null ? tooltip() : null;
-                    Core.Speech.Say(string.IsNullOrWhiteSpace(t) ? Strings.NoTooltip : t, interrupt: true);
+                    GameNodes.SayTooltip(t);
                 },
             };
         }
