@@ -362,13 +362,14 @@ namespace GuildrunAccess.Core.Graph
             var keys = new List<object>();
             foreach (var row in _rows)
             {
+                var first = row.Items[0];
+                if (first.Parent != null && first.Parent.SuppressChildPositions) continue; // the context said no
                 if (row.Items.Count > 1)
                 {
                     Stamp(row.Items);
                     continue;
                 }
-                var node = row.Items[0];
-                if (node.Parent != null && node.Parent.SuppressChildPositions) continue;
+                var node = first;
                 var key = new KeyValuePair<GraphNode, object>(node.Parent, node.StopKey);
                 if (!groups.TryGetValue(key, out var list))
                 {

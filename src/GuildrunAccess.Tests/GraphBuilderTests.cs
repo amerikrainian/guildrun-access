@@ -175,6 +175,27 @@ namespace GuildrunAccess.Tests
         }
 
         [Fact]
+        public void RowsUnderAContextWithoutPositionsGetNone()
+        {
+            // A grid (the battle board) declares its context without positions: its rows' members must
+            // not be stamped "n of m" either, only rows under contexts that allow positions are.
+            var render = new GraphBuilder()
+                .PushContext("board", null, positions: false)
+                .StartRow("grid").AddItem(Id("a1"), Vt("A1")).AddItem(Id("a2"), Vt("A2")).EndRow()
+                .StartRow("grid").AddItem(Id("b1"), Vt("B1")).AddItem(Id("b2"), Vt("B2")).EndRow()
+                .PopContext()
+                .PushContext("heroes", null, positions: true)
+                .StartRow("cards").AddItem(Id("h1"), Vt("H1")).AddItem(Id("h2"), Vt("H2")).EndRow()
+                .PopContext()
+                .Build();
+
+            Assert.Equal(0, render.Nodes[Id("a2")].PositionCount);
+            Assert.Equal(0, render.Nodes[Id("b1")].PositionCount);
+            Assert.Equal(2, render.Nodes[Id("h2")].PositionIndex);
+            Assert.Equal(2, render.Nodes[Id("h2")].PositionCount);
+        }
+
+        [Fact]
         public void RegionsAreStamped()
         {
             var render = new GraphBuilder()

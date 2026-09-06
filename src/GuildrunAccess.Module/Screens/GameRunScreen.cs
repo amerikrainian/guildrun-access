@@ -136,19 +136,41 @@ namespace GuildrunAccess.Module.Screens
             int w, h;
             try { w = board.BoardWidth; h = board.BoardHeight; }
             catch (Exception) { return; }
+            int playerRows = PlayerRows(h);
             b.BeginStop("board");
             b.PushContext(Strings.RunGrid, null, positions: false);
-            for (int y = h - 1; y >= 0; y--)
-            {
-                b.StartRow("grid");
-                for (int x = 0; x < w; x++)
-                    b.AddItem(ControlId.Structural("run:cell:" + x + ":" + y), CellNode(new Vector2Int(x, y)));
-                b.EndRow();
-            }
+            b.SetRegion("run:board:enemies");
+            b.PushContext(Strings.RunBoardEnemies, null, positions: false);
+            for (int y = h - 1; y >= playerRows; y--) AddGridRow(b, w, y);
+            b.PopContext();
+            b.SetRegion("run:board:heroes");
+            b.PushContext(Strings.RunBoardHeroes, null, positions: false);
+            for (int y = playerRows - 1; y >= 0; y--) AddGridRow(b, w, y);
+            b.PopContext();
+            b.SetRegion(null);
             b.PopContext();
         }
 
-        // "Kai, column 4, row 1" / "Mushroom Tank, column 3, enemy row 2" / "empty, column 1, row 3".
+        private void AddGridRow(GraphBuilder b, int width, int y)
+        {
+            b.StartRow("grid");
+            for (int x = 0; x < width; x++)
+                b.AddItem(ControlId.Structural("run:cell:" + x + ":" + y), CellNode(new Vector2Int(x, y)));
+            b.EndRow();
+        }
+
+        // How many rows from the bottom belong to the player (the placeable range).
+        private static int PlayerRows(int height)
+        {
+            int rows = 0;
+            for (int y = 0; y < height; y++)
+                if (RunData.IsPlayerCell(new Vector2Int(0, y))) rows++;
+                else break;
+            return rows;
+        }
+
+        // "Kai, column 4, row 1" / "Mushroom Tank, column 3, row 2" / "empty, column 1, row 3": the
+        // container says whose side it is; rows count from each side's back line.
         private NodeVtable CellNode(Vector2Int cell)
         {
             return new NodeVtable
@@ -181,7 +203,7 @@ namespace GuildrunAccess.Module.Screens
             if (RunData.IsPlayerCell(cell)) return Strings.RunCellPos(cell.x + 1, cell.y + 1);
             int playerRows = 0;
             for (int y = 0; y < cell.y; y++) if (RunData.IsPlayerCell(new Vector2Int(cell.x, y))) playerRows++;
-            return Strings.RunCellPosEnemy(cell.x + 1, cell.y - playerRows + 1);
+            return Strings.RunCellPos(cell.x + 1, cell.y - playerRows + 1);
         }
 
         // Enter on a cell: drop a picked-up hero here, else open the hero's menu, else nothing to do.

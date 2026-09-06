@@ -283,10 +283,10 @@ namespace GuildrunAccess.Core.Strings
             // The placement grid: rows counted from the player's back line; the enemy rows beyond.
             D("run.grid", "board"),
             D("run.cell_empty", "empty"),
-            // {0} = column number, {1} = row number.
+            // {0} = column number, {1} = row number (rows count from each side's back line).
             D("run.cell_pos", "column {0}, row {1}"),
-            // {0} = column number, {1} = enemy row number.
-            D("run.cell_pos_enemy", "column {0}, enemy row {1}"),
+            D("run.board_heroes", "heroes"),
+            D("run.board_enemies", "enemies"),
             D("run.move", "Move"),
             D("run.to_reserve", "Move to reserve"),
             D("run.to_board", "Place on board"),
@@ -572,7 +572,8 @@ namespace GuildrunAccess.Core.Strings
         public static string RunGrid => Get("run.grid");
         public static string RunCellEmpty => Get("run.cell_empty");
         public static string RunCellPos(int column, int row) => F("run.cell_pos", column, row);
-        public static string RunCellPosEnemy(int column, int row) => F("run.cell_pos_enemy", column, row);
+        public static string RunBoardHeroes => Get("run.board_heroes");
+        public static string RunBoardEnemies => Get("run.board_enemies");
         public static string RunMove => Get("run.move");
         public static string RunToReserve => Get("run.to_reserve");
         public static string RunToBoard => Get("run.to_board");

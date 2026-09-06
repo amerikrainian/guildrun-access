@@ -75,7 +75,7 @@ namespace GuildrunAccess.Module.Screens
             foreach (var card in panel.GetComponentsInChildren<HeroCardView>(false))
                 if (card != null && card.gameObject.activeInHierarchy) cards.Add(card);
             b.BeginStop("heroes");
-            b.PushContext(panel._isReserveShown ? Strings.RunReserve : Strings.RunParty, null, positions: false);
+            b.PushContext(panel._isReserveShown ? Strings.RunReserve : Strings.RunParty, null, positions: true);
             if (cards.Count == 0)
                 b.AddItem(ControlId.Structural("heroes:none"), GameNodes.Text(() => Strings.HeroesNone));
             else

@@ -105,7 +105,7 @@ namespace GuildrunAccess.Module.Screens
             if (cards.Count == 0) return;
 
             b.BeginStop("heroes");
-            b.PushContext(Strings.EndHeroes, null, positions: false);
+            b.PushContext(Strings.EndHeroes, null, positions: true);
             const string rowKey = "end:heroes";
 
             // One row per detail, every card a column (the loop variable is copied per cell: the

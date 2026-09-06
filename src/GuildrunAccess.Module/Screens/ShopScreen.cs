@@ -57,7 +57,7 @@ namespace GuildrunAccess.Module.Screens
             if (cards.Count > 0)
             {
                 b.BeginStop("heroes");
-                b.PushContext(Strings.ShopHeroes, null, positions: false);
+                b.PushContext(Strings.ShopHeroes, null, positions: true);
                 HeroCardNodes.AddGrid(b, "shop:hero", cards,
                     i => () => Buy(views[i]),
                     i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; },
