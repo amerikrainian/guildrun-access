@@ -165,9 +165,9 @@ namespace GuildrunAccess.Module.UI
             };
         }
 
-        /// <summary>A TMP dropdown as a combo box: "label, combo box, current option"; left/right step
-        /// through the options (the game applies each through onValueChanged); Enter opens the options
-        /// as a list landing on the current one, where Enter picks and Escape leaves the value alone.</summary>
+        /// <summary>A TMP dropdown as a combo box: "label, combo box, current option"; Enter opens the
+        /// options as a list landing on the current one, where Enter picks (the game applies it through
+        /// onValueChanged) and Escape leaves the value alone. Left/right navigate, never adjust.</summary>
         public static NodeVtable Dropdown(TMP_Dropdown dropdown, Func<string> label)
         {
             Func<string> current = () =>
@@ -177,17 +177,6 @@ namespace GuildrunAccess.Module.UI
                 var options = dropdown.options;
                 int v = dropdown.value;
                 return options != null && v >= 0 && v < options.Count ? options[v].text : null;
-            };
-            Action<int> step = sign =>
-            {
-                if (!dropdown.interactable) return;
-                var options = dropdown.options;
-                int count = options != null ? options.Count : 0;
-                if (count == 0) return;
-                int next = dropdown.value + sign;
-                if (next < 0 || next >= count) return; // at an end: the adjust feedback names the bound
-                dropdown.value = next;
-                dropdown.RefreshShownValue();
             };
             return new NodeVtable
             {
@@ -199,7 +188,6 @@ namespace GuildrunAccess.Module.UI
                     DisabledPart(() => dropdown.interactable),
                 },
                 SearchText = label,
-                OnAdjust = (sign, large) => step(sign),
                 OnActivate = () => OpenOptions(dropdown, label),
             };
         }
