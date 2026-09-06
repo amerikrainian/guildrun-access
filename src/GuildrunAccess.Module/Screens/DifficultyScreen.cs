@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Ember.Scopes.Application.Difficulty;
 using Ember.Scopes.MainMenu.UI;
@@ -104,12 +105,14 @@ namespace GuildrunAccess.Module.Screens
             b.PopContext();
         }
 
-        // A tier: its caption, tab role, selected state, and "disabled" while locked.
+        // A tier: its caption, radio-button role, selected state, and "disabled" while locked. Landing
+        // on an unlocked tier selects it, as Enter does.
         private static NodeVtable Tier(Toggle toggle, DifficultyOptionItemView option)
         {
+            Action select = () => { if (toggle.interactable && !option._isLocked && !toggle.isOn) toggle.isOn = true; };
             return new NodeVtable
             {
-                ControlType = ControlTypes.Tab,
+                ControlType = ControlTypes.RadioButton,
                 Announcements = new List<NodeAnnouncement>
                 {
                     GameNodes.LabelPart(() => Caption(option)),
@@ -117,7 +120,8 @@ namespace GuildrunAccess.Module.Screens
                     GameNodes.DisabledPart(() => toggle.interactable && !option._isLocked),
                 },
                 SearchText = () => Caption(option),
-                OnActivate = () => { if (toggle.interactable && !option._isLocked) toggle.isOn = true; },
+                OnActivate = select,
+                OnFocus = select,
             };
         }
 

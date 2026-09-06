@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Input;
@@ -426,6 +427,7 @@ namespace GuildrunAccess.Core.UI
 
             var node = _graph.CurrentNode;
             PlayHover(node);
+            FireFocus(node);
             Speak(ComposeMove(_lastSpokenNode, node, entry: false), interrupt: true);
             _lastSpokenKey = node.Id;
             _lastSpokenNode = node;
@@ -472,9 +474,19 @@ namespace GuildrunAccess.Core.UI
             var node = result.To;
             if (node == null) return;
             PlayHover(node);
+            FireFocus(node); // before speaking, so a tab that selects itself is read as selected
             Speak(ComposeMove(result.From, node, entry: false, transitionLabel: result.TransitionLabel, regionEntry: regionEntry), interrupt: true);
             _lastSpokenKey = node.Id;
             _lastSpokenNode = node;
+        }
+
+        // The landed node's focus hook (a tab selecting itself); a throwing hook must not break navigation.
+        private static void FireFocus(GraphNode node)
+        {
+            var hook = node?.Vtable?.OnFocus;
+            if (hook == null) return;
+            try { hook(); }
+            catch (Exception e) { CoreLog.Warning("Navigator: focus hook failed: " + e.Message); }
         }
 
         // Run the focused node's vtable activation; speak its StateText as immediate feedback when it

@@ -619,7 +619,7 @@ namespace GuildrunAccess.Module.Screens
             int any = 0;
             if (speed._autoView != null && GameNodes.IsShown(speed._autoView.Toggle))
             {
-                b.AddItem(ControlId.Structural("run:speed:auto"), GameNodes.Tab(speed._autoView.Toggle, () => Strings.RunSpeedAuto));
+                b.AddItem(ControlId.Structural("run:speed:auto"), GameNodes.Radio(speed._autoView.Toggle, () => Strings.RunSpeedAuto));
                 any++;
             }
             var views = speed._speedViews;
@@ -629,7 +629,7 @@ namespace GuildrunAccess.Module.Screens
                     var v = views[i];
                     if (v == null || !GameNodes.IsShown(v.Toggle)) continue;
                     int n = i + 1;
-                    b.AddItem(ControlId.Structural("run:speed:" + n), GameNodes.Tab(v.Toggle, () => Strings.RunSpeedN(n)));
+                    b.AddItem(ControlId.Structural("run:speed:" + n), GameNodes.Radio(v.Toggle, () => Strings.RunSpeedN(n)));
                     any++;
                 }
             if (any > 0) b.EndRow();

@@ -137,11 +137,22 @@ namespace GuildrunAccess.Module.UI
         /// <summary>A tab in a toggle-group strip (a Toggle whose caption is the tab name): "label, tab
         /// [, selected]"; activation selects it (the game switches pages on isOn).</summary>
         public static NodeVtable Tab(UnityEngine.UI.Toggle toggle, Func<string> label = null)
+            => Choice(toggle, ControlTypes.Tab, label);
+
+        /// <summary>A toggle of a mutually exclusive group that is a choice rather than a view (battle
+        /// speed, a difficulty tier, a filter): "label, radio button[, selected]". Like a tab, landing on
+        /// it selects it.</summary>
+        public static NodeVtable Radio(UnityEngine.UI.Toggle toggle, Func<string> label = null)
+            => Choice(toggle, ControlTypes.RadioButton, label);
+
+        // A tab or radio button: selected by landing on it as well as by Enter, never while disabled.
+        private static NodeVtable Choice(UnityEngine.UI.Toggle toggle, ControlType type, Func<string> label)
         {
             Func<string> lbl = label ?? (() => LabelOf(toggle));
+            Action select = () => { if (toggle != null && toggle.interactable && !toggle.isOn) toggle.isOn = true; };
             return new NodeVtable
             {
-                ControlType = ControlTypes.Tab,
+                ControlType = type,
                 Announcements = new List<NodeAnnouncement>
                 {
                     LabelPart(lbl),
@@ -149,7 +160,8 @@ namespace GuildrunAccess.Module.UI
                     DisabledPart(() => toggle.interactable),
                 },
                 SearchText = lbl,
-                OnActivate = () => { if (toggle.interactable && !toggle.isOn) toggle.isOn = true; },
+                OnActivate = select,
+                OnFocus = select,
             };
         }
 

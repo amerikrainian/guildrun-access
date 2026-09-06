@@ -105,6 +105,11 @@ namespace GuildrunAccess.Core.Graph
         /// <summary>Optional. Primary activation, the left-click equivalent (Enter).</summary>
         public Action OnActivate;
 
+        /// <summary>Optional. Runs when navigation lands on the node (arrows, Home/End, Tab), just before
+        /// the landing is spoken; not on a screen's first focus. Tabs and radio buttons select themselves
+        /// here, so browsing them is choosing them and the landing reads "selected".</summary>
+        public Action OnFocus;
+
         /// <summary>Optional. Secondary activation, the right-click equivalent (Backspace).</summary>
         public Action OnSecondary;
 

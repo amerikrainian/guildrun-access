@@ -70,9 +70,9 @@ namespace GuildrunAccess.Module.Screens
             if (GameNodes.IsShown(c._classFilterClearButton))
                 b.AddItem(ControlId.Structural("compendium:clear"), GameNodes.Button(c._classFilterClearButton, () => Strings.CompendiumClearFilter));
             if (GameNodes.IsShown(c._masteryAllFilter))
-                b.AddItem(ControlId.Structural("compendium:mastery:all"), GameNodes.Tab(c._masteryAllFilter));
+                b.AddItem(ControlId.Structural("compendium:mastery:all"), GameNodes.Radio(c._masteryAllFilter));
             if (GameNodes.IsShown(c._masteryIncompleteFilter))
-                b.AddItem(ControlId.Structural("compendium:mastery:incomplete"), GameNodes.Tab(c._masteryIncompleteFilter));
+                b.AddItem(ControlId.Structural("compendium:mastery:incomplete"), GameNodes.Radio(c._masteryIncompleteFilter));
             AddText(b, "compendium:mastery:overview", c._heroOverviewMasteryProgressText != null ? c._heroOverviewMasteryProgressText.GetComponent<TMP_Text>() : null);
             AddText(b, "compendium:mastery:details", c._heroDetailsMasteryProgressText != null ? c._heroDetailsMasteryProgressText.GetComponent<TMP_Text>() : null);
             b.PopContext();

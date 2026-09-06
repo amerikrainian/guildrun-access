@@ -49,6 +49,58 @@ namespace GuildrunAccess.Tests
             public string TypedText => "";
         }
 
+        // A tab strip: landing on a tab selects it (the vtable's focus hook), Enter selects it too.
+        private sealed class TabScreen : Screen
+        {
+            public int Selected;
+            public int FocusCalls;
+            public override string Key => "test.tabs";
+            public override bool IsActive() => true;
+            public override void Build(GraphBuilder b)
+            {
+                b.PushContext("Sections", null);
+                for (int i = 0; i < 3; i++)
+                {
+                    int index = i;
+                    b.AddItem(ControlId.Structural("tab" + i), new NodeVtable
+                    {
+                        ControlType = ControlTypes.Tab,
+                        Announcements = new[] { new NodeAnnouncement(() => "Tab " + index, kind: AnnouncementKinds.Label) },
+                        OnFocus = () => { FocusCalls++; Selected = index; },
+                    });
+                }
+                b.PopContext();
+            }
+        }
+
+        [Fact]
+        public void LandingOnATabRunsItsFocusHookButFirstFocusDoesNot()
+        {
+            var input = new FakeNavInput { FrameCount = 1 };
+            Speech.Speak = (t, i) => { };
+            NavInput.Current = input;
+            try
+            {
+                var nav = new GraphNavigator();
+                var screen = new TabScreen();
+                nav.Attach(screen);
+                nav.EnsureFocus();
+                Assert.Equal(0, screen.FocusCalls); // the screen's first focus is not a choice
+
+                Assert.True(nav.OnInputJustPressed(Action(UiActions.Down)));
+                Assert.Equal(1, screen.FocusCalls);
+                Assert.Equal(1, screen.Selected);
+
+                Assert.True(nav.OnInputJustPressed(Action(UiActions.End)));
+                Assert.Equal(2, screen.FocusCalls);
+                Assert.Equal(2, screen.Selected);
+            }
+            finally
+            {
+                Speech.Speak = (t, i) => { };
+            }
+        }
+
         [Fact]
         public void EntryReadsContextThenArrowsReadLeaves()
         {
