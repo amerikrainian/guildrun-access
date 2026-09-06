@@ -47,9 +47,11 @@ namespace GuildrunAccess.Module.UI
             return string.IsNullOrWhiteSpace(sub) ? title : title + ", " + sub;
         }
 
-        /// <summary>The full readout: heading, then every section the summary mode shows (details mode
-        /// when <paramref name="details"/>), in the game's own order. Null when the control has no tooltip.</summary>
-        public static string Describe(TooltipRaycastTarget target, bool details = false)
+        /// <summary>The full readout: heading, then every section the details mode shows (what the game
+        /// shows while Shift is held: the summary plus the definitions of the keywords it uses, without
+        /// the hint to hold Shift), in the game's own order; the summary alone when
+        /// <paramref name="details"/> is false. Null when the control has no tooltip.</summary>
+        public static string Describe(TooltipRaycastTarget target, bool details = true)
         {
             var view = Populate(target);
             if (view == null) return null;

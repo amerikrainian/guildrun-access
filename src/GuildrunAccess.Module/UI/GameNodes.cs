@@ -146,19 +146,18 @@ namespace GuildrunAccess.Module.UI
             => Choice(toggle, ControlTypes.RadioButton, label);
 
         // A tab or radio button: selected by landing on it as well as by Enter, never while disabled.
+        // A tab is always the selected one once landed on, so it carries no selected state.
         private static NodeVtable Choice(UnityEngine.UI.Toggle toggle, ControlType type, Func<string> label)
         {
             Func<string> lbl = label ?? (() => LabelOf(toggle));
             Action select = () => { if (toggle != null && toggle.interactable && !toggle.isOn) toggle.isOn = true; };
+            var parts = new List<NodeAnnouncement> { LabelPart(lbl) };
+            if (type != ControlTypes.Tab) parts.Add(SelectedPart(() => toggle.isOn));
+            parts.Add(DisabledPart(() => toggle.interactable));
             return new NodeVtable
             {
                 ControlType = type,
-                Announcements = new List<NodeAnnouncement>
-                {
-                    LabelPart(lbl),
-                    SelectedPart(() => toggle.isOn),
-                    DisabledPart(() => toggle.interactable),
-                },
+                Announcements = parts,
                 SearchText = lbl,
                 OnActivate = select,
                 OnFocus = select,

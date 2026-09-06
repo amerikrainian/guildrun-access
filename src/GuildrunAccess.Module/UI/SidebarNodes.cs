@@ -137,12 +137,11 @@ namespace GuildrunAccess.Module.UI
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        // The damage tracker: its title, the mode tabs, one live line per hero.
+        // The damage tracker: the mode tabs, then one live line per hero. No context of its own: the
+        // sidebar's "Damage tracker" switch already names it, and the panel's title is the selected
+        // mode's name, which the mode tab already says.
         private static void AddTracker(GraphBuilder b, DamageTrackerUIController tracker, string keyPrefix)
         {
-            string title = tracker._titleText != null && !string.IsNullOrWhiteSpace(tracker._titleText.text)
-                ? tracker._titleText.text : Strings.RunDamageTracker;
-            b.PushContext(title, null, positions: false);
             var modes = tracker._modeToggles;
             if (modes != null)
                 for (int i = 0; i < modes.Length; i++)
@@ -178,7 +177,6 @@ namespace GuildrunAccess.Module.UI
                 }
                 b.PopContext();
             }
-            b.PopContext();
         }
 
         private static string TrackerName(DamageTrackerUIController.HeroView view)
