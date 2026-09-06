@@ -23,5 +23,10 @@ namespace GuildrunAccess.Contracts
 
         /// <summary>The plugin folder (where lang/ and assets/ deploy beside the DLLs).</summary>
         string PluginDir { get; }
+
+        /// <summary>True while a module is being disposed because a newer generation has already loaded
+        /// and taken over the game state it suppressed (the keyboard, the EventSystem): restore nothing
+        /// then, only drop hooks. False on a shutdown, where everything must be given back.</summary>
+        bool SuccessorLoaded { get; }
     }
 }

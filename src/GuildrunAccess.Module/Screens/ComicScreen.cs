@@ -26,10 +26,16 @@ namespace GuildrunAccess.Module.Screens
 
         private readonly Finder<ComicController> _comic = new Finder<ComicController>();
 
+        // A comic is playing when one of its panels is actually active (the container keeps inactive
+        // panel prefabs around between comics).
         private ComicController Playing()
         {
             var c = _comic.Get();
-            return c != null && c.gameObject.activeInHierarchy && c._panelContainer != null && c._panelContainer.childCount > 0 ? c : null;
+            var container = c != null && c.gameObject.activeInHierarchy ? c._panelContainer : null;
+            if (container == null) return null;
+            for (int i = 0; i < container.childCount; i++)
+                if (container.GetChild(i).gameObject.activeInHierarchy) return c;
+            return null;
         }
 
         public override bool IsActive() => Playing() != null;

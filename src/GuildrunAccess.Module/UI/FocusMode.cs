@@ -19,8 +19,8 @@ namespace GuildrunAccess.Module.UI
     /// once more: no scanning, no per-frame checks.</item>
     /// </list>
     /// Fully reversible: turning focus mode off re-enables the keyboard and the EventSystem's
-    /// navigation. The EventSystem flag is still reasserted per frame because Unity rebuilds the
-    /// EventSystem on scene changes and offers no event for it.
+    /// navigation. A fresh EventSystem (Unity builds one per scene, with no event for it) is noticed
+    /// by a per-frame instance compare and suppressed on sight.
     /// </summary>
     public static class FocusMode
     {
@@ -49,23 +49,23 @@ namespace GuildrunAccess.Module.UI
             }
         }
 
-        /// <summary>Per-frame: re-apply the EventSystem suppression when the game constructs a fresh
-        /// EventSystem, and reassert the flag on the current one. The reassert matters on a hot reload:
-        /// the host loads the new generation (which suppresses) BEFORE disposing the old one (whose
-        /// Release restores), so without it a reload would hand navigation back to the game.</summary>
+        /// <summary>Per-frame: apply the EventSystem suppression to a fresh EventSystem (the game builds
+        /// one per scene, and Unity offers no event for it). Nothing else is reasserted: a reload's old
+        /// generation no longer restores what its successor owns (see <see cref="Shutdown"/>).</summary>
         public static void Tick()
         {
             if (!_active) return;
             var es = EventSystem.current;
-            if (es == null) return;
-            if (!ReferenceEquals(es, _applied)) { Apply(es); return; }
-            if (es.sendNavigationEvents) es.sendNavigationEvents = false;
+            if (es != null && !ReferenceEquals(es, _applied)) Apply(es);
         }
 
-        /// <summary>Module teardown: drop the device hook (a new generation installs its own).</summary>
-        public static void Shutdown()
+        /// <summary>Module teardown. With <paramref name="restore"/> the game gets its keyboard and
+        /// navigation events back (a shutdown); without it only our hooks are dropped, because a newer
+        /// generation has already taken over (a reload).</summary>
+        public static void Shutdown(bool restore)
         {
-            Set(false);
+            if (restore) Set(false);
+            else _active = false;
             if (_deviceHook == null) return;
             try { InputSystem.remove_onDeviceChange(_deviceHook); }
             catch (Exception e) { CoreLog.Warning("FocusMode: unhooking device changes failed: " + e.Message); }

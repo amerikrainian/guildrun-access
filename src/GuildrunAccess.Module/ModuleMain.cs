@@ -171,7 +171,10 @@ namespace GuildrunAccess.Module
         /// generation is live) and on shutdown.</summary>
         public void Dispose()
         {
-            try { FocusMode.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
+            // On a reload the successor already owns the keyboard and the EventSystem: drop our hooks
+            // only. On a shutdown, give everything back to the game.
+            bool restore = _host == null || !_host.SuccessorLoaded;
+            try { FocusMode.Shutdown(restore); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
             try { ScreenManager.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] screens: " + e); }
             try { InputManager.Clear(); } catch (Exception e) { _host?.LogError("[dispose] input: " + e); }
             try { _harmony?.UnpatchSelf(); } catch (Exception e) { _host?.LogError("[dispose] harmony: " + e); }

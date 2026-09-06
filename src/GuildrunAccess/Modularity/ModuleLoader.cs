@@ -23,12 +23,12 @@ namespace GuildrunAccess.Modularity
 
         private readonly string _corePath;
         private readonly string _modulePath;
-        private readonly IModHost _host;
+        private readonly ModHost _host;
         private readonly ManualLogSource _log;
 
         private ModuleAlc _alc;
 
-        public ModuleLoader(string corePath, string modulePath, IModHost host, ManualLogSource log)
+        public ModuleLoader(string corePath, string modulePath, ModHost host, ManualLogSource log)
         {
             _corePath = corePath;
             _modulePath = modulePath;
@@ -84,7 +84,11 @@ namespace GuildrunAccess.Modularity
 
                 // Swap in only once the new module is fully live, so a failed reload (locked / corrupt /
                 // half-written DLL) leaves the running module untouched rather than tearing it down.
-                DisposeCurrent();
+                // The old generation is told a successor owns the game state now, so its Dispose drops
+                // its hooks without handing the keyboard or the EventSystem back to the game.
+                _host.SuccessorLoaded = true;
+                try { DisposeCurrent(); }
+                finally { _host.SuccessorLoaded = false; }
                 _alc = candidateAlc;
                 Module = module;
                 Generation++;

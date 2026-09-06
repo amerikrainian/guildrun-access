@@ -97,8 +97,10 @@ Five projects (see `docs/plan.md` for the port map):
 Rules: new feature/screen/adapter/patch code goes in Module (Core when engine-free). Only entry, native
 handles, sockets, and IL2CPP type injection go in the host. Module Harmony uses a per-load GUID id and
 `UnpatchSelf()` in Dispose. The host loads the NEW generation BEFORE disposing the old one (failed-reload
-safety), so anything the old Dispose restores must be reasserted per frame by the new one (see
-`FocusMode.Tick`). Core statics are per-generation (Core loads into the same collectible context).
+safety) and sets `IModHost.SuccessorLoaded` around the old Dispose: a disposing module restores
+suppressed game state (the keyboard device, EventSystem navigation) only when that flag is false (a
+shutdown), and just drops its hooks on a reload. Core statics are per-generation (Core loads into the
+same collectible context).
 
 ## Dev driver (Debug only; on by default, `GRA_NO_DEV=1` disables, `GRA_DEV_PORT` sets the port)
 Loopback HTTP on `http://127.0.0.1:8771`, driven with curl. `GRA_NO_SPEECH=1` skips Prism for headless

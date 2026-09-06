@@ -28,6 +28,9 @@ namespace GuildrunAccess.Modularity
 
         public string ModVersion => Plugin.Version;
 
+        /// <summary>Set by the loader around the old generation's Dispose on a successful reload.</summary>
+        public bool SuccessorLoaded { get; internal set; }
+
         public void LogInfo(string message) => _log.LogInfo(message);
         public void LogWarning(string message) => _log.LogWarning(message);
         public void LogError(string message) => _log.LogError(message);
