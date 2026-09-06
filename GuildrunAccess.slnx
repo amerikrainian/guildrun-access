@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/GuildrunAccess.Contracts/GuildrunAccess.Contracts.csproj" />
+  <Project Path="src/GuildrunAccess.Core/GuildrunAccess.Core.csproj" />
+  <Project Path="src/GuildrunAccess.Module/GuildrunAccess.Module.csproj" />
+  <Project Path="src/GuildrunAccess/GuildrunAccess.csproj" />
+  <Project Path="src/GuildrunAccess.Tests/GuildrunAccess.Tests.csproj" />
+</Solution>

@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The reloadable feature module: screens, node factories, input bindings, focus suppression, and any
+    Harmony patches. NOT a BepInEx plugin (no [BepInPlugin]); the host loads it (with Core) by hand from
+    the DLL bytes into a collectible AssemblyLoadContext, so it can be rebuilt and reloaded without
+    restarting the game. It injects no IL2CPP types and owns no native handles; that permanent code stays
+    in the host. Same reference block as the host (Contracts + Il2CppInterop proxies + BepInEx/Harmony);
+    those resolve to the already-loaded default-context copies at runtime.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>GuildrunAccess.Module</AssemblyName>
+    <RootNamespace>GuildrunAccess.Module</RootNamespace>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GuildrunAccess.Contracts\GuildrunAccess.Contracts.csproj" />
+    <ProjectReference Include="..\GuildrunAccess.Core\GuildrunAccess.Core.csproj" />
+  </ItemGroup>
+
+  <!--
+    Fast iteration deploy (Debug only): copy just the two reloadable DLLs (Core + Module) into the plugin
+    folder. Both are overwrite-safe while the game runs (byte-loaded, never locked), so the day-to-day
+    loop is dotnet build on this project then POST /reload (or F6 in-game).
+  -->
+  <Target Name="DeployModule" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <CoreDll>$(RepoRoot)src\GuildrunAccess.Core\bin\$(Configuration)\netstandard2.0\GuildrunAccess.Core.dll</CoreDll>
+    </PropertyGroup>
+    <MakeDir Directories="$(PluginDeployDir)" />
+    <Copy SourceFiles="$(TargetPath);$(CoreDll)" DestinationFolder="$(PluginDeployDir)" ContinueOnError="true" />
+    <Message Importance="high" Text="GuildrunAccess.Module + Core deployed -> $(PluginDeployDir)" />
+  </Target>
+
+  <ItemGroup>
+    <!-- BepInEx loader + Harmony + Il2CppInterop runtime (dobby.dll is native, skip it) -->
+    <Reference Include="$(BepInExDir)\core\*.dll" Exclude="$(BepInExDir)\core\dobby.dll">
+      <Private>false</Private>
+    </Reference>
+    <!-- Il2CppInterop proxy assemblies for the game + Unity -->
+    <Reference Include="$(InteropDir)\*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

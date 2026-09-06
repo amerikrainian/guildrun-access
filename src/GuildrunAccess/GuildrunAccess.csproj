@@ -1,0 +1,99 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The BepInEx 6 IL2CPP plugin: the PERMANENT host. Engine + native glue only: the plugin entry, the
+    Prism P/Invoke speech backend, the one injected MonoBehaviour pump, the module loader (which loads
+    Core + Module into a collectible load context), the settings store, and the dev HTTP server with its
+    Roslyn REPL. References the loader's core dlls, the Il2CppInterop-generated proxy assemblies
+    (BepInEx/interop, produced on the game's first launch), and Contracts. NEVER references Core or Module
+    at compile time (a compile-time reference would load Core into the default context and break the
+    hot-reload identity split). Runs on .NET 6 (BepInEx's bundled CoreCLR).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>GuildrunAccess</AssemblyName>
+    <RootNamespace>GuildrunAccess</RootNamespace>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <!-- Copy NuGet runtime assemblies (Roslyn scripting) into the build output so DeployToGame ships
+         them beside the plugin. The game/loader refs are Private=false. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <!-- The mod version lives in Directory.Build.props alone; this generates the BuildVersion constant. -->
+  <Target Name="GenerateBuildVersion" BeforeTargets="BeforeCompile">
+    <PropertyGroup>
+      <_BuildVersionFile>$(IntermediateOutputPath)BuildVersion.g.cs</_BuildVersionFile>
+    </PropertyGroup>
+    <ItemGroup>
+      <_BuildVersionLine Include="namespace GuildrunAccess" />
+      <_BuildVersionLine Include="{" />
+      <_BuildVersionLine Include="    internal static class BuildVersion" />
+      <_BuildVersionLine Include="    {" />
+      <_BuildVersionLine Include='        public const string Value = "$(Version)"%3B' />
+      <_BuildVersionLine Include="    }" />
+      <_BuildVersionLine Include="}" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_BuildVersionFile)" Lines="@(_BuildVersionLine)"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(_BuildVersionFile)" />
+      <FileWrites Include="$(_BuildVersionFile)" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GuildrunAccess.Contracts\GuildrunAccess.Contracts.csproj" />
+    <!-- The reloadable side. ReferenceOutputAssembly=false: the host loads these by hand (bytes into a
+         collectible context) and never references their types at compile time; these entries only force
+         them to build before the host so DeployToGame can copy their DLLs. -->
+    <ProjectReference Include="..\GuildrunAccess.Module\GuildrunAccess.Module.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- In-process C# REPL for the dev /eval server (Roslyn scripting; runs on CoreCLR). -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.8.0" />
+  </ItemGroup>
+
+  <!--
+    Auto-deploy on build (Debug only): copy the host + Contracts + Roslyn deps (everything in the output)
+    plus the Core and Module DLLs into BepInEx/plugins/GuildrunAccess, and prism.dll next to Guildrun.exe.
+    ContinueOnError keeps a locked file (game running) a warning; close the game and rebuild to deploy the
+    host. Core and Module are overwrite-safe at runtime (byte-loaded, never locked); the chainloader skips
+    them since they carry no [BepInPlugin].
+  -->
+  <Target Name="DeployToGame" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <CoreDll>$(RepoRoot)src\GuildrunAccess.Core\bin\$(Configuration)\netstandard2.0\GuildrunAccess.Core.dll</CoreDll>
+      <ModuleDll>$(RepoRoot)src\GuildrunAccess.Module\bin\$(Configuration)\$(TargetFramework)\GuildrunAccess.Module.dll</ModuleDll>
+    </PropertyGroup>
+    <ItemGroup>
+      <_DeployDll Include="$(TargetDir)*.dll" />
+      <_LangFile Include="$(RepoRoot)lang\*.txt" />
+    </ItemGroup>
+    <MakeDir Directories="$(PluginDeployDir)" />
+    <Copy SourceFiles="@(_DeployDll);$(CoreDll);$(ModuleDll)"
+          DestinationFolder="$(PluginDeployDir)" ContinueOnError="true" Retries="0" />
+    <Copy SourceFiles="$(RepoRoot)third_party\prism\prism.dll"
+          DestinationFolder="$(GameDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <Copy SourceFiles="@(_LangFile)" DestinationFolder="$(PluginDeployDir)\lang"
+          SkipUnchangedFiles="true" ContinueOnError="true" Condition="'@(_LangFile)' != ''" />
+    <Message Importance="high" Text="GuildrunAccess deployed -> $(PluginDeployDir)" />
+  </Target>
+
+  <ItemGroup>
+    <!-- BepInEx loader + Harmony + Il2CppInterop runtime (dobby.dll is native, skip it) -->
+    <Reference Include="$(BepInExDir)\core\*.dll" Exclude="$(BepInExDir)\core\dobby.dll">
+      <Private>false</Private>
+    </Reference>
+    <!-- Il2CppInterop proxy assemblies for the game + Unity -->
+    <Reference Include="$(InteropDir)\*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
