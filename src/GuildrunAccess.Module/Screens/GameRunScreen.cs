@@ -169,8 +169,8 @@ namespace GuildrunAccess.Module.Screens
             return rows;
         }
 
-        // "Kai, 4, 1" / "Mushroom Tank, 3, 2" / "empty, 1, 3": column then row, the container saying
-        // whose side it is; rows count from each side's back line.
+        // "Kai, 4, 1" / "Mushroom Tank, 3, 6" / "empty, 1, 3": column then row on the game's one grid,
+        // the container saying whose side it is.
         private NodeVtable CellNode(Vector2Int cell)
         {
             return new NodeVtable
@@ -197,14 +197,9 @@ namespace GuildrunAccess.Module.Screens
             return null;
         }
 
-        // Rows count from the player's back line; the enemy side counts its own rows from the front.
-        private static string CellName(Vector2Int cell)
-        {
-            if (RunData.IsPlayerCell(cell)) return Strings.RunCellPos(cell.x + 1, cell.y + 1);
-            int playerRows = 0;
-            for (int y = 0; y < cell.y; y++) if (RunData.IsPlayerCell(new Vector2Int(cell.x, y))) playerRows++;
-            return Strings.RunCellPos(cell.x + 1, cell.y - playerRows + 1);
-        }
+        // The game's own grid, one-based: columns left to right, rows from the player's back line up
+        // through the enemy side (a hero on row 4 and an enemy on row 6 are two cells apart).
+        private static string CellName(Vector2Int cell) => Strings.RunCellPos(cell.x + 1, cell.y + 1);
 
         // Enter on a cell: drop a picked-up hero here, else open the hero's menu, else nothing to do.
         private void ActivateCell(Vector2Int cell)

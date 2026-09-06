@@ -283,8 +283,8 @@ namespace GuildrunAccess.Core.Strings
             // The placement grid: rows counted from the player's back line; the enemy rows beyond.
             D("run.grid", "board"),
             D("run.cell_empty", "empty"),
-            // {0} = column number, {1} = row number (rows count from each side's back line): bare
-            // coordinates, column first.
+            // {0} = column number, {1} = row number, both one-based on the game's single grid (rows run
+            // from the player's back line up through the enemy side): bare coordinates, column first.
             D("run.cell_pos", "{0}, {1}"),
             D("run.board_heroes", "heroes"),
             D("run.board_enemies", "enemies"),
