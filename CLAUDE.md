@@ -153,6 +153,14 @@ control, Ctrl+Up/Down jump sections, typing letters searches the focused group.
    mod menu (Ctrl+Shift+M: settings, key help), comics. Open: the shop's "sold" filter is a
    canvas-group heuristic; Escape on the run HUD only cancels a pending move.
 
+## The game's own hotkeys
+The game's Input System action maps bind Tab, Space, Enter, Escape, arrows and letters (Navigation:
+Heroes panel, reserve/shop toggle, feedback, back; UI: navigate/submit/cancel; a Player map). While
+focus mode is on, `Input/GameHotkeys` blanks every enabled action's keyboard bindings with an empty
+override (mouse/gamepad bindings stay), re-scans every 30 frames for fresh maps, and restores them
+when focus mode turns off or the module unloads. Anything the game's hotkey did must be offered
+through our screens instead (the run HUD's Escape opens the game's settings, Heroes is in the menu).
+
 ## Click-only widgets
 Some game prompts poll the pointer through the game's own input service instead of listening to a
 widget event (the comics' click-anywhere, the run-over panel's Proceed): `onClick.Invoke()` does
