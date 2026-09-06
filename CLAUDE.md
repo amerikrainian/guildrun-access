@@ -140,7 +140,13 @@ control, Ctrl+Up/Down jump sections, typing letters searches the focused group.
 1. **(done)** Loader bring-up on Unity 6 (BepInEx be.788), host + collectible-context hot reload, Prism.
 2. **(done)** Graph engine + navigator + input substrate in Core, 54 tests.
 3. **(done)** Main menu and the modal dialogs (privacy consent, confirm, error, exit, survey).
-4. Settings (tabs, sliders, toggles, dropdowns) and the run-start flow (difficulty).
-5. The game run: slots/hero panel, chunk map, events, shop, campfire, relics, tooltips (`GraphSheet`
-   for tabular data; `GameRunTooltipController` for descriptions).
-6. Battle, end screen, compendium. Then: mod settings menu, key help, announcement settings.
+4. **(done)** Settings (tabs, sliders, toggles, dropdowns) and the run-start flow (difficulty).
+5. **(done)** The game run: hero picker, run HUD (placement grid with keyboard moves, party/reserve
+   with equip/unequip menus, items, relics, info, speed, menu), battle result (all forms), shop,
+   crossroads, events (campfire included), rank-up pickers, the Heroes panel, tooltips through the
+   game's own tooltip pipeline. Reusable readers: `UI/HeroCardNodes`, `UI/ItemNodes`,
+   `UI/LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `Run/RunData`.
+6. End screen and progression **(done)**. Open: live battle narration (deaths, casts), the sidebar
+   inspect card and damage tracker, the compendium, then the mod settings menu, key help,
+   announcement settings. Known gap: the run-lost panel's Proceed button ignores `onClick.Invoke()`
+   (see the interop-pitfalls memory); a real click is needed until the handler is found.

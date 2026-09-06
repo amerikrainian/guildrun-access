@@ -116,6 +116,7 @@ namespace GuildrunAccess.Module
         {
             ScreenManager.Register(new MainMenuScreen());
             ScreenManager.Register(new SettingsScreen());
+            ScreenManager.Register(new DifficultyScreen());
             ScreenManager.Register(new HeroPickerScreen());
             ScreenManager.Register(new GameRunScreen());
             ScreenManager.Register(new BattleResultScreen());
@@ -123,6 +124,7 @@ namespace GuildrunAccess.Module
             ScreenManager.Register(new CrossroadsScreen());
             ScreenManager.Register(new EventScreen());
             ScreenManager.Register(new PickerScreen());
+            ScreenManager.Register(new HeroesPanelScreen());
             ScreenManager.Register(new RunEndScreen());
             ScreenManager.Register(new ProgressionScreen());
             // Modal dialogs (layer 30, exclusive): the privacy consent that greets a fresh install, the

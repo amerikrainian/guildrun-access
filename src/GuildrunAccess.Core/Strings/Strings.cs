@@ -190,6 +190,19 @@ namespace GuildrunAccess.Core.Strings
             D("progression.locked", "locked"),
             D("progression.unlocked", "unlocked"),
             D("progression.new", "new"),
+
+            // The run-start (difficulty) screen.
+            D("screen.difficulty", "New run"),
+            D("difficulty.levels", "difficulty"),
+            D("difficulty.modifiers", "modifiers"),
+            D("difficulty.streak", "streak"),
+
+            // The run's Heroes panel.
+            D("heroes.counters", "counters"),
+            D("heroes.close", "Close"),
+            D("heroes.none", "no heroes"),
+            D("hero.items", "items"),
+            D("hero.no_items", "no items"),
             // Item and hero actions from the keyboard (the game's drag and drop).
             // {0} = the item's name.
             D("run.equip_to", "Equip {0} to"),
@@ -432,6 +445,15 @@ namespace GuildrunAccess.Core.Strings
         public static string ProgressionLocked => Get("progression.locked");
         public static string ProgressionUnlocked => Get("progression.unlocked");
         public static string ProgressionNew => Get("progression.new");
+        public static string ScreenDifficulty => Get("screen.difficulty");
+        public static string DifficultyLevels => Get("difficulty.levels");
+        public static string DifficultyModifiers => Get("difficulty.modifiers");
+        public static string DifficultyStreak => Get("difficulty.streak");
+        public static string HeroesCounters => Get("heroes.counters");
+        public static string HeroesClose => Get("heroes.close");
+        public static string HeroesNone => Get("heroes.none");
+        public static string HeroItems => Get("hero.items");
+        public static string HeroNoItems => Get("hero.no_items");
         public static string RunEquipTo(string item) => F("run.equip_to", item);
         public static string RunEquipped(string item, string hero) => F("run.equipped", item, hero);
         public static string RunEquipFailed => Get("run.equip_failed");

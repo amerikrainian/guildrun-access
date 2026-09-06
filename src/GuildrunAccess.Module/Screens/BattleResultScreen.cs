@@ -174,37 +174,8 @@ namespace GuildrunAccess.Module.Screens
         {
             var lb = panel.GetComponentInChildren<LeaderboardController>(false);
             if (lb == null || !lb.gameObject.activeInHierarchy) return;
-
             b.BeginStop("leaderboard");
-            b.PushContext(Strings.ResultLeaderboard, null, positions: false);
-            if (GameNodes.IsShown(lb._globalTab))
-                b.AddItem(ControlId.Structural("result:lb:global"), GameNodes.Tab(lb._globalTab));
-            if (GameNodes.IsShown(lb._friendsTab))
-                b.AddItem(ControlId.Structural("result:lb:friends"), GameNodes.Tab(lb._friendsTab));
-            AddLine(b, "result:lb:streak", lb._currentStreakText);
-            AddLine(b, "result:lb:load", lb._loadText);
-
-            var entries = lb._entries;
-            if (entries != null)
-            {
-                b.PushContext(Strings.ResultEntries, Strings.RoleList);
-                foreach (var entry in entries)
-                {
-                    if (entry == null || !entry.gameObject.activeInHierarchy) continue;
-                    var e = entry;
-                    b.AddItem(ControlId.Structural("result:lb:" + e.GetInstanceID()), GameNodes.Text(() => Strings.ResultEntry(
-                        e.RankText != null ? e.RankText.text : "", e.NameText != null ? e.NameText.text : "", e.FloorText != null ? e.FloorText.text : "")));
-                }
-                b.PopContext();
-            }
-            var reset = lb._resetCountdownText;
-            if (reset != null && reset.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(reset.text))
-                b.AddItem(ControlId.Structural("result:lb:reset"), new NodeVtable
-                {
-                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Strings.ResultReset + " " + reset.text) },
-                    OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(lb._resetTooltipRaycastTarget) ?? Strings.NoTooltip, interrupt: true),
-                });
-            b.PopContext();
+            LeaderboardNodes.Add(b, lb, "result:lb");
         }
 
         // ---- actions ----

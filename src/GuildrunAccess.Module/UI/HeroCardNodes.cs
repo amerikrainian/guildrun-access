@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Ember.Scopes.GameRun.UI.HeroCard;
 using Ember.Scopes.GameRun.UI.HeroCard.Elements;
+using Ember.Scopes.GameRun.UI.Slots;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -166,6 +167,18 @@ namespace GuildrunAccess.Module.UI
 
         public static readonly GridRow StatsRow = new GridRow("stats", () => Strings.HeroStats, StatsLine, StatsTooltips);
         public static readonly GridRow AbilitiesRow = new GridRow("abilities", () => Strings.HeroAbilities, AbilitiesLine, AbilitiesTooltips);
+        public static readonly GridRow ItemsRow = new GridRow("items", () => Strings.HeroItems,
+            card => ItemNodes.ItemNames(Slots(card)) ?? Strings.HeroNoItems, card => ItemNodes.ItemTooltips(Slots(card)));
+
+        /// <summary>The card's equipment slots (the ones it shows).</summary>
+        public static List<PlaceholderSlotView> Slots(HeroCardView card)
+        {
+            var list = new List<PlaceholderSlotView>();
+            if (card == null) return list;
+            foreach (var slot in card.GetComponentsInChildren<PlaceholderSlotView>(false))
+                if (slot != null && slot.gameObject.activeInHierarchy) list.Add(slot);
+            return list;
+        }
 
         /// <summary>
         /// Declare a grid of hero cards inside the current Tab-stop: row 1 is each card's name and
