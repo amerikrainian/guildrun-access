@@ -151,6 +151,45 @@ namespace GuildrunAccess.Core.Strings
             D("run.rewards", "rewards"),
             D("run.proceed", "Proceed"),
             D("run.summary", "Summary"),
+            // The result panel's stats and leaderboard (the run's end).
+            D("result.stats", "stats"),
+            D("result.tracker", "combat tracker"),
+            D("result.damage_dealt", "damage dealt"),
+            D("result.damage_taken", "damage taken"),
+            D("result.healing_done", "healing done"),
+            D("result.status_applied", "applied"),
+            D("result.previous_combat", "Previous combat"),
+            D("result.next_combat", "Next combat"),
+            D("result.leaderboard", "leaderboard"),
+            D("result.entries", "entries"),
+            // {0} = rank, {1} = player name, {2} = floor reached.
+            D("result.entry", "{0}, {1}, floor {2}"),
+            D("result.reset", "time until reset"),
+
+            // The run's end screen.
+            D("screen.end", "Run over"),
+            D("end.victory", "Run won"),
+            D("end.defeat", "Run lost"),
+            D("end.info", "run"),
+            D("end.floor", "floor reached"),
+            D("end.rank", "leaderboard rank"),
+            D("end.rank_change", "change"),
+            D("end.top_percent", "top"),
+            D("end.heroes", "final team"),
+            D("end.backup", "backup team"),
+            D("end.no_items", "no items"),
+            D("end.no_highlights", "no highlights"),
+
+            // The meta-progression (unlock timeline) after a run.
+            D("screen.progression", "Progression"),
+            // {0} = XP, {1} = level.
+            D("progression.xp", "{0} XP, level {1}"),
+            D("progression.milestones", "milestones"),
+            // {0} = the XP the milestone needs.
+            D("progression.threshold", "{0} XP"),
+            D("progression.locked", "locked"),
+            D("progression.unlocked", "unlocked"),
+            D("progression.new", "new"),
             // Item and hero actions from the keyboard (the game's drag and drop).
             // {0} = the item's name.
             D("run.equip_to", "Equip {0} to"),
@@ -362,6 +401,37 @@ namespace GuildrunAccess.Core.Strings
         public static string RunRewards => Get("run.rewards");
         public static string RunProceed => Get("run.proceed");
         public static string RunSummary => Get("run.summary");
+        public static string ResultStats => Get("result.stats");
+        public static string ResultTracker => Get("result.tracker");
+        /// <summary>The tracker mode's name: 0 damage dealt, 1 damage taken, 2 healing done.</summary>
+        public static string ResultTrackerMode(int mode)
+            => Get(mode == 0 ? "result.damage_dealt" : mode == 1 ? "result.damage_taken" : "result.healing_done");
+        public static string ResultStatusApplied => Get("result.status_applied");
+        public static string ResultPreviousCombat => Get("result.previous_combat");
+        public static string ResultNextCombat => Get("result.next_combat");
+        public static string ResultLeaderboard => Get("result.leaderboard");
+        public static string ResultEntries => Get("result.entries");
+        public static string ResultEntry(string rank, string name, string floor) => F("result.entry", rank, name, floor);
+        public static string ResultReset => Get("result.reset");
+        public static string ScreenEnd => Get("screen.end");
+        public static string EndVictory => Get("end.victory");
+        public static string EndDefeat => Get("end.defeat");
+        public static string EndInfo => Get("end.info");
+        public static string EndFloor => Get("end.floor");
+        public static string EndRank => Get("end.rank");
+        public static string EndRankChange => Get("end.rank_change");
+        public static string EndTopPercent => Get("end.top_percent");
+        public static string EndHeroes => Get("end.heroes");
+        public static string EndBackup => Get("end.backup");
+        public static string EndNoItems => Get("end.no_items");
+        public static string EndNoHighlights => Get("end.no_highlights");
+        public static string ScreenProgression => Get("screen.progression");
+        public static string ProgressionXp(int xp, int level) => F("progression.xp", xp, level);
+        public static string ProgressionMilestones => Get("progression.milestones");
+        public static string ProgressionThreshold(string xp) => F("progression.threshold", xp);
+        public static string ProgressionLocked => Get("progression.locked");
+        public static string ProgressionUnlocked => Get("progression.unlocked");
+        public static string ProgressionNew => Get("progression.new");
         public static string RunEquipTo(string item) => F("run.equip_to", item);
         public static string RunEquipped(string item, string hero) => F("run.equipped", item, hero);
         public static string RunEquipFailed => Get("run.equip_failed");

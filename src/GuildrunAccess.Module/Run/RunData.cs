@@ -113,6 +113,21 @@ namespace GuildrunAccess.Module.Run
             }
         }
 
+        /// <summary>A character entry's (hero's or enemy's) localized name, or null.</summary>
+        public static string EntryName(Ember.Balancing.Sheets.Characters.ICharacterEntry entry)
+        {
+            try
+            {
+                var named = entry != null ? entry.TryCast<INamedBalancingEntry>() : null;
+                return LocalizedName(named);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: entry name failed: " + e.Message);
+                return null;
+            }
+        }
+
         // A balancing entry's name through its localization key (the game's own localized string;
         // the English text when the key has none).
         private static string LocalizedName(INamedBalancingEntry named)

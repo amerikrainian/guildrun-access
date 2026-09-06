@@ -24,22 +24,35 @@ namespace GuildrunAccess.Module.Screens
 
         private readonly Finder<EventUIController> _event = new Finder<EventUIController>();
         private string _lastOutcome;
+        private string _lastChoices;
 
         // When the outcome text appears (the chosen button is gone by then), land on it so the result
-        // is spoken and Proceed is a step away.
+        // is spoken and Proceed is a step away; when a new set of choices replaces the old one (an
+        // event that branches, like the campfire), land on the first new choice.
         public override void OnUpdate()
         {
             var e = _event.Get();
-            var typewriter = e != null ? e._eventOutcomeTypewriterEffect : null;
+            if (e == null) return;
+            var typewriter = e._eventOutcomeTypewriterEffect;
             string outcome = typewriter != null && typewriter.gameObject.activeInHierarchy ? FullText(typewriter, null) : null;
-            if (outcome == _lastOutcome) return;
-            _lastOutcome = outcome;
-            if (!string.IsNullOrWhiteSpace(outcome)) Navigation.FocusStop("outcome");
+            if (outcome != _lastOutcome)
+            {
+                _lastOutcome = outcome;
+                if (!string.IsNullOrWhiteSpace(outcome)) { Navigation.FocusStop("outcome"); return; }
+            }
+            var sb = new System.Text.StringBuilder();
+            foreach (var choice in Choices(e)) sb.Append(choice.GetInstanceID()).Append(',');
+            string choices = sb.ToString();
+            if (choices == _lastChoices) return;
+            bool hadChoices = !string.IsNullOrEmpty(_lastChoices);
+            _lastChoices = choices;
+            if (hadChoices && choices.Length > 0) Navigation.FocusStop("choices");
         }
 
         public override void OnPop()
         {
             _lastOutcome = null;
+            _lastChoices = null;
         }
 
         public override bool IsActive()
