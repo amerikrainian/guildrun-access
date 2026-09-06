@@ -233,8 +233,14 @@ namespace GuildrunAccess.Module.Screens
 
         public override IEnumerable<ElementAction> GetActions()
         {
-            // Escape: cancel a pending move.
-            yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ => CancelMove());
+            // Escape: cancel a pending move; otherwise the game's own Escape (its settings panel).
+            yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
+            {
+                if (_moveSource != MoveSource.None) { CancelMove(); return; }
+                var nav = _nav.Get();
+                if (nav != null && GameNodes.IsShown(nav._settingsButton) && nav._settingsButton.interactable)
+                    nav._settingsButton.onClick.Invoke();
+            });
         }
 
         // ---- the battlefield: units with health bars, heroes first ----
