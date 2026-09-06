@@ -204,6 +204,12 @@ namespace GuildrunAccess.Core.Strings
             D("screen.event", "Event"),
             D("event.choices", "choices"),
             D("event.outcome", "outcome"),
+
+            // A hero's rank-up choice (specialization / rank modifier picker).
+            D("screen.picker", "Rank up"),
+            D("picker.hero", "hero"),
+            D("picker.choices", "choices"),
+            D("picker.no_choices", "no choices yet"),
         };
 
         private static readonly Dictionary<string, string> _defaults = BuildDefaults();
@@ -393,5 +399,9 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenEvent => Get("screen.event");
         public static string EventChoices => Get("event.choices");
         public static string EventOutcome => Get("event.outcome");
+        public static string ScreenPicker => Get("screen.picker");
+        public static string PickerHero => Get("picker.hero");
+        public static string PickerChoices => Get("picker.choices");
+        public static string PickerNoChoices => Get("picker.no_choices");
     }
 }
