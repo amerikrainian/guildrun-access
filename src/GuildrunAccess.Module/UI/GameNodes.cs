@@ -21,11 +21,12 @@ namespace GuildrunAccess.Module.UI
         public static NodeAnnouncement LabelPart(Func<string> label)
             => new NodeAnnouncement(label, kind: AnnouncementKinds.Label);
 
-        /// <summary>The disabled-state part: silent while enabled, "disabled" otherwise; LIVE, so a
-        /// control graying out under focus announces it.</summary>
+        /// <summary>The disabled-state part: silent while enabled, "disabled" otherwise. Read on landing
+        /// and on request, not live: the game grays a button out for the instant after it is pressed
+        /// (Proceed, Quit to Menu), which would otherwise be announced as the control going dead.</summary>
         public static NodeAnnouncement DisabledPart(Func<bool> enabled)
             => new NodeAnnouncement(() => enabled == null || enabled() ? null : Strings.StateDisabled,
-                live: true, kind: AnnouncementKinds.Enabled);
+                live: false, kind: AnnouncementKinds.Enabled);
 
         /// <summary>The selected-state part: "selected" when selected, silent otherwise; LIVE.</summary>
         public static NodeAnnouncement SelectedPart(Func<bool> selected)
