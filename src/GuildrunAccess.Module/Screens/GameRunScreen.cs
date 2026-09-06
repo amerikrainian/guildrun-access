@@ -74,6 +74,7 @@ namespace GuildrunAccess.Module.Screens
             BuildItems(b);
             BuildRelics(b);
             BuildInfo(b);
+            BuildMap(b);
             BuildSidebar(b);
             BuildEvents(b);
             BuildSpeed(b);
@@ -526,18 +527,6 @@ namespace GuildrunAccess.Module.Screens
             var timer = _timer.Get();
             if (timer != null && timer._timerText != null && timer._timerText.gameObject.activeInHierarchy)
                 AddValue(b, "timer", () => Strings.RunTimer, () => timer._timerText.text, null);
-            var chunk = _chunk.Get();
-            if (chunk != null && chunk.gameObject.activeInHierarchy)
-                b.AddItem(ControlId.Structural("run:info:map"), new NodeVtable
-                {
-                    Announcements = new List<NodeAnnouncement>
-                    {
-                        new NodeAnnouncement(() => Strings.RunMap, kind: AnnouncementKinds.Label),
-                        new NodeAnnouncement(() => MapLine(chunk), kind: AnnouncementKinds.Value),
-                    },
-                    SearchText = () => Strings.RunMap,
-                    OnTooltip = () => Core.Speech.Say(MapTooltips(chunk) ?? Strings.NoTooltip, interrupt: true),
-                });
             b.PopContext();
         }
 
@@ -566,35 +555,53 @@ namespace GuildrunAccess.Module.Screens
             return list;
         }
 
-        // "fight (current), event, boss": each node's title, the current one marked.
-        private static string MapLine(ChunkUIController chunk)
+        // ---- the act map: one node per stage, the current one marked ----
+
+        private void BuildMap(GraphBuilder b)
         {
-            var sb = new StringBuilder();
-            foreach (var node in MapNodes(chunk))
+            var chunk = _chunk.Get();
+            if (chunk == null || !chunk.gameObject.activeInHierarchy) return;
+            var nodes = MapNodes(chunk);
+            if (nodes.Count == 0) return;
+            b.BeginStop("map");
+            b.PushContext(MapTitle(chunk), Strings.RoleList);
+            for (int i = 0; i < nodes.Count; i++)
             {
-                string title = node.Title;
-                if (string.IsNullOrWhiteSpace(title)) title = TooltipReader.Title(node.TooltipRaycastTarget);
-                if (string.IsNullOrWhiteSpace(title)) continue;
-                if (sb.Length > 0) sb.Append(", ");
-                sb.Append(title);
-                var marker = node.CurrentMarker;
-                if (marker != null && marker.gameObject.activeInHierarchy && marker.enabled)
-                    sb.Append(" (").Append(Strings.RunMapCurrent).Append(')');
+                var node = nodes[i];
+                b.AddItem(ControlId.Structural("run:map:" + node.GetInstanceID()), new NodeVtable
+                {
+                    Announcements = new List<NodeAnnouncement>
+                    {
+                        new NodeAnnouncement(() => NodeTitle(node), kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => IsCurrent(node) ? Strings.RunMapCurrent : null, live: true, kind: AnnouncementKinds.Value),
+                    },
+                    SearchText = () => NodeTitle(node),
+                    OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(node.TooltipRaycastTarget) ?? Strings.NoTooltip, interrupt: true),
+                });
             }
-            return sb.ToString();
+            b.PopContext();
         }
 
-        private static string MapTooltips(ChunkUIController chunk)
+        // "map" plus the act indicator's own text ("Act 1") when it shows one.
+        private static string MapTitle(ChunkUIController chunk)
         {
-            var sb = new StringBuilder();
-            foreach (var node in MapNodes(chunk))
-            {
-                var text = TooltipReader.Describe(node.TooltipRaycastTarget);
-                if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(text);
-            }
-            return sb.Length > 0 ? sb.ToString() : null;
+            var indicator = chunk._actIndicatorView;
+            var text = indicator != null ? indicator._actIndicatorText : null;
+            string act = text != null && text.gameObject.activeInHierarchy ? text.text : null;
+            return string.IsNullOrWhiteSpace(act) ? Strings.RunMap : Strings.RunMap + ", " + act.Trim();
+        }
+
+        private static string NodeTitle(ActNodeView node)
+        {
+            string title = node.Title;
+            if (string.IsNullOrWhiteSpace(title)) title = TooltipReader.Title(node.TooltipRaycastTarget);
+            return string.IsNullOrWhiteSpace(title) ? node.gameObject.name : title;
+        }
+
+        private static bool IsCurrent(ActNodeView node)
+        {
+            var marker = node.CurrentMarker;
+            return marker != null && marker.gameObject.activeInHierarchy && marker.enabled;
         }
 
         // ---- battle speed ----
