@@ -152,7 +152,6 @@ namespace GuildrunAccess.Module
         public void Tick()
         {
             FocusMode.Tick();
-            Safe(() => GameHotkeys.Tick(FocusMode.Active), "game hotkeys");
             InputManager.Tick();
             ScreenManager.Tick();
             Navigation.TickTypeahead();
@@ -172,8 +171,7 @@ namespace GuildrunAccess.Module
         /// generation is live) and on shutdown.</summary>
         public void Dispose()
         {
-            try { FocusMode.Set(false); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
-            try { GameHotkeys.Restore(); } catch (Exception e) { _host?.LogError("[dispose] hotkeys: " + e); }
+            try { FocusMode.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
             try { ScreenManager.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] screens: " + e); }
             try { InputManager.Clear(); } catch (Exception e) { _host?.LogError("[dispose] input: " + e); }
             try { _harmony?.UnpatchSelf(); } catch (Exception e) { _host?.LogError("[dispose] harmony: " + e); }

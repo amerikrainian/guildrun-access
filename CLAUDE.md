@@ -156,10 +156,13 @@ control, Ctrl+Up/Down jump sections, typing letters searches the focused group.
 ## The game's own hotkeys
 The game's Input System action maps bind Tab, Space, Enter, Escape, arrows and letters (Navigation:
 Heroes panel, reserve/shop toggle, feedback, back; UI: navigate/submit/cancel; a Player map). While
-focus mode is on, `Input/GameHotkeys` blanks every enabled action's keyboard bindings with an empty
-override (mouse/gamepad bindings stay), re-scans every 30 frames for fresh maps, and restores them
-when focus mode turns off or the module unloads. Anything the game's hotkey did must be offered
-through our screens instead (the run HUD's Escape opens the game's settings, Heroes is in the menu).
+focus mode is on, `FocusMode` disables the keyboard as an Input System DEVICE
+(`InputSystem.DisableDevice`), so no game action hears a key; our own keys are polled through the
+legacy input path, which is unaffected. `InputSystem.onDeviceChange` (a managed delegate converted
+with `DelegateSupport`) re-disables a keyboard the moment anything enables it again (window focus,
+a reload's old generation, a new device), so there is no scanning. Turning focus mode off re-enables
+it. Anything a game hotkey did must be offered through our screens instead (the run HUD's Escape
+opens the game's settings, Heroes is in the menu).
 
 ## Click-only widgets
 Some game prompts poll the pointer through the game's own input service instead of listening to a
