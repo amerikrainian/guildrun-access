@@ -86,6 +86,7 @@ namespace GuildrunAccess.Core.Strings
 
             // Screen names, spoken on entry.
             D("screen.main_menu", "Main menu"),
+            D("screen.settings", "Settings"),
             D("screen.privacy", "Privacy"),
             D("screen.confirm", "Confirm"),
             D("screen.error", "Error"),
@@ -190,6 +191,7 @@ namespace GuildrunAccess.Core.Strings
             => Has("bind." + actionKey) ? Get("bind." + actionKey) : fallback;
 
         public static string ScreenMainMenu => Get("screen.main_menu");
+        public static string ScreenSettings => Get("screen.settings");
         public static string ScreenPrivacy => Get("screen.privacy");
         public static string ScreenConfirm => Get("screen.confirm");
         public static string ScreenError => Get("screen.error");

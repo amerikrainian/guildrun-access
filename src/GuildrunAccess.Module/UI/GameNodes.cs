@@ -134,6 +134,90 @@ namespace GuildrunAccess.Module.UI
             };
         }
 
+        /// <summary>A tab in a toggle-group strip (a Toggle whose caption is the tab name): "label, tab
+        /// [, selected]"; activation selects it (the game switches pages on isOn).</summary>
+        public static NodeVtable Tab(UnityEngine.UI.Toggle toggle, Func<string> label = null)
+        {
+            Func<string> lbl = label ?? (() => LabelOf(toggle));
+            return new NodeVtable
+            {
+                ControlType = ControlTypes.Tab,
+                Announcements = new List<NodeAnnouncement>
+                {
+                    LabelPart(lbl),
+                    SelectedPart(() => toggle.isOn),
+                    DisabledPart(() => toggle.interactable),
+                },
+                SearchText = lbl,
+                OnActivate = () => { if (toggle.interactable && !toggle.isOn) toggle.isOn = true; },
+            };
+        }
+
+        /// <summary>A TMP dropdown as a combo box: "label, combo box, current option"; left/right step
+        /// through the options (the game applies each through onValueChanged), Enter cycles forward.</summary>
+        public static NodeVtable Dropdown(TMP_Dropdown dropdown, Func<string> label)
+        {
+            Func<string> current = () =>
+            {
+                var caption = dropdown.captionText;
+                if (caption != null && !string.IsNullOrEmpty(caption.text)) return caption.text;
+                var options = dropdown.options;
+                int v = dropdown.value;
+                return options != null && v >= 0 && v < options.Count ? options[v].text : null;
+            };
+            Action<int> step = sign =>
+            {
+                if (!dropdown.interactable) return;
+                var options = dropdown.options;
+                int count = options != null ? options.Count : 0;
+                if (count == 0) return;
+                int next = dropdown.value + sign;
+                if (next < 0 || next >= count) return; // at an end: the adjust feedback names the bound
+                dropdown.value = next;
+                dropdown.RefreshShownValue();
+            };
+            return new NodeVtable
+            {
+                ControlType = ControlTypes.ComboBox,
+                Announcements = new List<NodeAnnouncement>
+                {
+                    LabelPart(label),
+                    new NodeAnnouncement(current, live: true, kind: AnnouncementKinds.Value),
+                    DisabledPart(() => dropdown.interactable),
+                },
+                SearchText = label,
+                OnAdjust = (sign, large) => step(sign),
+                OnActivate = () =>
+                {
+                    if (!dropdown.interactable) return;
+                    var options = dropdown.options;
+                    int count = options != null ? options.Count : 0;
+                    if (count == 0) return;
+                    dropdown.value = (dropdown.value + 1) % count;
+                    dropdown.RefreshShownValue();
+                },
+                StateText = current,
+            };
+        }
+
+        /// <summary>The caption of a settings-style row: the TMP text named "Title" found by walking up
+        /// from the widget through its row (a NamePanel/Title beside a SelectionHolder). Null when none.</summary>
+        public static string RowLabel(Component widget, int levels = 4)
+        {
+            if (widget == null) return null;
+            Transform t = widget.transform.parent;
+            for (int i = 0; i < levels && t != null; i++, t = t.parent)
+            {
+                foreach (var tmp in t.GetComponentsInChildren<TMP_Text>(true))
+                {
+                    if (tmp == null || !string.Equals(tmp.gameObject.name, "Title", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (tmp.transform.IsChildOf(widget.transform)) continue; // the widget's own caption
+                    if (!string.IsNullOrWhiteSpace(tmp.text)) return tmp.text;
+                }
+            }
+            return null;
+        }
+
         /// <summary>The visible TMP text under a widget, or its object name when it has none.</summary>
         public static string LabelOf(Component widget)
         {
