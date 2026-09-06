@@ -78,13 +78,12 @@ namespace GuildrunAccess.Module.UI
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        /// <summary>An item slot as a control: "name, item"; Space reads its tooltip; Enter runs
-        /// <paramref name="activate"/> when given.</summary>
+        /// <summary>An item slot as a control: its name (no role word: the list's context already says
+        /// items); Space reads its tooltip; Enter runs <paramref name="activate"/> when given.</summary>
         public static NodeVtable Slot(PlaceholderSlotView slot, Action activate = null)
         {
             return new NodeVtable
             {
-                ControlType = ControlTypes.Item,
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => ItemName(slot) ?? Strings.RunItemSlotEmpty) },
                 SearchText = () => ItemName(slot),
                 OnActivate = activate,
@@ -101,12 +100,11 @@ namespace GuildrunAccess.Module.UI
             return string.IsNullOrWhiteSpace(name) ? relic.gameObject.name : name;
         }
 
-        /// <summary>A relic as a control: "name, item"; Space reads its tooltip.</summary>
+        /// <summary>A relic as a control: its name; Space reads its tooltip.</summary>
         public static NodeVtable Relic(RelicView relic, Action activate = null)
         {
             return new NodeVtable
             {
-                ControlType = ControlTypes.Item,
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => RelicName(relic)) },
                 SearchText = () => RelicName(relic),
                 OnActivate = activate,

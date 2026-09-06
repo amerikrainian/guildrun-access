@@ -135,12 +135,11 @@ namespace GuildrunAccess.Module.Screens
             b.PopContext();
         }
 
-        // An item or relic for sale: "name, cost X, item, description"; Enter buys, Space reads the tooltip.
+        // An item or relic for sale: "name, cost X, description"; Enter buys, Space reads the tooltip.
         private static NodeVtable Offer(ShopItemView item)
         {
             return new NodeVtable
             {
-                ControlType = ControlTypes.Item,
                 Announcements = new List<NodeAnnouncement>
                 {
                     GameNodes.LabelPart(() => item._itemNameText != null && !string.IsNullOrWhiteSpace(item._itemNameText.text)
