@@ -128,6 +128,21 @@ namespace GuildrunAccess.Module.Run
             }
         }
 
+        /// <summary>Any balancing entry's (hero, class, item, relic) localized name, or null.</summary>
+        public static string NameOf(Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase entry)
+        {
+            try
+            {
+                var named = entry != null ? entry.TryCast<INamedBalancingEntry>() : null;
+                return LocalizedName(named);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: entry name failed: " + e.Message);
+                return null;
+            }
+        }
+
         // A balancing entry's name through its localization key (the game's own localized string;
         // the English text when the key has none).
         private static string LocalizedName(INamedBalancingEntry named)
@@ -164,6 +179,31 @@ namespace GuildrunAccess.Module.Run
             catch (Exception e)
             {
                 CoreLog.Warning("RunData: item name failed: " + e.Message);
+                return null;
+            }
+        }
+
+        /// <summary>The active ability the unit's party card shows (the one drawn in the active-ability
+        /// frame; the first otherwise), or null.</summary>
+        public static string ActiveAbilityName(Ember.Scopes.Battle.Characters.CharacterViewController unit)
+        {
+            try
+            {
+                if (unit == null || !Nullables.TryGet(() => unit.HeroId, out HeroId id)) return null;
+                var view = ViewOf(id);
+                var abilities = view != null ? UI.HeroCardNodes.Abilities(view._abilitiesView) : null;
+                if (abilities == null || abilities.Count == 0) return null;
+                var pick = abilities[0];
+                foreach (var ability in abilities)
+                {
+                    var frame = ability._frameImage;
+                    if (frame != null && ability._activeAbilityFrame != null && frame.sprite == ability._activeAbilityFrame) { pick = ability; break; }
+                }
+                return UI.TooltipReader.Title(pick._tooltipRaycastTarget);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: active ability name failed: " + e.Message);
                 return null;
             }
         }

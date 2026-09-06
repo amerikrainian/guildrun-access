@@ -25,6 +25,9 @@ namespace GuildrunAccess.Module
     public sealed class ModuleMain : IModModule, IDevDriver
     {
         private IModHost _host;
+
+        /// <summary>The host of the live generation (settings, logging), for screens that need it.</summary>
+        public static IModHost Host { get; private set; }
         private Harmony _harmony;
         // Ambient readers: things the game shows without a focusable control (comics, tutorial text).
         // Owned per generation; they hold live references only and re-find them when destroyed.
@@ -34,6 +37,7 @@ namespace GuildrunAccess.Module
         public void Load(IModHost host)
         {
             _host = host;
+            Host = host;
 
             // Core seams: logging, speech, engine inputs, focus ownership, announcement wording.
             CoreLog.Info = host.LogInfo;
@@ -55,6 +59,9 @@ namespace GuildrunAccess.Module
 
             RegisterInput();
             RegisterScreens();
+            // The game-event hooks (the battle log). Patched by this load's Harmony id, unpatched in Dispose.
+            try { _harmony.PatchAll(typeof(ModuleMain).Assembly); }
+            catch (Exception e) { host.LogError("Harmony patching failed: " + e); }
 
             FocusMode.Set(host.Settings.FocusModeOnLaunch);
             host.LogInfo("Module loaded: " + ScreenManager.Registered.Count + " screens, "
@@ -103,6 +110,8 @@ namespace GuildrunAccess.Module
             // Global: always live, so the player can hand the keyboard back to the game and reclaim it.
             InputManager.Register("mod.focus", "Toggle navigation", InputCategory.Global, ToggleFocus)
                 .AddBinding(new KeyboardBinding(KeyCode.A, ctrl: true, shift: true));
+            InputManager.Register("mod.menu", "Mod menu", InputCategory.Global, ModMenuScreen.Toggle)
+                .AddBinding(new KeyboardBinding(KeyCode.M, ctrl: true, shift: true));
         }
 
         private static void ToggleFocus()
@@ -127,6 +136,9 @@ namespace GuildrunAccess.Module
             ScreenManager.Register(new HeroesPanelScreen());
             ScreenManager.Register(new RunEndScreen());
             ScreenManager.Register(new ProgressionScreen());
+            ScreenManager.Register(new ComicScreen());
+            ScreenManager.Register(new CompendiumScreen());
+            ScreenManager.Register(new ModMenuScreen());
             // Modal dialogs (layer 30, exclusive): the privacy consent that greets a fresh install, the
             // generic confirmation, the error box, and the exit / survey prompts.
             ScreenManager.Register(new DialogScreen<Ember.System.UI.GdprDialogPanel>("dialog.privacy", () => Strings.ScreenPrivacy));
@@ -145,6 +157,7 @@ namespace GuildrunAccess.Module
             Navigation.TickTypeahead();
             Safe(_comics.Tick, "comics");
             Safe(_tutorials.Tick, "tutorials");
+            Safe(Run.BattleEvents.Tick, "battle events");
         }
 
         // A reader that throws must not take the whole tick (and every other reader) down with it.
@@ -164,6 +177,7 @@ namespace GuildrunAccess.Module
             try { _harmony?.UnpatchSelf(); } catch (Exception e) { _host?.LogError("[dispose] harmony: " + e); }
             _harmony = null;
             _host = null;
+            if (ReferenceEquals(Host, this)) Host = null;
         }
 
         // ---- IDevDriver: the dev server drives and inspects our navigation through these ----

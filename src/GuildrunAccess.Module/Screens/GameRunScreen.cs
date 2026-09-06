@@ -6,6 +6,7 @@ using Ember.Scopes.Battle.Characters;
 using Ember.Scopes.Battle.UI;
 using Ember.Scopes.Battle.UI.BattleFlow;
 using Ember.Scopes.Battle.UI.Hud;
+using Ember.Scopes.Battle.UI.Sidebar;
 using Ember.Scopes.GameRun.GameRegistry.Data.Characters;
 using Ember.Scopes.GameRun.UI;
 using Ember.Scopes.GameRun.UI.BattleSpeed;
@@ -55,6 +56,7 @@ namespace GuildrunAccess.Module.Screens
         private readonly Finder<BattleTimerController> _timer = new Finder<BattleTimerController>();
         private readonly Finder<BattleSpeedController> _speed = new Finder<BattleSpeedController>();
         private readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
+        private readonly Finder<InformationSidebarController> _sidebar = new Finder<InformationSidebarController>();
 
         public override bool IsActive()
         {
@@ -72,6 +74,8 @@ namespace GuildrunAccess.Module.Screens
             BuildItems(b);
             BuildRelics(b);
             BuildInfo(b);
+            BuildSidebar(b);
+            BuildEvents(b);
             BuildSpeed(b);
             BuildMenu(b);
             b.PopContext();
@@ -109,6 +113,16 @@ namespace GuildrunAccess.Module.Screens
             var flow = _flow.Get();
             var placement = flow != null ? flow._placementParent : null;
             return placement != null && placement.activeInHierarchy && RunData.Board() != null;
+        }
+
+        private bool _wasPlacing;
+
+        public override void OnUpdate()
+        {
+            // The events belong to one fight: placement returning means the next one is being set up.
+            bool placing = Placing();
+            if (placing && !_wasPlacing && BattleEvents.Lines.Count > 0) BattleEvents.Clear();
+            _wasPlacing = placing;
         }
 
         private void BuildGrid(GraphBuilder b)
@@ -606,6 +620,33 @@ namespace GuildrunAccess.Module.Screens
             else
             {
                 b.EndRow();
+            }
+            b.PopContext();
+        }
+
+        // ---- the information sidebar: inspect cards, damage tracker, challenge ----
+
+        private void BuildSidebar(GraphBuilder b)
+        {
+            var sidebar = _sidebar.Get();
+            if (sidebar == null || !sidebar.gameObject.activeInHierarchy) return;
+            b.BeginStop("sidebar");
+            SidebarNodes.Add(b, sidebar, "run:sidebar");
+        }
+
+        // ---- battle events: what the HUD showed, newest first ----
+
+        private void BuildEvents(GraphBuilder b)
+        {
+            var lines = BattleEvents.Lines;
+            b.BeginStop("events");
+            b.PushContext(Strings.RunEvents, Strings.RoleList);
+            if (lines.Count == 0)
+                b.AddItem(ControlId.Structural("run:event:none"), GameNodes.Text(() => Strings.RunEventsEmpty));
+            for (int i = lines.Count - 1; i >= 0; i--)
+            {
+                var line = lines[i];
+                b.AddItem(ControlId.Structural("run:event:" + line.Sequence), GameNodes.Text(() => line.Text));
             }
             b.PopContext();
         }

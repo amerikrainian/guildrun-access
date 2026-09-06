@@ -63,18 +63,22 @@ namespace GuildrunAccess.Module.UI
 
         /// <summary>Health, mana, then every active stat panel named by its own tooltip title.</summary>
         public static string StatsLine(HeroCardView card)
+            => card == null ? null : StatsLine(card, card._healthText, card._manaText);
+
+        /// <summary>The same line over any view carrying health/mana captions and stat panels (a mini card's stats view).</summary>
+        public static string StatsLine(UnityEngine.Component root, TMPro.TMP_Text health, TMPro.TMP_Text mana)
         {
-            if (card == null) return null;
+            if (root == null) return null;
             var sb = new StringBuilder();
-            if (card._healthText != null && !string.IsNullOrWhiteSpace(card._healthText.text))
-                sb.Append(Strings.HeroStat(Strings.HeroHealth, card._healthText.text));
-            if (card._manaText != null && !string.IsNullOrWhiteSpace(card._manaText.text))
+            if (health != null && health.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(health.text))
+                sb.Append(Strings.HeroStat(Strings.HeroHealth, health.text));
+            if (mana != null && mana.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(mana.text))
             {
                 if (sb.Length > 0) sb.Append(", ");
-                sb.Append(Strings.HeroStat(Strings.HeroMana, card._manaText.text));
+                sb.Append(Strings.HeroStat(Strings.HeroMana, mana.text));
             }
             // Active panels only: the card keeps inactive template panels with placeholder values.
-            foreach (var stat in card.GetComponentsInChildren<StatView>(false))
+            foreach (var stat in root.GetComponentsInChildren<StatView>(false))
             {
                 if (stat == null || stat._statText == null || string.IsNullOrWhiteSpace(stat._statText.text)) continue;
                 string name = TooltipReader.Title(stat._tooltipRaycastTarget) ?? StatNameFromObject(stat.gameObject.name);
@@ -223,6 +227,14 @@ namespace GuildrunAccess.Module.UI
             }
         }
 
+        /// <summary>Press the card's own compendium button (the game opens the compendium on that hero).</summary>
+        public static void OpenCompendium(HeroCardView card)
+        {
+            var opener = card != null ? card.GetComponentInChildren<Ember.Scopes.Application.Compendium.OpenCompendiumButton>(false) : null;
+            var button = opener != null ? opener._button : null;
+            if (button != null && button.interactable) button.onClick.Invoke();
+        }
+
         // A grid cell: "caption, text" (untyped, so parts speak in declaration order) or a typed name
         // cell; Enter runs the column's action; Space speaks the tooltip text.
         private static NodeVtable Cell(HeroCardView card, Func<string> text, ControlType type,
@@ -237,6 +249,7 @@ namespace GuildrunAccess.Module.UI
                 Announcements = parts,
                 SearchText = () => NameAndClass(card),
                 OnActivate = activate,
+                OnSecondary = () => OpenCompendium(card),
                 OnTooltip = () =>
                 {
                     string t = tooltip != null ? tooltip() : null;

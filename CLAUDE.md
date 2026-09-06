@@ -146,7 +146,16 @@ control, Ctrl+Up/Down jump sections, typing letters searches the focused group.
    crossroads, events (campfire included), rank-up pickers, the Heroes panel, tooltips through the
    game's own tooltip pipeline. Reusable readers: `UI/HeroCardNodes`, `UI/ItemNodes`,
    `UI/LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `Run/RunData`.
-6. End screen and progression **(done)**. Open: live battle narration (deaths, casts), the sidebar
-   inspect card and damage tracker, the compendium, then the mod settings menu, key help,
-   announcement settings. Known gap: the run-lost panel's Proceed button ignores `onClick.Invoke()`
-   (see the interop-pitfalls memory); a real click is needed until the handler is found.
+6. **(done)** End screen, progression, the sidebar (inspect cards, damage tracker), battle events
+   (`Run/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties
+   bars, cast animations: a run-HUD stop plus narration; only what the game draws is reported: the
+   simulation's own `BattleLogger` is developer debug text and is NOT used), the compendium, the
+   mod menu (Ctrl+Shift+M: settings, key help), comics. Open: the shop's "sold" filter is a
+   canvas-group heuristic; Escape on the run HUD only cancels a pending move.
+
+## Click-only widgets
+Some game prompts poll the pointer through the game's own input service instead of listening to a
+widget event (the comics' click-anywhere, the run-over panel's Proceed): `onClick.Invoke()` does
+nothing there. `Input/SyntheticMouse` queues a mouse move/press/release into Unity's Input System
+(`InputSystem.QueueStateEvent<MouseState>`), which both uGUI and the game's service see as a real
+click, without moving the OS cursor. Use it only where the widget event is not what the game hears.

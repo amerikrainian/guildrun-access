@@ -50,7 +50,7 @@ namespace GuildrunAccess.Module.Screens
             if (heroes != null && heroes.gameObject.activeInHierarchy && heroes._heroCardShopItemViews != null)
                 foreach (var v in heroes._heroCardShopItemViews)
                 {
-                    if (v == null || !v.gameObject.activeInHierarchy || v._heroCardView == null) continue;
+                    if (v == null || !v.gameObject.activeInHierarchy || v._heroCardView == null || Sold(v)) continue;
                     views.Add(v);
                     cards.Add(v._heroCardView);
                 }
@@ -100,6 +100,14 @@ namespace GuildrunAccess.Module.Screens
             b.PopContext();
 
             b.PopContext();
+        }
+
+        // A bought card stays in the row faded and unclickable (its canvas group), with no price.
+        private static bool Sold(HeroCardShopItemView view)
+        {
+            var group = view._heroCardCanvasGroup;
+            if (group != null && (!group.interactable || group.alpha < 0.5f)) return true;
+            return HeroCardNodes.Price(view._heroCardView) == null;
         }
 
         private static string Caption(Button button, string fallback)

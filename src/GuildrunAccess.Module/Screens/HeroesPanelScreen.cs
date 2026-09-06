@@ -25,12 +25,17 @@ namespace GuildrunAccess.Module.Screens
         public override bool Exclusive => true;
 
         private readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
+        private readonly Finder<Ember.Scopes.Battle.UI.BattleFlow.BattleFlowUIStateController> _flow = new Finder<Ember.Scopes.Battle.UI.BattleFlow.BattleFlowUIStateController>();
 
+        // The HUD's own Heroes panel, not the summary form the result panel reuses.
         private HeroPanelView Panel()
         {
             var nav = _nav.Get();
             var panel = nav != null ? nav._heroPanelView : null;
-            return panel != null && panel.gameObject.activeInHierarchy ? panel : null;
+            if (panel == null || !panel.gameObject.activeInHierarchy || panel._isSummary) return null;
+            var flow = _flow.Get();
+            var result = flow != null ? flow._resultParent : null;
+            return result != null && result.activeInHierarchy ? null : panel;
         }
 
         public override bool IsActive() => Panel() != null;

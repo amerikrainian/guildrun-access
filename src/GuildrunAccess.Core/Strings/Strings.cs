@@ -201,6 +201,70 @@ namespace GuildrunAccess.Core.Strings
             D("heroes.counters", "counters"),
             D("heroes.close", "Close"),
             D("heroes.none", "no heroes"),
+
+            // Comics (click-anywhere panels) and the mod's own menu.
+            D("screen.comic", "Comic"),
+            D("comic.continue", "Continue"),
+            D("screen.mod_menu", "Guildrun Access"),
+            D("mod.settings", "Settings"),
+            D("mod.key_help", "Key help"),
+            D("mod.close", "Close"),
+            D("mod.speak_positions", "Speak list positions"),
+            D("mod.focus_on_launch", "Keyboard navigation on at launch"),
+            // {0} = the key category (Global, UI, Game).
+            D("mod.key_category", "{0} keys"),
+            D("bind.mod.menu", "Mod menu"),
+
+            // The run's sidebar and the fight narration.
+            D("run.sidebar", "sidebar"),
+            D("run.damage_tracker", "Damage tracker"),
+            D("run.challenge", "Challenge"),
+            // The battle HUD's events, as the game shows them (floating numbers, status icons, deaths, casts).
+            D("run.events", "battle events"),
+            D("run.events_empty", "no events yet"),
+            // {0} = the unit, {1} = the number shown.
+            D("battle.damage", "{0}: {1} damage"),
+            D("battle.crit", "{0}: {1} critical damage"),
+            D("battle.healed", "{0}: {1} healed"),
+            // {0} = the unit, {1} = the status, {2} = its stack count.
+            D("battle.status", "{0}: {1} {2}"),
+            D("battle.status_gone", "{0}: {1} gone"),
+            // {0} = the unit, {1} = the ability.
+            D("battle.cast", "{0} casts {1}"),
+            D("battle.ability", "ability"),
+            D("battle.defeated", "{0} defeated"),
+            D("status.burn", "Burn"),
+            D("status.frost", "Frost"),
+            D("status.poison", "Poison"),
+            D("status.stun", "Stun"),
+            D("status.bleed", "Bleed"),
+            D("status.cantattack", "Can't attack"),
+            D("status.cantmove", "Can't move"),
+            D("status.cantcast", "Can't cast"),
+            D("status.stealth", "Stealth"),
+            D("status.shield", "Shield"),
+            D("status.damageimmunity", "Damage immunity"),
+            D("status.statreduction", "Stat reduction"),
+            D("status.antiheal", "Anti-heal"),
+            D("status.selkherasstoning", "Stoning"),
+            // The compendium.
+            D("screen.compendium", "Compendium"),
+            D("compendium.sections", "sections"),
+            D("compendium.overview", "Overview"),
+            D("compendium.filters", "filters"),
+            // {0} = the search text.
+            D("compendium.search", "search: {0}"),
+            D("compendium.search_empty", "empty"),
+            D("compendium.class_filter", "class"),
+            D("compendium.clear_filter", "Clear class filter"),
+            D("compendium.heroes", "heroes"),
+            D("compendium.classes", "classes"),
+            D("compendium.ranks", "rank"),
+            // {0} = the rank tab's number when it has no caption.
+            D("compendium.rank_n", "rank {0}"),
+            D("compendium.upgrades", "rank upgrades"),
+            D("mod.narrate", "Narrate deaths and ability uses"),
+            D("mod.narrate_numbers", "Speak damage, healing and status numbers"),
             D("hero.items", "items"),
             D("hero.no_items", "no items"),
             // Item and hero actions from the keyboard (the game's drag and drop).
@@ -452,6 +516,49 @@ namespace GuildrunAccess.Core.Strings
         public static string HeroesCounters => Get("heroes.counters");
         public static string HeroesClose => Get("heroes.close");
         public static string HeroesNone => Get("heroes.none");
+        public static string ScreenComic => Get("screen.comic");
+        public static string ComicContinue => Get("comic.continue");
+        public static string ScreenModMenu => Get("screen.mod_menu");
+        public static string ModSettings => Get("mod.settings");
+        public static string ModKeyHelp => Get("mod.key_help");
+        public static string ModClose => Get("mod.close");
+        public static string ModSpeakPositions => Get("mod.speak_positions");
+        public static string ModFocusOnLaunch => Get("mod.focus_on_launch");
+        public static string ModKeyCategory(string category) => F("mod.key_category", category);
+        public static string RunSidebar => Get("run.sidebar");
+        public static string RunDamageTracker => Get("run.damage_tracker");
+        public static string RunChallenge => Get("run.challenge");
+        public static string RunEvents => Get("run.events");
+        public static string RunEventsEmpty => Get("run.events_empty");
+        public static string BattleDamage(string unit, int amount) => F("battle.damage", unit, amount);
+        public static string BattleCrit(string unit, int amount) => F("battle.crit", unit, amount);
+        public static string BattleHealed(string unit, int amount) => F("battle.healed", unit, amount);
+        public static string BattleStatus(string unit, string status, int stacks) => F("battle.status", unit, status, stacks);
+        public static string BattleStatusGone(string unit, string status) => F("battle.status_gone", unit, status);
+        public static string BattleCast(string unit, string ability) => F("battle.cast", unit, ability);
+        public static string BattleAbility => Get("battle.ability");
+        public static string BattleDefeated(string unit) => F("battle.defeated", unit);
+        /// <summary>A status icon's name from the game's status type name ("Poison"); the type name itself when unknown.</summary>
+        public static string Status(string typeName)
+        {
+            string key = "status." + (typeName ?? "").ToLowerInvariant();
+            return Has(key) ? Get(key) : typeName;
+        }
+        public static string ScreenCompendium => Get("screen.compendium");
+        public static string CompendiumSections => Get("compendium.sections");
+        public static string CompendiumOverview => Get("compendium.overview");
+        public static string CompendiumFilters => Get("compendium.filters");
+        public static string CompendiumSearch(string text) => F("compendium.search", text);
+        public static string CompendiumSearchEmpty => Get("compendium.search_empty");
+        public static string CompendiumClassFilter => Get("compendium.class_filter");
+        public static string CompendiumClearFilter => Get("compendium.clear_filter");
+        public static string CompendiumHeroes => Get("compendium.heroes");
+        public static string CompendiumClasses => Get("compendium.classes");
+        public static string CompendiumRanks => Get("compendium.ranks");
+        public static string CompendiumRank(int n) => F("compendium.rank_n", n);
+        public static string CompendiumUpgrades => Get("compendium.upgrades");
+        public static string ModNarrate => Get("mod.narrate");
+        public static string ModNarrateNumbers => Get("mod.narrate_numbers");
         public static string HeroItems => Get("hero.items");
         public static string HeroNoItems => Get("hero.no_items");
         public static string RunEquipTo(string item) => F("run.equip_to", item);

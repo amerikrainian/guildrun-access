@@ -5,10 +5,13 @@ using Ember.Scopes.Battle.UI.BattleResult;
 using Ember.Scopes.Battle.UI.BattleStats;
 using Ember.Scopes.Battle.UI.Tracking.Views;
 using Ember.Scopes.GameRun.UI.HeroCard;
+using Ember.Scopes.GameRun.UI.Slots;
+using Ember.Utilities.UI;
 using Ember.Scopes.MainMenu.UI;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
+using GuildrunAccess.Module.Input;
 using GuildrunAccess.Module.Run;
 using GuildrunAccess.Module.UI;
 using TMPro;
@@ -105,9 +108,39 @@ namespace GuildrunAccess.Module.Screens
             if (GameNodes.IsShown(stats._nextBattleButton))
                 b.AddItem(ControlId.Structural("result:nextbattle"), GameNodes.Button(stats._nextBattleButton, () => Strings.ResultNextCombat));
 
+            // The Tracker / Hero Stats switch.
+            var tabs = stats.GetComponentInChildren<TabView>(false);
+            if (tabs != null)
+                foreach (var toggle in tabs.GetComponentsInChildren<Toggle>(false))
+                {
+                    if (!GameNodes.IsShown(toggle)) continue;
+                    var t = toggle;
+                    b.AddItem(ControlId.Structural("result:tab:" + t.GetInstanceID()), GameNodes.Tab(t));
+                }
+
+            // Hero Stats: one card per hero (name, stats, items).
+            var cards = stats._heroCards;
+            if (cards != null)
+            {
+                int shown = 0;
+                foreach (var card in cards)
+                {
+                    if (card == null || !card.gameObject.activeInHierarchy) continue;
+                    if (shown++ == 0) b.PushContext(Strings.EndHeroes, Strings.RoleList);
+                    var c = card;
+                    b.AddItem(ControlId.Structural("result:card:" + c.GetInstanceID()), new NodeVtable
+                    {
+                        Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => MiniCardLine(c)) },
+                        SearchText = () => c._name != null ? c._name.text : null,
+                        OnTooltip = () => Core.Speech.Say(MiniCardTooltips(c) ?? Strings.NoTooltip, interrupt: true),
+                    });
+                }
+                if (shown > 0) b.PopContext();
+            }
+
             var summary = stats._damagerTrackerSummaryView;
             var heroes = summary != null ? summary._heroViews : null;
-            if (heroes != null)
+            if (heroes != null && summary.gameObject.activeInHierarchy)
             {
                 b.PushContext(Strings.ResultTracker, Strings.RoleList);
                 foreach (var hero in heroes)
@@ -162,6 +195,35 @@ namespace GuildrunAccess.Module.Screens
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
+        // "Kai: health 875, mana 105, Attack 25, ...; Hammer".
+        private static string MiniCardLine(MiniHeroCard card)
+        {
+            string name = card._name != null ? card._name.text : null;
+            var statsView = card._heroStatsView;
+            string stats = statsView != null ? HeroCardNodes.StatsLine(statsView, statsView._healthText, statsView._manaText) : null;
+            string items = ItemNodes.ItemNames(EquipmentSlots(card));
+            var sb = new StringBuilder(string.IsNullOrEmpty(name) ? Strings.RunParty : name);
+            if (!string.IsNullOrEmpty(stats)) sb.Append(": ").Append(stats);
+            if (!string.IsNullOrEmpty(items)) sb.Append("; ").Append(items);
+            return sb.ToString();
+        }
+
+        private static string MiniCardTooltips(MiniHeroCard card)
+        {
+            string items = ItemNodes.ItemTooltips(EquipmentSlots(card));
+            return items;
+        }
+
+        private static List<PlaceholderSlotView> EquipmentSlots(MiniHeroCard card)
+        {
+            var list = new List<PlaceholderSlotView>();
+            var equipment = card != null ? card._equipmentView : null;
+            var slots = equipment != null ? equipment._equipmentSlots : null;
+            if (slots == null) return list;
+            for (int i = 0; i < slots.Count; i++) list.Add(slots[i]);
+            return list;
+        }
+
         private static string HeroName(HeroBattleStatsView hero)
         {
             var portrait = hero != null ? hero._heroPortrait : null;
@@ -195,7 +257,11 @@ namespace GuildrunAccess.Module.Screens
             foreach (var button in OtherButtons(panel))
             {
                 if (added.Contains(button.GetInstanceID())) continue;
-                b.AddItem(ControlId.Structural("result:btn:" + button.GetInstanceID()), GameNodes.Button(button));
+                var btn = button;
+                // The run-over form's button listens to the game's own pointer polling, not to the
+                // widget's click event: send it the click a mouse would.
+                b.AddItem(ControlId.Structural("result:btn:" + button.GetInstanceID()),
+                    GameNodes.Button(() => GameNodes.LabelOf(btn), () => SyntheticMouse.Click(btn), () => btn.interactable));
             }
         }
 
@@ -237,7 +303,9 @@ namespace GuildrunAccess.Module.Screens
             {
                 var panel = Panel();
                 var button = panel != null ? ProceedLike(panel) : null;
-                if (button != null) button.onClick.Invoke();
+                if (button == null) return;
+                if (button == panel._proceedButton) button.onClick.Invoke();
+                else SyntheticMouse.Click(button);
             });
         }
     }
