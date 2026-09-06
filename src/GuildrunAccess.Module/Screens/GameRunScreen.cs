@@ -45,6 +45,9 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 0;
         public override bool AllowsTypeahead => true;
 
+        // The HUD has many stops and no natural end: Tab past the last one comes round to the first.
+        public GameRunScreen() { Wrap = true; }
+
         // The controllers, each re-found by scene scan (throttled) when absent.
         private readonly Finder<BottomHeroPanelUIController> _party = new Finder<BottomHeroPanelUIController>();
         private readonly Finder<BattleFlowUIStateController> _flow = new Finder<BattleFlowUIStateController>();
