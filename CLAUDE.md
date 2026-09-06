@@ -33,12 +33,37 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   flags analytics on tamper. Never write to `Obscured*` fields.
 
 ## Decompiled reference
-- `game/il2cppdump/dump.cs` — Il2CppDumper output (gitignored, regenerate with the command in
-  `game/README.md`): every type, field with offset, method with RVA. **Grep this before guessing a
-  shape** (`grep -n '^public class SettingsUIController ' game/il2cppdump/dump.cs`).
+- `game/il2cppdump/dump.cs` — Il2CppDumper output (gitignored; regenerate with
+  `uv run python tools/python/dump_game.py`): every type, field with offset, method with RVA.
+  **Look a shape up before guessing it**: `uv run python tools/python/show.py SettingsUIController`.
 - `game/il2cppdump/DummyDll/` — stub assemblies for ilspycmd browsing (signatures only, no bodies).
-- `game/analysis/types.tsv` — one row per type: typedef, assembly, namespace, kind, name (committed).
+- `game/analysis/types.tsv` — one row per type: typedef, assembly, namespace, kind, name (committed);
+  `game/analysis/version.json` — the Steam build id the dump was taken from.
 - For real behavior use the live game: `GET /gui` for structure, `POST /eval` for values (see Dev driver).
+
+## Tools (`tools/python/`, standard library only; run them with `uv run python tools/python/<tool>.py`)
+- `dump_game.py [--keep] [--check]` — after a game update: rerun Il2CppDumper (found in `--dumper`,
+  `IL2CPPDUMPER_DIR`, `tools/Il2CppDumper`, or `C:\tools\Il2CppDumper`), rebuild `types.tsv`, record
+  the build id; `--keep` parks the old dump as `game/il2cppdump.prev` for diffing, `--check` runs
+  `check_members.py`. Then launch the game once (the interop proxies regenerate) and `dotnet build`.
+- `check_members.py` — every game type and `_field` the module names that the current dump no longer
+  has, with the files that use them: the first pass at what an update renamed. The build against the
+  regenerated proxies is the final word; `show.py` / `holders.py` find where a member went.
+- `show.py Type [Type...] [--grep RE] [--all] [--raw]` — a type's fields (with offsets), properties,
+  methods and enum values, with its namespace and assembly. Nested names work (`HeroPanelView.TrackedStatDisplay`).
+- `holders.py Type [--game-only]` — who holds a field of that type (how to reach a service or view
+  from a scene scan) and which methods take it (what to hook for a notification or event).
+- `census.py [--report]` — rebuild `types.tsv`; `--report` is the obfuscation/name-quality census.
+- `dev.py <cmd>` — the dev server from the command line: `launch`, `kill`, `reload`, `nav`, `input
+  ui.down ui.activate`, `speech --tail 20`, `log --grep X`, `gui --grep RE --context 3`, `eval file.cs`,
+  `wait "<bool expr>"`, `typeinfo Name`, `actions`, `module`, `screenshot out.png`, `click [x y]`
+  (an OS click at Unity screen coordinates, the fallback for prompts the mod does not cover yet).
+- `run_driver.py [--until placement|result|shop|crossroads|event|picker|heroes|end] [--buy]` — plays
+  a run forward through the mod's own navigation and stops at the stage you want or at any screen it
+  does not know, so new game screens surface for inspection.
+
+Typical update loop: `dump_game.py --keep --check` -> fix what it lists (`show.py`, `holders.py`) ->
+`dev.py launch` (proxies regenerate) -> `dotnet build` -> `dev.py reload` -> `run_driver.py` through a run.
 
 ## Build & deploy
 ```

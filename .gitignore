@@ -8,3 +8,4 @@ obj/
 
 # Machine-specific build overrides
 Directory.Build.local.props
+game/il2cppdump.prev/
