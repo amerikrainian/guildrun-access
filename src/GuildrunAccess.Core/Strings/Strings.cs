@@ -151,6 +151,41 @@ namespace GuildrunAccess.Core.Strings
             D("run.rewards", "rewards"),
             D("run.proceed", "Proceed"),
             D("run.summary", "Summary"),
+            // Item and hero actions from the keyboard (the game's drag and drop).
+            // {0} = the item's name.
+            D("run.equip_to", "Equip {0} to"),
+            // {0} = the item, {1} = the hero.
+            D("run.equipped", "{0} equipped to {1}"),
+            D("run.equip_failed", "could not equip"),
+            // {0} = the hero's name.
+            D("run.hero_actions", "{0}"),
+            D("run.inspect", "Inspect"),
+            // {0} = the item's name.
+            D("run.unequip", "Unequip {0}"),
+            D("run.unequipped", "{0} unequipped"),
+            D("run.no_heroes", "no heroes to equip"),
+
+            // The shop between fights.
+            D("screen.shop", "Shop"),
+            D("shop.heroes", "heroes"),
+            D("shop.items", "items"),
+            D("shop.relics", "relics"),
+            D("shop.actions", "actions"),
+            // {0} = the price as the shop shows it.
+            D("shop.cost", "cost {0}"),
+            D("shop.reroll", "Reroll"),
+            D("shop.freeze", "Freeze"),
+            D("shop.threat", "threat level"),
+            D("shop.nothing", "nothing for sale"),
+
+            // The crossroads after a shop: the next paths.
+            D("screen.crossroads", "Crossroads"),
+            D("crossroads.paths", "paths"),
+
+            // A random event: story, choices, outcome.
+            D("screen.event", "Event"),
+            D("event.choices", "choices"),
+            D("event.outcome", "outcome"),
         };
 
         private static readonly Dictionary<string, string> _defaults = BuildDefaults();
@@ -303,5 +338,29 @@ namespace GuildrunAccess.Core.Strings
         public static string RunRewards => Get("run.rewards");
         public static string RunProceed => Get("run.proceed");
         public static string RunSummary => Get("run.summary");
+        public static string RunEquipTo(string item) => F("run.equip_to", item);
+        public static string RunEquipped(string item, string hero) => F("run.equipped", item, hero);
+        public static string RunEquipFailed => Get("run.equip_failed");
+        public static string RunHeroActions(string hero) => F("run.hero_actions", hero);
+        public static string RunInspect => Get("run.inspect");
+        public static string RunUnequip(string item) => F("run.unequip", item);
+        public static string RunUnequipped(string item) => F("run.unequipped", item);
+        public static string RunNoHeroes => Get("run.no_heroes");
+
+        public static string ScreenShop => Get("screen.shop");
+        public static string ShopHeroes => Get("shop.heroes");
+        public static string ShopItems => Get("shop.items");
+        public static string ShopRelics => Get("shop.relics");
+        public static string ShopActions => Get("shop.actions");
+        public static string ShopCost(string price) => F("shop.cost", price);
+        public static string ShopReroll => Get("shop.reroll");
+        public static string ShopFreeze => Get("shop.freeze");
+        public static string ShopThreat => Get("shop.threat");
+        public static string ShopNothing => Get("shop.nothing");
+        public static string ScreenCrossroads => Get("screen.crossroads");
+        public static string CrossroadsPaths => Get("crossroads.paths");
+        public static string ScreenEvent => Get("screen.event");
+        public static string EventChoices => Get("event.choices");
+        public static string EventOutcome => Get("event.outcome");
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Ember.Balancing.SimulationBridge;
 using Ember.Scopes.Battle.Characters;
 using Ember.Scopes.Battle.UI;
 using Ember.Scopes.Battle.UI.BattleFlow;
@@ -15,6 +16,8 @@ using Ember.Scopes.GameRun.UI.Slots;
 using Ember.Scopes.GameRun.UI.Slots.Equipment;
 using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
 using GuildrunAccess.Core.Graph;
+using GuildrunAccess.Core.Screens;
+using GuildrunAccess.Module.Run;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
@@ -155,21 +158,8 @@ namespace GuildrunAccess.Module.Screens
             return Strings.RunMana(((int)slider.value).ToString(), ((int)slider.maxValue).ToString());
         }
 
-        // The unit's equipped items, by their tooltip titles.
-        private static string ItemsOn(HealthBarView bar)
-        {
-            var slots = bar._itemSlotViews;
-            if (slots == null) return null;
-            var sb = new StringBuilder();
-            foreach (var slot in slots)
-            {
-                string name = ItemName(slot);
-                if (name == null) continue;
-                if (sb.Length > 0) sb.Append(", ");
-                sb.Append(name);
-            }
-            return sb.Length > 0 ? sb.ToString() : null;
-        }
+        // The unit's equipped items, by name.
+        private static string ItemsOn(HealthBarView bar) => ItemNodes.ItemNames(bar._itemSlotViews);
 
         // ---- the party: active and reserve slots ----
 
@@ -203,68 +193,85 @@ namespace GuildrunAccess.Module.Screens
                         new NodeAnnouncement(() => view.IsEmpty ? Strings.RunSlotEmpty : SlotSummary(view), live: true, kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => SlotSummary(view),
-                    OnActivate = () => ClickPortrait(view),
+                    OnActivate = () => OpenHeroMenu(view),
                     OnTooltip = () => Core.Speech.Say(SlotTooltips(view) ?? Strings.NoTooltip, interrupt: true),
                 });
             }
             b.PopContext();
         }
 
-        // The hero occupying a slot, described by its ability names and equipped items.
+        // The hero occupying a slot: its name, then its ability names and equipped items.
         private static string SlotSummary(BottomHeroView view)
         {
-            var sb = new StringBuilder();
-            foreach (var a in AbilitiesOf(view))
-            {
-                var head = TooltipReader.Heading(a._tooltipRaycastTarget);
-                if (string.IsNullOrEmpty(head)) continue;
-                if (sb.Length > 0) sb.Append("; ");
-                sb.Append(head);
-            }
-            var slots = view._itemSlotViews;
-            if (slots != null)
-                foreach (var slot in slots)
-                {
-                    string name = ItemName(slot);
-                    if (name == null) continue;
-                    if (sb.Length > 0) sb.Append("; ");
-                    sb.Append(name);
-                }
-            return sb.Length > 0 ? sb.ToString() : Strings.HeroNoAbilities;
+            string abilities = HeroCardNodes.AbilitiesLine(view._abilitiesView);
+            string items = ItemNodes.ItemNames(view._itemSlotViews);
+            string body = items == null ? abilities : abilities + "; " + items;
+            string name = RunData.HeroName(view);
+            return string.IsNullOrEmpty(name) ? body : name + ": " + body;
         }
 
-        private static List<HeroCardAbilityView> AbilitiesOf(BottomHeroView view)
+        // Enter on a hero: a menu of what the mouse would do with it: inspect its card, unequip one of
+        // its items (back to the reserve).
+        private static void OpenHeroMenu(BottomHeroView view)
         {
-            var list = new List<HeroCardAbilityView>();
-            var abilities = view._abilitiesView;
-            if (abilities == null) return list;
-            foreach (var a in abilities.GetComponentsInChildren<HeroCardAbilityView>(true))
-                if (a != null && a._tooltipRaycastTarget != null && a._tooltipRaycastTarget.TooltipSource != null && a._tooltipRaycastTarget.IsActive)
-                    list.Add(a);
-            return list;
+            if (view == null || view.IsEmpty) { ClickPortrait(view); return; }
+            string heroName = RunData.HeroName(view) ?? Strings.RunParty;
+            var options = new List<ChoiceOption> { new ChoiceOption(Strings.RunInspect, () => ClickPortrait(view)) };
+            if (RunData.TryHeroId(view, out var heroId) && view._itemSlotViews != null)
+            {
+                foreach (var slot in view._itemSlotViews)
+                {
+                    if (!RunData.TryItemId(slot, out var itemId)) continue;
+                    string itemName = ItemNodes.ItemName(slot) ?? Strings.RunItems;
+                    var id = itemId;
+                    options.Add(new ChoiceOption(Strings.RunUnequip(itemName), () =>
+                    {
+                        if (RunData.Unequip(heroId, id)) Core.Speech.Say(Strings.RunUnequipped(itemName), interrupt: true);
+                    }));
+                }
+            }
+            ChoiceSubmenuScreen.Open(Strings.RunHeroActions(heroName), options);
+        }
+
+        // Enter on a reserve item: pick the hero to equip it to (what dragging it onto a hero does).
+        private void OpenEquipMenu(PlaceholderSlotView slot)
+        {
+            if (!RunData.TryItemId(slot, out var itemId)) return;
+            string itemName = ItemNodes.ItemName(slot) ?? Strings.RunItems;
+            var options = new List<ChoiceOption>();
+            var party = _party.Get();
+            if (party != null)
+            {
+                AddEquipTargets(options, party._activeHeroPanel, itemId, itemName);
+                AddEquipTargets(options, party._reserveHeroPanel, itemId, itemName);
+            }
+            if (options.Count == 0) { Core.Speech.Say(Strings.RunNoHeroes, interrupt: true); return; }
+            ChoiceSubmenuScreen.Open(Strings.RunEquipTo(itemName), options);
+        }
+
+        private static void AddEquipTargets(List<ChoiceOption> options, BottomHeroPanelView panel, ItemId itemId, string itemName)
+        {
+            if (panel == null || !panel.gameObject.activeInHierarchy || panel.HeroViews == null) return;
+            foreach (var view in panel.HeroViews)
+            {
+                if (view == null || !view.gameObject.activeInHierarchy || view.IsEmpty) continue;
+                if (!RunData.TryHeroId(view, out var heroId)) continue;
+                string heroName = RunData.HeroName(view) ?? Strings.RunParty;
+                string items = ItemNodes.ItemNames(view._itemSlotViews);
+                var id = heroId;
+                options.Add(new ChoiceOption(heroName, () =>
+                {
+                    Core.Speech.Say(RunData.Equip(id, itemId) ? Strings.RunEquipped(itemName, heroName) : Strings.RunEquipFailed, interrupt: true);
+                }, items));
+            }
         }
 
         private static string SlotTooltips(BottomHeroView view)
         {
-            var sb = new StringBuilder();
-            foreach (var a in AbilitiesOf(view))
-            {
-                var text = TooltipReader.Describe(a._tooltipRaycastTarget);
-                if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(text);
-            }
-            var slots = view._itemSlotViews;
-            if (slots != null)
-                foreach (var slot in slots)
-                {
-                    if (!HasItem(slot)) continue;
-                    var text = TooltipReader.Describe(slot._tooltipRaycastTarget);
-                    if (string.IsNullOrEmpty(text)) continue;
-                    if (sb.Length > 0) sb.Append(". ");
-                    sb.Append(text);
-                }
-            return sb.Length > 0 ? sb.ToString() : null;
+            string abilities = HeroCardNodes.AbilitiesTooltips(view._abilitiesView);
+            string items = ItemNodes.ItemTooltips(view._itemSlotViews);
+            if (abilities == null) return items;
+            return items == null ? abilities : abilities + ". " + items;
         }
 
         // The portrait button opens the hero's card in the sidebar (the game's own inspect action).
@@ -276,17 +283,6 @@ namespace GuildrunAccess.Module.Screens
 
         // ---- items: the reserve column ----
 
-        private static bool HasItem(PlaceholderSlotView slot)
-            => slot != null && slot.gameObject.activeInHierarchy && slot._activeSlotParent != null && slot._activeSlotParent.activeSelf;
-
-        private static string ItemName(PlaceholderSlotView slot)
-        {
-            if (!HasItem(slot)) return null;
-            string name = slot._activeNameText != null ? slot._activeNameText.text : null;
-            if (string.IsNullOrWhiteSpace(name)) name = TooltipReader.Title(slot._tooltipRaycastTarget);
-            return string.IsNullOrWhiteSpace(name) ? null : name;
-        }
-
         private void BuildItems(GraphBuilder b)
         {
             var reserve = _reserve.Get();
@@ -296,16 +292,10 @@ namespace GuildrunAccess.Module.Screens
             int n = 0;
             foreach (var slot in reserve.GetComponentsInChildren<PlaceholderSlotView>(false))
             {
-                if (!HasItem(slot)) continue;
+                if (!ItemNodes.HasItem(slot)) continue;
                 n++;
                 var s = slot;
-                b.AddItem(ControlId.Structural("run:item:" + s.GetInstanceID()), new NodeVtable
-                {
-                    ControlType = ControlTypes.Item,
-                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => ItemName(s) ?? Strings.RunItemSlotEmpty) },
-                    SearchText = () => ItemName(s),
-                    OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(s._tooltipRaycastTarget) ?? Strings.NoTooltip, interrupt: true),
-                });
+                b.AddItem(ControlId.Structural("run:item:" + slot.GetInstanceID()), ItemNodes.Slot(slot, () => OpenEquipMenu(s)));
             }
             if (n == 0) b.AddItem(ControlId.Structural("run:item:none"), GameNodes.Text(() => Strings.RunNoItems));
             b.PopContext();
@@ -324,24 +314,10 @@ namespace GuildrunAccess.Module.Screens
             {
                 if (relic == null || !relic.gameObject.activeInHierarchy) continue;
                 n++;
-                var r = relic;
-                b.AddItem(ControlId.Structural("run:relic:" + r.GetInstanceID()), new NodeVtable
-                {
-                    ControlType = ControlTypes.Item,
-                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => RelicName(r)) },
-                    SearchText = () => RelicName(r),
-                    OnTooltip = () => Core.Speech.Say(TooltipReader.Describe(r._tooltipRaycastTarget) ?? Strings.NoTooltip, interrupt: true),
-                });
+                b.AddItem(ControlId.Structural("run:relic:" + relic.GetInstanceID()), ItemNodes.Relic(relic));
             }
             if (n == 0) b.AddItem(ControlId.Structural("run:relic:none"), GameNodes.Text(() => Strings.RunNoRelics));
             b.PopContext();
-        }
-
-        private static string RelicName(RelicView r)
-        {
-            string name = r._nameText != null ? r._nameText.text : null;
-            if (string.IsNullOrWhiteSpace(name)) name = TooltipReader.Title(r._tooltipRaycastTarget);
-            return string.IsNullOrWhiteSpace(name) ? r.gameObject.name : name;
         }
 
         // ---- info: gold, shards, difficulty, timer, the act map ----

@@ -57,18 +57,17 @@ namespace GuildrunAccess.Module.UI
             Append(sb, view._titleText != null ? view._titleText.text : null);
             Append(sb, view._subtitleText != null ? view._subtitleText.text : null);
 
+            // The view itself activates the sections its mode shows (summary or details) and leaves the
+            // others inactive; that flag is the filter. (The section tuple's mode field does not read
+            // back reliably through the interop value tuple.)
+            view.SetDetailsMode(details);
             var sections = view._sections;
             if (sections != null)
             {
                 for (int i = 0; i < sections.Count; i++)
                 {
-                    var section = sections[i];
-                    var go = section.Item1;
-                    var mode = section.Item2;
-                    if (go == null) continue;
-                    bool shown = mode == TooltipSectionVisibilityMode.Always
-                        || (details ? mode == TooltipSectionVisibilityMode.Details : mode == TooltipSectionVisibilityMode.Summary);
-                    if (!shown) continue;
+                    var go = sections[i].Item1;
+                    if (go == null || !go.activeSelf) continue;
                     foreach (var tmp in go.GetComponentsInChildren<TMP_Text>(true))
                         if (tmp != null) Append(sb, tmp.text);
                 }
