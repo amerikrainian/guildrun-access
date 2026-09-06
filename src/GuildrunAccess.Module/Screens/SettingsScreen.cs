@@ -22,7 +22,7 @@ namespace GuildrunAccess.Module.Screens
     public sealed class SettingsScreen : Screen
     {
         public override string Key => "settings";
-        public override int Layer => 10;
+        public override int Layer => 27; // above the run's pause menu, which opens it
         public override bool Exclusive => true;
         public override object InitialFocusStop => "body";
 
