@@ -94,6 +94,63 @@ namespace GuildrunAccess.Core.Strings
             D("screen.survey", "Survey"),
             // The role word for a modal dialog context.
             D("role.dialog", "dialog"),
+
+            // The hero picker at the start of a run and the hero card readouts.
+            D("screen.choose_hero", "Choose hero"),
+            // Row captions of the hero grid (spoken before the value when the row changes).
+            D("hero.stats", "stats"),
+            D("hero.abilities", "abilities"),
+            D("hero.relic", "relic"),
+            // {0} = a stat value, {1} = the stat name as the game labels it.
+            D("hero.stat", "{1} {0}"),
+            D("hero.health", "health"),
+            D("hero.mana", "mana"),
+            D("hero.no_relic", "no relic"),
+            D("hero.no_abilities", "no abilities"),
+            D("hero.reroll", "Reroll"),
+
+            // The run screen (the battlefield HUD between and during fights) and its sections.
+            D("screen.run", "Run"),
+            D("run.actions", "actions"),
+            D("run.board", "battlefield"),
+            D("run.party", "party"),
+            D("run.reserve", "reserve"),
+            D("run.items", "items"),
+            D("run.relics", "relics"),
+            D("run.info", "info"),
+            D("run.speed", "battle speed"),
+            D("run.menu", "menu"),
+            // {0} = unit name, {1} = health text, spoken for a unit on the board.
+            D("run.unit_hero", "{0}, hero, {1} health"),
+            D("run.unit_enemy", "{0}, enemy, {1} health"),
+            // {0} = current mana, {1} = max mana.
+            D("run.mana", "mana {0} of {1}"),
+            D("run.no_units", "no units on the board"),
+            // {0} = slot number (1-based).
+            D("run.party_slot", "party slot {0}"),
+            D("run.reserve_slot", "reserve slot {0}"),
+            D("run.slot_empty", "empty"),
+            D("run.item_slot_empty", "empty item slot"),
+            D("run.no_items", "no items in reserve"),
+            D("run.no_relics", "no relics"),
+            D("run.gold", "gold"),
+            D("run.shards", "shards"),
+            D("run.difficulty", "difficulty"),
+            D("run.timer", "timer"),
+            D("run.map", "map"),
+            D("run.map_current", "current"),
+            D("run.speed_auto", "auto"),
+            // {0} = the speed step number.
+            D("run.speed_n", "speed {0}"),
+            D("run.hero_panel", "Heroes"),
+            D("run.settings", "Settings"),
+            D("run.feedback", "Feedback"),
+            D("run.fight", "Fight"),
+            D("run.battle_started", "battle started"),
+            D("screen.battle_result", "Battle result"),
+            D("run.rewards", "rewards"),
+            D("run.proceed", "Proceed"),
+            D("run.summary", "Summary"),
         };
 
         private static readonly Dictionary<string, string> _defaults = BuildDefaults();
@@ -198,5 +255,53 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenExit => Get("screen.exit");
         public static string ScreenSurvey => Get("screen.survey");
         public static string RoleDialog => Get("role.dialog");
+
+        public static string ScreenChooseHero => Get("screen.choose_hero");
+        public static string HeroStats => Get("hero.stats");
+        public static string HeroAbilities => Get("hero.abilities");
+        public static string HeroRelic => Get("hero.relic");
+        public static string HeroStat(string name, string value) => F("hero.stat", value, name);
+        public static string HeroHealth => Get("hero.health");
+        public static string HeroMana => Get("hero.mana");
+        public static string HeroNoRelic => Get("hero.no_relic");
+        public static string HeroNoAbilities => Get("hero.no_abilities");
+        public static string HeroReroll => Get("hero.reroll");
+
+        public static string ScreenRun => Get("screen.run");
+        public static string RunActions => Get("run.actions");
+        public static string RunBoard => Get("run.board");
+        public static string RunParty => Get("run.party");
+        public static string RunReserve => Get("run.reserve");
+        public static string RunItems => Get("run.items");
+        public static string RunRelics => Get("run.relics");
+        public static string RunInfo => Get("run.info");
+        public static string RunSpeed => Get("run.speed");
+        public static string RunMenu => Get("run.menu");
+        public static string RunUnit(bool hero, string name, string health) => F(hero ? "run.unit_hero" : "run.unit_enemy", name, health);
+        public static string RunMana(string current, string max) => F("run.mana", current, max);
+        public static string RunNoUnits => Get("run.no_units");
+        public static string RunPartySlot(int index) => F("run.party_slot", index);
+        public static string RunReserveSlot(int index) => F("run.reserve_slot", index);
+        public static string RunSlotEmpty => Get("run.slot_empty");
+        public static string RunItemSlotEmpty => Get("run.item_slot_empty");
+        public static string RunNoItems => Get("run.no_items");
+        public static string RunNoRelics => Get("run.no_relics");
+        public static string RunGold => Get("run.gold");
+        public static string RunShards => Get("run.shards");
+        public static string RunDifficulty => Get("run.difficulty");
+        public static string RunTimer => Get("run.timer");
+        public static string RunMap => Get("run.map");
+        public static string RunMapCurrent => Get("run.map_current");
+        public static string RunSpeedAuto => Get("run.speed_auto");
+        public static string RunSpeedN(int n) => F("run.speed_n", n);
+        public static string RunHeroPanel => Get("run.hero_panel");
+        public static string RunSettings => Get("run.settings");
+        public static string RunFeedback => Get("run.feedback");
+        public static string RunFight => Get("run.fight");
+        public static string RunBattleStarted => Get("run.battle_started");
+        public static string ScreenBattleResult => Get("screen.battle_result");
+        public static string RunRewards => Get("run.rewards");
+        public static string RunProceed => Get("run.proceed");
+        public static string RunSummary => Get("run.summary");
     }
 }

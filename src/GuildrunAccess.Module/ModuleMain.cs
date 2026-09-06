@@ -26,6 +26,10 @@ namespace GuildrunAccess.Module
     {
         private IModHost _host;
         private Harmony _harmony;
+        // Ambient readers: things the game shows without a focusable control (comics, tutorial text).
+        // Owned per generation; they hold live references only and re-find them when destroyed.
+        private readonly Readers.ComicReader _comics = new Readers.ComicReader();
+        private readonly Readers.TutorialReader _tutorials = new Readers.TutorialReader();
 
         public void Load(IModHost host)
         {
@@ -112,6 +116,9 @@ namespace GuildrunAccess.Module
         {
             ScreenManager.Register(new MainMenuScreen());
             ScreenManager.Register(new SettingsScreen());
+            ScreenManager.Register(new HeroPickerScreen());
+            ScreenManager.Register(new GameRunScreen());
+            ScreenManager.Register(new BattleResultScreen());
             // Modal dialogs (layer 30, exclusive): the privacy consent that greets a fresh install, the
             // generic confirmation, the error box, and the exit / survey prompts.
             ScreenManager.Register(new DialogScreen<Ember.System.UI.GdprDialogPanel>("dialog.privacy", () => Strings.ScreenPrivacy));
@@ -128,6 +135,15 @@ namespace GuildrunAccess.Module
             InputManager.Tick();
             ScreenManager.Tick();
             Navigation.TickTypeahead();
+            Safe(_comics.Tick, "comics");
+            Safe(_tutorials.Tick, "tutorials");
+        }
+
+        // A reader that throws must not take the whole tick (and every other reader) down with it.
+        private void Safe(Action tick, string what)
+        {
+            try { tick(); }
+            catch (Exception e) { _host?.LogWarning("[" + what + "] " + e); }
         }
 
         /// <summary>Undo every persistent game-side effect Load created. Runs on reload (after the new
