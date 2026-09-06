@@ -164,6 +164,24 @@ namespace GuildrunAccess.Core.Strings
             D("run.unequip", "Unequip {0}"),
             D("run.unequipped", "{0} unequipped"),
             D("run.no_heroes", "no heroes to equip"),
+            // The placement grid: rows counted from the player's back line; the enemy rows beyond.
+            D("run.grid", "board"),
+            D("run.cell_empty", "empty"),
+            // {0} = column number, {1} = row number.
+            D("run.cell_pos", "column {0}, row {1}"),
+            // {0} = column number, {1} = enemy row number.
+            D("run.cell_pos_enemy", "column {0}, enemy row {1}"),
+            D("run.move", "Move"),
+            D("run.to_reserve", "Move to reserve"),
+            D("run.to_board", "Place on board"),
+            // {0} = the hero's name.
+            D("run.picked_up", "{0} picked up. Choose a cell on the board and press Enter"),
+            // {0} = the hero, {1} = the cell.
+            D("run.moved", "{0} moved to {1}"),
+            D("run.move_cancelled", "move cancelled"),
+            D("run.move_invalid", "not a cell your heroes can stand on"),
+            D("run.move_failed", "could not move"),
+            D("run.reserve_full", "the reserve is full"),
 
             // The shop between fights.
             D("screen.shop", "Shop"),
@@ -346,6 +364,19 @@ namespace GuildrunAccess.Core.Strings
         public static string RunUnequip(string item) => F("run.unequip", item);
         public static string RunUnequipped(string item) => F("run.unequipped", item);
         public static string RunNoHeroes => Get("run.no_heroes");
+        public static string RunGrid => Get("run.grid");
+        public static string RunCellEmpty => Get("run.cell_empty");
+        public static string RunCellPos(int column, int row) => F("run.cell_pos", column, row);
+        public static string RunCellPosEnemy(int column, int row) => F("run.cell_pos_enemy", column, row);
+        public static string RunMove => Get("run.move");
+        public static string RunToReserve => Get("run.to_reserve");
+        public static string RunToBoard => Get("run.to_board");
+        public static string RunPickedUp(string hero) => F("run.picked_up", hero);
+        public static string RunMoved(string hero, string cell) => F("run.moved", hero, cell);
+        public static string RunMoveCancelled => Get("run.move_cancelled");
+        public static string RunMoveInvalid => Get("run.move_invalid");
+        public static string RunMoveFailed => Get("run.move_failed");
+        public static string RunReserveFull => Get("run.reserve_full");
 
         public static string ScreenShop => Get("screen.shop");
         public static string ShopHeroes => Get("shop.heroes");

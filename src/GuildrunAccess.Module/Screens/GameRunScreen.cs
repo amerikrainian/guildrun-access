@@ -6,6 +6,7 @@ using Ember.Scopes.Battle.Characters;
 using Ember.Scopes.Battle.UI;
 using Ember.Scopes.Battle.UI.BattleFlow;
 using Ember.Scopes.Battle.UI.Hud;
+using Ember.Scopes.GameRun.GameRegistry.Data.Characters;
 using Ember.Scopes.GameRun.UI;
 using Ember.Scopes.GameRun.UI.BattleSpeed;
 using Ember.Scopes.GameRun.UI.ChunkUI;
@@ -65,7 +66,8 @@ namespace GuildrunAccess.Module.Screens
         {
             b.PushContext(Strings.ScreenRun, null, positions: false);
             BuildActions(b);
-            BuildBoard(b);
+            if (Placing()) BuildGrid(b);
+            else BuildBoard(b);
             BuildParty(b);
             BuildItems(b);
             BuildRelics(b);
@@ -90,6 +92,135 @@ namespace GuildrunAccess.Module.Screens
                 b.AddItem(ControlId.Structural("run:action:" + button.gameObject.name + button.GetInstanceID()),
                     GameNodes.Button(btn));
             }
+        }
+
+        // ---- the placement grid (before a fight): every cell, enemy rows first ----
+
+        // A pending keyboard "drag": the hero picked up from a board cell or a reserve slot, dropped by
+        // Enter on a board cell.
+        private enum MoveSource { None, Board, Reserve }
+        private MoveSource _moveSource = MoveSource.None;
+        private Vector2Int _moveFrom;
+        private int _moveReserveIndex = -1;
+        private string _moveHero;
+
+        private bool Placing()
+        {
+            var flow = _flow.Get();
+            var placement = flow != null ? flow._placementParent : null;
+            return placement != null && placement.activeInHierarchy && RunData.Board() != null;
+        }
+
+        private void BuildGrid(GraphBuilder b)
+        {
+            var board = RunData.Board();
+            if (board == null) return;
+            int w, h;
+            try { w = board.BoardWidth; h = board.BoardHeight; }
+            catch (Exception) { return; }
+            b.BeginStop("board");
+            b.PushContext(Strings.RunGrid, null, positions: false);
+            for (int y = h - 1; y >= 0; y--)
+            {
+                b.StartRow("grid");
+                for (int x = 0; x < w; x++)
+                    b.AddItem(ControlId.Structural("run:cell:" + x + ":" + y), CellNode(new Vector2Int(x, y)));
+                b.EndRow();
+            }
+            b.PopContext();
+        }
+
+        // "Kai, column 4, row 1" / "Mushroom Tank, column 3, enemy row 2" / "empty, column 1, row 3".
+        private NodeVtable CellNode(Vector2Int cell)
+        {
+            return new NodeVtable
+            {
+                Announcements = new List<NodeAnnouncement>
+                {
+                    new NodeAnnouncement(() => Occupant(cell) ?? Strings.RunCellEmpty, kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(() => CellName(cell), kind: AnnouncementKinds.Value),
+                },
+                SearchText = () => Occupant(cell),
+                OnActivate = () => ActivateCell(cell),
+                OnTooltip = () =>
+                {
+                    var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null;
+                    Core.Speech.Say((view != null ? SlotTooltips(view) : null) ?? Strings.NoTooltip, interrupt: true);
+                },
+            };
+        }
+
+        private static string Occupant(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var hero)) return RunData.HeroName(hero) ?? Strings.RunParty;
+            if (RunData.TryEnemyAt(cell, out var enemy)) return RunData.EnemyName(enemy) ?? Strings.RunBoard;
+            return null;
+        }
+
+        // Rows count from the player's back line; the enemy side counts its own rows from the front.
+        private static string CellName(Vector2Int cell)
+        {
+            if (RunData.IsPlayerCell(cell)) return Strings.RunCellPos(cell.x + 1, cell.y + 1);
+            int playerRows = 0;
+            for (int y = 0; y < cell.y; y++) if (RunData.IsPlayerCell(new Vector2Int(cell.x, y))) playerRows++;
+            return Strings.RunCellPosEnemy(cell.x + 1, cell.y - playerRows + 1);
+        }
+
+        // Enter on a cell: drop a picked-up hero here, else open the hero's menu, else nothing to do.
+        private void ActivateCell(Vector2Int cell)
+        {
+            if (_moveSource != MoveSource.None) { Drop(cell); return; }
+            if (RunData.TryHeroAt(cell, out var id))
+            {
+                var view = RunData.ViewOf(id);
+                OpenHeroMenu(view, id, cell, reserve: false);
+                return;
+            }
+            Core.Speech.Say(Strings.RunCellEmpty, interrupt: true);
+        }
+
+        private void PickUpFromBoard(string hero, Vector2Int cell)
+        {
+            _moveSource = MoveSource.Board;
+            _moveFrom = cell;
+            _moveHero = hero;
+            Core.Speech.Say(Strings.RunPickedUp(hero), interrupt: true);
+        }
+
+        private void PickUpFromReserve(string hero, int reserveIndex)
+        {
+            _moveSource = MoveSource.Reserve;
+            _moveReserveIndex = reserveIndex;
+            _moveHero = hero;
+            Core.Speech.Say(Strings.RunPickedUp(hero), interrupt: true);
+        }
+
+        private void Drop(Vector2Int cell)
+        {
+            if (!RunData.IsPlayerCell(cell)) { Core.Speech.Say(Strings.RunMoveInvalid, interrupt: true); return; }
+            bool ok = _moveSource == MoveSource.Board
+                ? RunData.SwapBoard(_moveFrom, cell)
+                : RunData.SwapReserveAndBoard(_moveReserveIndex, cell);
+            string hero = _moveHero;
+            CancelMove(silent: true);
+            Core.Speech.Say(ok ? Strings.RunMoved(hero, CellName(cell)) : Strings.RunMoveFailed, interrupt: true);
+        }
+
+        private void CancelMove(bool silent = false)
+        {
+            bool had = _moveSource != MoveSource.None;
+            _moveSource = MoveSource.None;
+            _moveReserveIndex = -1;
+            _moveHero = null;
+            if (had && !silent) Core.Speech.Say(Strings.RunMoveCancelled, interrupt: true);
+        }
+
+        public override void OnPop() => CancelMove(silent: true);
+
+        public override IEnumerable<ElementAction> GetActions()
+        {
+            // Escape: cancel a pending move.
+            yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ => CancelMove());
         }
 
         // ---- the battlefield: units with health bars, heroes first ----
@@ -172,7 +303,7 @@ namespace GuildrunAccess.Module.Screens
             AddHeroPanel(b, party._reserveHeroPanel, Strings.RunReserve, "reserve", true);
         }
 
-        private static void AddHeroPanel(GraphBuilder b, BottomHeroPanelView panel, string label, string key, bool reserve)
+        private void AddHeroPanel(GraphBuilder b, BottomHeroPanelView panel, string label, string key, bool reserve)
         {
             if (panel == null || !panel.gameObject.activeInHierarchy) return;
             var views = panel.HeroViews;
@@ -193,7 +324,7 @@ namespace GuildrunAccess.Module.Screens
                         new NodeAnnouncement(() => view.IsEmpty ? Strings.RunSlotEmpty : SlotSummary(view), live: true, kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => SlotSummary(view),
-                    OnActivate = () => OpenHeroMenu(view),
+                    OnActivate = () => OpenHeroMenu(view, reserve),
                     OnTooltip = () => Core.Speech.Say(SlotTooltips(view) ?? Strings.NoTooltip, interrupt: true),
                 });
             }
@@ -210,14 +341,46 @@ namespace GuildrunAccess.Module.Screens
             return string.IsNullOrEmpty(name) ? body : name + ": " + body;
         }
 
-        // Enter on a hero: a menu of what the mouse would do with it: inspect its card, unequip one of
-        // its items (back to the reserve).
-        private static void OpenHeroMenu(BottomHeroView view)
+        // Enter on a party/reserve slot: the hero's menu (its board cell looked up when it stands on the board).
+        private void OpenHeroMenu(BottomHeroView view, bool reserve)
         {
             if (view == null || view.IsEmpty) { ClickPortrait(view); return; }
-            string heroName = RunData.HeroName(view) ?? Strings.RunParty;
-            var options = new List<ChoiceOption> { new ChoiceOption(Strings.RunInspect, () => ClickPortrait(view)) };
-            if (RunData.TryHeroId(view, out var heroId) && view._itemSlotViews != null)
+            if (!RunData.TryHeroId(view, out var heroId)) { ClickPortrait(view); return; }
+            Vector2Int? cell = null;
+            if (!reserve)
+            {
+                var hero = RunData.Hero(heroId);
+                try { if (hero != null) cell = hero.CellPosition; } catch (Exception) { }
+            }
+            OpenHeroMenu(view, heroId, cell, reserve);
+        }
+
+        // Enter on a hero: a menu of what the mouse would do with it: inspect its card, move it (pick
+        // up, then Enter on a board cell), send it to the reserve, unequip one of its items.
+        private void OpenHeroMenu(BottomHeroView view, HeroId heroId, Vector2Int? cell, bool reserve)
+        {
+            string heroName = RunData.HeroName(heroId) ?? Strings.RunParty;
+            var options = new List<ChoiceOption>();
+            if (view != null) options.Add(new ChoiceOption(Strings.RunInspect, () => ClickPortrait(view)));
+            if (Placing())
+            {
+                if (reserve && view != null)
+                {
+                    int index = view.Index;
+                    options.Add(new ChoiceOption(Strings.RunToBoard, () => PickUpFromReserve(heroName, index)));
+                }
+                else if (cell.HasValue)
+                {
+                    var from = cell.Value;
+                    options.Add(new ChoiceOption(Strings.RunMove, () => PickUpFromBoard(heroName, from)));
+                    int free = RunData.FreeReserveIndex();
+                    options.Add(new ChoiceOption(Strings.RunToReserve, () =>
+                    {
+                        Core.Speech.Say(RunData.SwapReserveAndBoard(free, from) ? Strings.RunMoved(heroName, Strings.RunReserve) : Strings.RunMoveFailed, interrupt: true);
+                    }, enabled: free >= 0));
+                }
+            }
+            if (view != null && view._itemSlotViews != null)
             {
                 foreach (var slot in view._itemSlotViews)
                 {
@@ -277,6 +440,7 @@ namespace GuildrunAccess.Module.Screens
         // The portrait button opens the hero's card in the sidebar (the game's own inspect action).
         private static void ClickPortrait(BottomHeroView view)
         {
+            if (view == null) return;
             foreach (var button in view.GetComponentsInChildren<Button>(false))
                 if (GameNodes.IsShown(button)) { button.onClick.Invoke(); return; }
         }

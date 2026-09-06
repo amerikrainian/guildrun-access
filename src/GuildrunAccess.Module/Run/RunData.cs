@@ -1,5 +1,8 @@
 using System;
 using Ember.Balancing.SimulationBridge;
+using Ember.Scopes.Battle.Board.Controllers;
+using Ember.Scopes.Battle.Board.Data;
+using Ember.Scopes.Battle.Board.Services;
 using Ember.Scopes.GameRun.GameRegistry.Data;
 using Ember.Scopes.GameRun.GameRegistry.Data.Characters;
 using Ember.Scopes.GameRun.GameRegistry.Data.Items;
@@ -11,6 +14,7 @@ using gg.leyline.balancing.Data;
 using GuildrunAccess.Core;
 using GuildrunAccess.Module.Interop;
 using GuildrunAccess.Module.Screens;
+using UnityEngine;
 
 namespace GuildrunAccess.Module.Run
 {
@@ -24,6 +28,7 @@ namespace GuildrunAccess.Module.Run
     {
         private static readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
         private static readonly Finder<BottomHeroPanelUIController> _party = new Finder<BottomHeroPanelUIController>();
+        private static readonly Finder<BoardController> _board = new Finder<BoardController>();
 
         /// <summary>The registry reader (hero/item data), or null outside a run.</summary>
         public static GameRegistryDataReader Reader()
@@ -114,8 +119,16 @@ namespace GuildrunAccess.Module.Run
         {
             var key = named != null ? named.NameLocaKey : null;
             if (key == null) return null;
-            var localized = key.LocalizedString;
-            string text = localized != null ? localized.GetLocalizedString() : null;
+            string text = null;
+            try
+            {
+                var localized = key.LocalizedString;
+                text = localized != null ? localized.GetLocalizedString() : null;
+            }
+            catch (Exception)
+            {
+                // A key without a table (some enemies): the English text is all there is.
+            }
             return !string.IsNullOrWhiteSpace(text) ? text : key.EnglishText;
         }
 
@@ -179,6 +192,132 @@ namespace GuildrunAccess.Module.Run
         // "No slot index" for the registry calls: a proper empty nullable (the interop proxy rejects
         // a plain null for a nullable-typed parameter).
         private static Il2CppSystem.Nullable<int> NoSlot() => new Il2CppSystem.Nullable<int>();
+
+        // ---- the board ----
+
+        /// <summary>The battle board's tile reader (size, occupants), or null outside a battle scene.</summary>
+        public static BoardDataReader Board()
+        {
+            var controller = _board.Get();
+            return controller != null ? controller._boardDataReader : null;
+        }
+
+        /// <summary>The board service (the drag operations: swaps between cells and reserve slots).</summary>
+        public static BoardService BoardService() => Services.Resolve<BoardService>();
+
+        public static bool TryHeroAt(Vector2Int cell, out HeroId id)
+        {
+            id = default;
+            var board = Board();
+            return board != null && Nullables.TryGet(() => board.GetHeroIdAtPosition(cell), out id);
+        }
+
+        public static bool TryEnemyAt(Vector2Int cell, out EnemyId id)
+        {
+            id = default;
+            var board = Board();
+            return board != null && Nullables.TryGet(() => board.GetEnemyIdAtPosition(cell), out id);
+        }
+
+        /// <summary>Whether the cell is on the player's side (where heroes may be placed).</summary>
+        public static bool IsPlayerCell(Vector2Int cell)
+        {
+            try { var board = Board(); return board != null && board.IsInPlayableRange(cell); }
+            catch (Exception) { return false; }
+        }
+
+        public static EnemyData Enemy(EnemyId id)
+        {
+            try
+            {
+                var reader = Reader();
+                var data = reader != null ? reader.GetEnemyData(id) : null;
+                return data != null ? data.TryCast<EnemyData>() : null;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: enemy lookup failed: " + e.Message);
+                return null;
+            }
+        }
+
+        /// <summary>The enemy's localized name, or null.</summary>
+        public static string EnemyName(EnemyId id)
+        {
+            try
+            {
+                var enemy = Enemy(id);
+                var named = enemy != null && enemy.CharacterEntry != null ? enemy.CharacterEntry.TryCast<INamedBalancingEntry>() : null;
+                return LocalizedName(named);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: enemy name failed: " + e.Message);
+                return null;
+            }
+        }
+
+        /// <summary>Swap two board cells (a hero moves to an empty cell, or two heroes trade places).</summary>
+        public static bool SwapBoard(Vector2Int from, Vector2Int to)
+        {
+            try
+            {
+                var service = BoardService();
+                if (service == null) return false;
+                service.SwapBoardPositions(from, to);
+                return true;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: board swap failed: " + e);
+                return false;
+            }
+        }
+
+        /// <summary>Swap a reserve slot with a board cell: places a reserve hero on the board, sends a
+        /// board hero to an empty reserve slot, or trades the two.</summary>
+        public static bool SwapReserveAndBoard(int reserveIndex, Vector2Int cell)
+        {
+            try
+            {
+                var service = BoardService();
+                if (service == null) return false;
+                service.SwapReserveAndBoardPositions(reserveIndex, cell);
+                return true;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: reserve/board swap failed: " + e);
+                return false;
+            }
+        }
+
+        /// <summary>The first empty reserve slot's index, or -1.</summary>
+        public static int FreeReserveIndex()
+        {
+            var party = _party.Get();
+            var panel = party != null ? party._reserveHeroPanel : null;
+            var views = panel != null && panel.gameObject.activeInHierarchy ? panel.HeroViews : null;
+            if (views == null) return -1;
+            foreach (var view in views)
+                if (view != null && view.gameObject.activeInHierarchy && view.IsEmpty) return view.Index;
+            return -1;
+        }
+
+        /// <summary>The party or reserve slot view showing the hero, or null.</summary>
+        public static BottomHeroView ViewOf(HeroId id)
+        {
+            var party = _party.Get();
+            if (party == null) return null;
+            foreach (var panel in new[] { party._activeHeroPanel, party._reserveHeroPanel })
+            {
+                var views = panel != null ? panel.HeroViews : null;
+                if (views == null) continue;
+                foreach (var view in views)
+                    if (TryHeroId(view, out var other) && other.Guid == id.Guid) return view;
+            }
+            return null;
+        }
 
         /// <summary>Whether the hero has a free item slot.</summary>
         public static bool HasFreeSlot(HeroData hero)
