@@ -27,6 +27,16 @@ namespace GuildrunAccess.Core.UI
         private ControlId _lastSpokenKey;
         private GraphNode _lastSpokenNode;
 
+        // The differ memory of a screen the navigator left for a CHILD screen (a dropdown's option list,
+        // a context menu), restored when the child hands focus back: the return then diffs against what
+        // was last spoken there, so the restored control reads just itself (with any new value) and a
+        // landing elsewhere reads only the levels entered, not the whole path again as a fresh entry
+        // would. An OUTER screen change (a window closing over a screen) keeps the fresh-entry readout.
+        private readonly Dictionary<Screens.Screen, KeyValuePair<ControlId, GraphNode>> _spokenMemory =
+            new Dictionary<Screens.Screen, KeyValuePair<ControlId, GraphNode>>();
+        private Screens.Screen _returnTo; // the parent a closing child hands focus back to
+        private bool _reannounce;         // speak the restored landing even when it is the remembered node
+
         // A focus request whose target is not in the render yet (lazy content): applied by EnsureFocus.
         private ControlId _pendingFocus;
         private bool _pendingAnnounce;
@@ -41,13 +51,19 @@ namespace GuildrunAccess.Core.UI
 
         public override void Attach(Screens.Screen screen)
         {
-            bool same = ReferenceEquals(screen, Screen);
+            var prev = Screen;
+            bool same = ReferenceEquals(screen, prev);
             Screen = screen;
             ClearSearch(announce: false);
             if (!same)
             {
+                // Leaving for a child: keep this screen's differ memory for the return.
+                if (prev != null && screen != null && ReferenceEquals(screen.ParentScreen, prev))
+                    _spokenMemory[prev] = new KeyValuePair<ControlId, GraphNode>(_lastSpokenKey, _lastSpokenNode);
+
                 // Swap to this screen's own state (creating it on first attach). The differ memory
-                // resets so the (possibly restored) landing announces itself on return.
+                // resets so the (possibly restored) landing announces itself on return, except on a
+                // return from a child, which diffs against the screen's own last readout.
                 if (screen != null)
                 {
                     if (!_states.TryGetValue(screen, out _state))
@@ -60,8 +76,21 @@ namespace GuildrunAccess.Core.UI
                 {
                     _state = new GraphState();
                 }
-                _lastSpokenKey = null;
-                _lastSpokenNode = null;
+                bool childReturn = screen != null && ReferenceEquals(screen, _returnTo)
+                    && _spokenMemory.TryGetValue(screen, out var memory);
+                if (childReturn)
+                {
+                    _spokenMemory.Remove(screen);
+                    _lastSpokenKey = memory.Key;
+                    _lastSpokenNode = memory.Value;
+                }
+                else
+                {
+                    _lastSpokenKey = null;
+                    _lastSpokenNode = null;
+                }
+                _reannounce = childReturn;
+                _returnTo = null;
                 _pendingFocus = null;
                 _pendingStop = null;
                 _liveKey = null;
@@ -71,7 +100,13 @@ namespace GuildrunAccess.Core.UI
 
         public override void ScreenClosed(Screens.Screen screen)
         {
-            if (screen != null) _states.Remove(screen);
+            if (screen == null) return;
+            _states.Remove(screen);
+            _spokenMemory.Remove(screen);
+            // A closing CHILD hands focus back to its parent (still set here: Screen.RemoveChild notifies
+            // before unlinking); the parent's next attach is a return. A closing outer screen is nobody's
+            // return target.
+            _returnTo = screen.ParentScreen;
         }
 
         public override void FocusNode(ControlId id, bool announce = true)
@@ -114,6 +149,7 @@ namespace GuildrunAccess.Core.UI
             _state.CurKey = null;
             _lastSpokenKey = null;
             _lastSpokenNode = null;
+            _reannounce = false;
             _pendingFocus = null;
             _liveKey = null;
         }
@@ -162,7 +198,7 @@ namespace GuildrunAccess.Core.UI
                     if (_graph.Current.Nodes.ContainsKey(_pendingFocus))
                     {
                         _graph.Focus(_pendingFocus);
-                        if (!_pendingAnnounce) { _lastSpokenKey = _pendingFocus; _lastSpokenNode = _graph.CurrentNode; }
+                        if (!_pendingAnnounce) { _lastSpokenKey = _pendingFocus; _lastSpokenNode = _graph.CurrentNode; _reannounce = false; }
                     }
                     _pendingFocus = null;
                 }
@@ -177,12 +213,14 @@ namespace GuildrunAccess.Core.UI
             var node = _graph.CurrentNode;
             if (node == null) return;
 
-            if (_lastSpokenKey == null || !_lastSpokenKey.Equals(node.Id))
+            if (_reannounce || _lastSpokenKey == null || !_lastSpokenKey.Equals(node.Id))
             {
-                // Queued (not interrupting): landings follow the screen name / preceding feedback.
+                // Queued (not interrupting): landings follow the screen name / preceding feedback. A
+                // return from a child re-reads the remembered node itself (its value may have changed).
                 if (Navigation.FocusActive()) Speak(ComposeMove(_lastSpokenNode, node, entry: _lastSpokenNode == null));
                 _lastSpokenKey = node.Id;
                 _lastSpokenNode = node;
+                _reannounce = false;
             }
 
             WatchLive(node);

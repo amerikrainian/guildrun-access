@@ -243,7 +243,8 @@ namespace GuildrunAccess.Module.UI
                     dropdown.RefreshShownValue();
                 }));
             }
-            Core.Screens.ChoiceSubmenuScreen.Open(label != null ? label() : null, choices, dropdown.value);
+            // The combo box just read its own label: the list speaks only the option landed on.
+            Core.Screens.ChoiceSubmenuScreen.Open(label != null ? label() : null, choices, dropdown.value, speakTitle: false);
         }
 
         /// <summary>The caption of a settings-style row: the TMP text named "Title" found by walking up

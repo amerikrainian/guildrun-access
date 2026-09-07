@@ -34,29 +34,39 @@ namespace GuildrunAccess.Core.Screens
     /// on its remembered control automatically. Reusable for any "open a list and pick one" interaction.
     /// The option list is immutable per instance; focus starts on <c>current</c> when one is given, so
     /// opening a value picker reads the selected value first.
+    ///
+    /// The title is spoken ONCE, as the list context the entry readout enters ("Equip Sword to, list,
+    /// Bob, button, 1 of 3"). A picker opened from a control whose label the player just heard (a combo
+    /// box's option list) passes <c>speakTitle: false</c>: the options are the screen's root items and
+    /// the entry reads just the option landed on ("Windowed Borderless, button, selected, 2 of 4").
     /// </summary>
     public sealed class ChoiceSubmenuScreen : Screen
     {
         private readonly string _title;
+        private readonly bool _speakTitle;
         private readonly IReadOnlyList<ChoiceOption> _options;
         private readonly int _current;
 
-        public ChoiceSubmenuScreen(string title, IReadOnlyList<ChoiceOption> options, int current = -1)
+        public ChoiceSubmenuScreen(string title, IReadOnlyList<ChoiceOption> options, int current = -1, bool speakTitle = true)
         {
             _title = title;
+            _speakTitle = speakTitle;
             _options = options ?? new ChoiceOption[0];
             _current = current;
             Wrap = true;
         }
 
         /// <summary>Open the submenu as a child of the current screen.</summary>
-        public static void Open(string title, IReadOnlyList<ChoiceOption> options, int current = -1)
+        public static void Open(string title, IReadOnlyList<ChoiceOption> options, int current = -1, bool speakTitle = true)
         {
-            ScreenManager.Current?.PushChild(new ChoiceSubmenuScreen(title, options, current));
+            ScreenManager.Current?.PushChild(new ChoiceSubmenuScreen(title, options, current, speakTitle));
         }
 
+        /// <summary>The list's title (dev inspection). Not the spoken screen name: the list context
+        /// announces it via the path diff on entry, so a screen-name line would say it twice.</summary>
+        public string Title => _title;
+
         public override string Key => "overlay.choice";
-        public override string ScreenName => _title;
         public override bool IsActive() => false; // never poll-pushed: only ever a child screen
 
         public override IEnumerable<ElementAction> GetActions()
@@ -69,7 +79,7 @@ namespace GuildrunAccess.Core.Screens
 
         public override void Build(GraphBuilder b)
         {
-            b.PushContext(_title, Strings.RoleList);
+            if (_speakTitle) b.PushContext(_title, Strings.RoleList);
             for (int i = 0; i < _options.Count; i++)
             {
                 int idx = i;
@@ -95,7 +105,7 @@ namespace GuildrunAccess.Core.Screens
                     },
                 });
             }
-            b.PopContext();
+            if (_speakTitle) b.PopContext();
             if (_current >= 0 && _current < _options.Count)
                 b.SetStart(ControlId.Structural("choice:" + _current)); // land on the current option
         }

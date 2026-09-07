@@ -33,22 +33,6 @@ namespace GuildrunAccess.Tests
 
         private static InputAction Action(string key) => new InputAction(key, key) { Category = InputCategory.UI };
 
-        // The engine inputs the navigator reads, with a frame counter the test advances by hand (the
-        // idle rebuild is throttled to every few frames, as in the game).
-        private sealed class FakeNavInput : INavInput
-        {
-            public int FrameCount { get; set; }
-            public float UnscaledTime => FrameCount / 60f;
-            public float UnscaledDeltaTime => 1f / 60f;
-            public bool CtrlHeld => false;
-            public bool AltHeld => false;
-            public bool ShiftHeld => false;
-            public bool EscapeDown => false;
-            public bool UpHeld => false;
-            public bool DownHeld => false;
-            public string TypedText => "";
-        }
-
         // A tab strip: landing on a tab selects it (the vtable's focus hook), Enter selects it too.
         private sealed class TabScreen : Screen
         {

@@ -132,7 +132,7 @@ namespace GuildrunAccess.Core.Screens
             if (child == null || ActiveChild != child) return;
             if (child.ActiveChild != null) child.RemoveChild(child.ActiveChild); // recurse: grandchildren first
             child.OnPop();
-            Navigation.ScreenClosed(child);
+            Navigation.ScreenClosed(child); // while ParentScreen is still set: the navigator reads it
             child.ParentScreen = null;
             ActiveChild = null;
         }
