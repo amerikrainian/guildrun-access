@@ -116,6 +116,8 @@ namespace GuildrunAccess.Core.Strings
             D("run.party", "party"),
             D("run.reserve", "reserve"),
             D("run.items", "items"),
+            // {0} = the hero's equipped items, comma-separated: after the hero's name wherever a hero is listed.
+            D("run.wearing", "wearing {0}"),
             D("run.relics", "relics"),
             D("run.info", "info"),
             D("run.speed", "battle speed"),
@@ -449,6 +451,7 @@ namespace GuildrunAccess.Core.Strings
         public static string RunParty => Get("run.party");
         public static string RunReserve => Get("run.reserve");
         public static string RunItems => Get("run.items");
+        public static string RunWearing(string items) => F("run.wearing", items);
         public static string RunRelics => Get("run.relics");
         public static string RunInfo => Get("run.info");
         public static string RunSpeed => Get("run.speed");

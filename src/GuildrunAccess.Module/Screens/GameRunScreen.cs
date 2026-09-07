@@ -194,9 +194,16 @@ namespace GuildrunAccess.Module.Screens
             };
         }
 
+        // "Pimenta, wearing Freezing Tome" / "Snake" / null for an empty cell.
         private static string Occupant(Vector2Int cell)
         {
-            if (RunData.TryHeroAt(cell, out var hero)) return RunData.HeroName(hero) ?? Strings.RunParty;
+            if (RunData.TryHeroAt(cell, out var hero))
+            {
+                string name = RunData.HeroName(hero) ?? Strings.RunParty;
+                var view = RunData.ViewOf(hero);
+                string items = view != null ? ItemNodes.ItemNames(view._itemSlotViews) : null;
+                return items == null ? name : name + ", " + Strings.RunWearing(items);
+            }
             if (RunData.TryEnemyAt(cell, out var enemy)) return RunData.EnemyName(enemy) ?? Strings.RunBoard;
             return null;
         }
@@ -333,12 +340,13 @@ namespace GuildrunAccess.Module.Screens
                 {
                     Announcements = new List<NodeAnnouncement>
                     {
-                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, u.Name, Health(u.Bar)), kind: AnnouncementKinds.Label),
+                        // "Pimenta, wearing Freezing Tome, 650 health": the hero named as on the board.
+                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, Wearing(u.Name, u.Bar), Health(u.Bar)), kind: AnnouncementKinds.Label),
                         // Not live: mana and health change every tick of a fight; re-read on demand (Ctrl+Space).
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => u.Name,
-                    OnTooltip = () => GameNodes.SayTooltip(ItemsOn(u.Bar)),
+                    OnTooltip = () => GameNodes.SayTooltip(ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
                 });
             }
             b.PopContext();
@@ -354,8 +362,12 @@ namespace GuildrunAccess.Module.Screens
             return Strings.RunMana(((int)slider.value).ToString(), ((int)slider.maxValue).ToString());
         }
 
-        // The unit's equipped items, by name.
-        private static string ItemsOn(HealthBarView bar) => ItemNodes.ItemNames(bar._itemSlotViews);
+        // The unit's name with its equipped items: "Pimenta, wearing Freezing Tome"; the bare name without any.
+        private static string Wearing(string name, HealthBarView bar)
+        {
+            string items = ItemNodes.ItemNames(bar._itemSlotViews);
+            return items == null ? name : name + ", " + Strings.RunWearing(items);
+        }
 
         // ---- the party: active and reserve slots ----
 
@@ -396,14 +408,17 @@ namespace GuildrunAccess.Module.Screens
             b.PopContext();
         }
 
-        // The hero occupying a slot: its name, then its ability names and equipped items.
+        // The hero occupying a slot: "Irini: Limitless, Passive Ability, wearing Freezing Tome".
         private static string SlotSummary(BottomHeroView view)
         {
             string abilities = HeroCardNodes.AbilitiesLine(view._abilitiesView);
             string items = ItemNodes.ItemNames(view._itemSlotViews);
-            string body = items == null ? abilities : abilities + "; " + items;
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(abilities)) parts.Add(abilities);
+            if (items != null) parts.Add(Strings.RunWearing(items));
+            string body = string.Join(", ", parts);
             string name = RunData.HeroName(view);
-            return string.IsNullOrEmpty(name) ? body : name + ": " + body;
+            return string.IsNullOrEmpty(name) ? body : body.Length == 0 ? name : name + ": " + body;
         }
 
         // Enter on a party/reserve slot: the hero's menu (its board cell looked up when it stands on the board).
@@ -490,7 +505,7 @@ namespace GuildrunAccess.Module.Screens
                 options.Add(new ChoiceOption(heroName, () =>
                 {
                     Core.Speech.Say(RunData.Equip(id, itemId) ? Strings.RunEquipped(itemName, heroName) : Strings.RunEquipFailed, interrupt: true);
-                }, items));
+                }, items != null ? Strings.RunWearing(items) : null));
             }
         }
 
