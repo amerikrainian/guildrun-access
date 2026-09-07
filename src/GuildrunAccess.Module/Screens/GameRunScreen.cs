@@ -27,6 +27,7 @@ using Il2CppInterop.Runtime;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Navigation = GuildrunAccess.Core.UI.Navigation;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -127,6 +128,7 @@ namespace GuildrunAccess.Module.Screens
             bool placing = Placing();
             if (placing && !_wasPlacing && BattleEvents.Lines.Count > 0) BattleEvents.Clear();
             _wasPlacing = placing;
+            LandOnInspectedCard();
         }
 
         private void BuildGrid(GraphBuilder b)
@@ -385,8 +387,8 @@ namespace GuildrunAccess.Module.Screens
         // Enter on a party/reserve slot: the hero's menu (its board cell looked up when it stands on the board).
         private void OpenHeroMenu(BottomHeroView view, bool reserve)
         {
-            if (view == null || view.IsEmpty) { ClickPortrait(view); return; }
-            if (!RunData.TryHeroId(view, out var heroId)) { ClickPortrait(view); return; }
+            if (view == null || view.IsEmpty) return; // an empty slot has nothing to do
+            if (!RunData.TryHeroId(view, out var heroId)) return;
             Vector2Int? cell = null;
             if (!reserve)
             {
@@ -402,7 +404,7 @@ namespace GuildrunAccess.Module.Screens
         {
             string heroName = RunData.HeroName(heroId) ?? Strings.RunParty;
             var options = new List<ChoiceOption>();
-            if (view != null) options.Add(new ChoiceOption(Strings.RunInspect, () => ClickPortrait(view)));
+            options.Add(new ChoiceOption(Strings.RunInspect, () => InspectHero(heroId)));
             if (Placing())
             {
                 if (reserve && view != null)
@@ -478,12 +480,54 @@ namespace GuildrunAccess.Module.Screens
             return items == null ? abilities : abilities + ". " + items;
         }
 
-        // The portrait button opens the hero's card in the sidebar (the game's own inspect action).
-        private static void ClickPortrait(BottomHeroView view)
+        // ---- inspect: the hero's card in the sidebar ----
+
+        // The game inspects on a mouse click over the slot: its CharacterCardController polls the pointer
+        // (no widget event to invoke) and publishes ShowHeroCardNotification, whose only subscriber is
+        // the sidebar. Asking the sidebar directly is that same path without a pointer. Focus follows
+        // the card, but only once we are back on this screen: the menu's close re-attaches the navigator
+        // and drops any focus request made before that, so the landing is applied from OnUpdate.
+        private void InspectHero(HeroId heroId)
         {
-            if (view == null) return;
-            foreach (var button in view.GetComponentsInChildren<Button>(false))
-                if (GameNodes.IsShown(button)) { button.onClick.Invoke(); return; }
+            var sidebar = _sidebar.Get();
+            if (sidebar == null || !sidebar.gameObject.activeInHierarchy)
+            {
+                Core.CoreLog.Warning("Inspect: no information sidebar in the scene");
+                Core.Speech.Say(Strings.RunInspectFailed, interrupt: true);
+                return;
+            }
+            try { sidebar.ShowHeroCard(heroId); }
+            catch (Exception e)
+            {
+                Core.CoreLog.Warning("Inspect: ShowHeroCard threw: " + e.Message);
+                Core.Speech.Say(Strings.RunInspectFailed, interrupt: true);
+                return;
+            }
+            _inspectPending = true;
+            _inspectDeadline = NavInput.Current.FrameCount + InspectLandingFrames;
+        }
+
+        // The card's name row is the landing; the card may take a frame or two to show.
+        private const int InspectLandingFrames = 60;
+        private bool _inspectPending;
+        private int _inspectDeadline;
+
+        private void LandOnInspectedCard()
+        {
+            if (!_inspectPending) return;
+            var sidebar = _sidebar.Get();
+            var card = sidebar != null ? sidebar._heroCardView : null;
+            if (card != null && card.gameObject.activeInHierarchy)
+            {
+                _inspectPending = false;
+                Navigation.FocusNode(SidebarNodes.HeroCardId("run:sidebar"));
+            }
+            else if (NavInput.Current.FrameCount >= _inspectDeadline)
+            {
+                _inspectPending = false;
+                Core.CoreLog.Warning("Inspect: the hero card did not show within " + InspectLandingFrames + " frames");
+                Core.Speech.Say(Strings.RunInspectFailed, interrupt: true);
+            }
         }
 
         // ---- items: the reserve column ----
@@ -672,10 +716,9 @@ namespace GuildrunAccess.Module.Screens
         private void BuildEvents(GraphBuilder b)
         {
             var lines = BattleEvents.Lines;
+            if (lines.Count == 0) return; // no stop until a fight has shown something
             b.BeginStop("events");
             b.PushContext(Strings.RunEvents, Strings.RoleList);
-            if (lines.Count == 0)
-                b.AddItem(ControlId.Structural("run:event:none"), GameNodes.Text(() => Strings.RunEventsEmpty));
             for (int i = lines.Count - 1; i >= 0; i--)
             {
                 var line = lines[i];

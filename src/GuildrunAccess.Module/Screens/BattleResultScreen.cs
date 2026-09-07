@@ -147,16 +147,35 @@ namespace GuildrunAccess.Module.Screens
                 {
                     if (hero == null || !hero.gameObject.activeInHierarchy) continue;
                     var h = hero;
+                    var tip = summary._tooltipView;
                     b.AddItem(ControlId.Structural("result:tracker:" + h.GetInstanceID()), new NodeVtable
                     {
                         Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => TrackerLine(h)) },
                         SearchText = () => HeroName(h),
-                        OnTooltip = () => GameNodes.SayTooltip(StatusTooltips(h)),
+                        // Each tracker's hover breakdown by source, then the status descriptions.
+                        OnTooltip = () => GameNodes.SayTooltip(TrackerTooltips(tip, h, StatusTooltips(h))),
                     });
                 }
                 b.PopContext();
             }
             b.PopContext();
+        }
+
+        // "damage dealt: Kai: Basic attack 2,000, Shuriken 906. damage taken: Kai: ...", then the
+        // statuses' descriptions; null when nothing has a tooltip.
+        private static string TrackerTooltips(Ember.Scopes.Battle.UI.Tracking.Views.TrackerTooltipView tip, HeroBattleStatsView hero, string statuses)
+        {
+            var parts = new List<string>();
+            var trackers = hero.Trackers;
+            if (trackers != null)
+                foreach (var tracker in trackers)
+                {
+                    if (tracker == null || !tracker.gameObject.activeInHierarchy || tracker.IsEmpty) continue;
+                    string breakdown = SidebarNodes.TrackerTooltip(tip, tracker.CurrentMode, tracker);
+                    if (breakdown != null) parts.Add(Strings.ResultTrackerMode((int)tracker.CurrentMode) + ": " + breakdown);
+                }
+            if (!string.IsNullOrWhiteSpace(statuses)) parts.Add(statuses);
+            return parts.Count == 0 ? null : string.Join(". ", parts);
         }
 
         // "Kai: damage dealt 2,906, damage taken 1,589, healing done 1,820, Poison applied 40".

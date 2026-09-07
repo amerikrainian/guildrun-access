@@ -187,7 +187,9 @@ namespace GuildrunAccess.Module.UI
         /// <summary>
         /// Declare a grid of hero cards inside the current Tab-stop: row 1 is each card's name and
         /// class (plus <paramref name="nameSuffix"/>, e.g. a price), then <paramref name="rows"/> in
-        /// order. Every cell of a column activates through <paramref name="activate"/> for that card.
+        /// order. Every cell of a column activates through <paramref name="activate"/> for that card;
+        /// the name cell is a button only when it has an action (a picker), plain text otherwise (an
+        /// inspected card).
         /// </summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
             Func<int, Action> activate, Func<int, string> nameSuffix, params GridRow[] rows)
@@ -200,6 +202,7 @@ namespace GuildrunAccess.Module.UI
             {
                 int index = i;
                 var card = cards[i];
+                var action = activate != null ? activate(index) : null;
                 b.AddItem(ControlId.Structural(keyPrefix + ":" + i + ":name"), Cell(card,
                     () =>
                     {
@@ -207,7 +210,7 @@ namespace GuildrunAccess.Module.UI
                         string suffix = nameSuffix != null ? nameSuffix(index) : null;
                         return string.IsNullOrEmpty(suffix) ? name : name + ", " + suffix;
                     },
-                    ControlTypes.Button, () => AbilitiesTooltips(card), null, activate(index)));
+                    action != null ? ControlTypes.Button : null, () => AbilitiesTooltips(card), null, action));
             }
             b.EndRow();
 
@@ -221,7 +224,8 @@ namespace GuildrunAccess.Module.UI
                     var card = cards[i];
                     var r = row;
                     b.AddItem(ControlId.Structural(keyPrefix + ":" + i + ":" + r.Key), Cell(card,
-                        () => r.Text(card), null, () => r.Tooltip != null ? r.Tooltip(card) : null, r.Caption, activate(index)));
+                        () => r.Text(card), null, () => r.Tooltip != null ? r.Tooltip(card) : null, r.Caption,
+                        activate != null ? activate(index) : null));
                 }
                 b.EndRow();
             }

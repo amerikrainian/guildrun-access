@@ -221,7 +221,6 @@ namespace GuildrunAccess.Core.Strings
             D("run.challenge", "Challenge"),
             // The battle HUD's events, as the game shows them (floating numbers, status icons, deaths, casts).
             D("run.events", "battle events"),
-            D("run.events_empty", "no events yet"),
             // {0} = the unit, {1} = the number shown.
             D("battle.damage", "{0}: {1} damage"),
             D("battle.crit", "{0}: {1} critical damage"),
@@ -276,6 +275,7 @@ namespace GuildrunAccess.Core.Strings
             // {0} = the hero's name.
             D("run.hero_actions", "{0}"),
             D("run.inspect", "Inspect"),
+            D("run.inspect_failed", "could not inspect"),
             // {0} = the item's name.
             D("run.unequip", "Unequip {0}"),
             D("run.unequipped", "{0} unequipped"),
@@ -530,7 +530,6 @@ namespace GuildrunAccess.Core.Strings
         public static string RunDamageTracker => Get("run.damage_tracker");
         public static string RunChallenge => Get("run.challenge");
         public static string RunEvents => Get("run.events");
-        public static string RunEventsEmpty => Get("run.events_empty");
         public static string BattleDamage(string unit, int amount) => F("battle.damage", unit, amount);
         public static string BattleCrit(string unit, int amount) => F("battle.crit", unit, amount);
         public static string BattleHealed(string unit, int amount) => F("battle.healed", unit, amount);
@@ -567,6 +566,7 @@ namespace GuildrunAccess.Core.Strings
         public static string RunEquipFailed => Get("run.equip_failed");
         public static string RunHeroActions(string hero) => F("run.hero_actions", hero);
         public static string RunInspect => Get("run.inspect");
+        public static string RunInspectFailed => Get("run.inspect_failed");
         public static string RunUnequip(string item) => F("run.unequip", item);
         public static string RunUnequipped(string item) => F("run.unequipped", item);
         public static string RunNoHeroes => Get("run.no_heroes");

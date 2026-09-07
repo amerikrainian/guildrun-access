@@ -1,7 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Ember.Scopes.Battle.DamageTracker.Controller;
 using Ember.Scopes.Battle.UI.Sidebar;
+using Ember.Scopes.Battle.UI.Tracking.Data;
+using Ember.Scopes.Battle.UI.Tracking.Views;
+using GuildrunAccess.Core;
 using Ember.Scopes.GameRun.UI.EnemyCard;
 using Ember.Scopes.GameRun.UI.HeroCard;
 using GuildrunAccess.Core.Graph;
@@ -14,21 +18,38 @@ using UnityEngine.UI;
 namespace GuildrunAccess.Module.UI
 {
     /// <summary>
-    /// The run's information sidebar (<see cref="InformationSidebarController"/>): whichever panel it
-    /// shows: an inspected hero's card (the shared hero grid), an inspected enemy's card (name, health,
-    /// mana, abilities, stats), the damage tracker (its mode tabs and every hero's live number), or the
-    /// challenge panel's text. Declared inside the caller's current Tab-stop.
+    /// The run's information sidebar (<see cref="InformationSidebarController"/>) as a strip and a
+    /// page. The strip, in the caller's current Tab-stop, holds the panel switches and, while the
+    /// damage tracker is the shown panel, its mode tabs (damage dealt, damage taken, healing done). A
+    /// panel switch (Damage tracker, Challenge) is a free-standing game Toggle, no group: on shows its
+    /// panel, off hides it, and the game turns it off itself when an inspected card takes the sidebar;
+    /// so it reads as a toggle, "Damage tracker, toggle, on", flipped by Enter and never by landing on
+    /// it (that would discard a card the player was reading). A mode tab selects on landing like any
+    /// tab: it only changes which number the tracker shows. The page is the NEXT stop: an inspected
+    /// hero's card (the shared hero grid), an inspected enemy's card (name, health, mana, abilities,
+    /// stats), the damage tracker's per-hero live numbers, or the challenge panel's text. Two stops so
+    /// that arrows inside the page never reach the strip.
     /// </summary>
     internal static class SidebarNodes
     {
+        /// <summary>The first node of an inspected hero's card (its name row), where focus lands after
+        /// an inspect; <paramref name="keyPrefix"/> as passed to <see cref="Add"/>.</summary>
+        public static ControlId HeroCardId(string keyPrefix) => ControlId.Structural(keyPrefix + ":hero:0:name");
+
         public static void Add(GraphBuilder b, InformationSidebarController sidebar, string keyPrefix)
         {
             if (sidebar == null || !sidebar.gameObject.activeInHierarchy) return;
             b.PushContext(Strings.RunSidebar, null, positions: false);
 
-            // The panel switches.
+            // The strip: the panel switches, then the tracker's mode tabs while it is the shown panel.
             AddToggle(b, keyPrefix + ":tracker", sidebar._damageTrackerToggle, Strings.RunDamageTracker);
             AddToggle(b, keyPrefix + ":challenge", sidebar._challengeModeToggle, Strings.RunChallenge);
+            var tracker = sidebar._damageTrackerPanel;
+            var trackerController = tracker != null && tracker.activeInHierarchy ? tracker.GetComponent<DamageTrackerUIController>() : null;
+            if (trackerController != null) AddTrackerModes(b, trackerController, keyPrefix + ":dmg");
+
+            // The page: its own stop (empty, hence absent, when no panel is shown).
+            b.BeginStop(keyPrefix + ":panel");
 
             var hero = sidebar._heroCardView;
             if (hero != null && hero.gameObject.activeInHierarchy)
@@ -70,10 +91,7 @@ namespace GuildrunAccess.Module.UI
                 b.PopContext();
             }
 
-            var tracker = sidebar._damageTrackerPanel;
-            var trackerController = tracker != null ? tracker.GetComponent<DamageTrackerUIController>() : null;
-            if (tracker != null && tracker.activeInHierarchy && trackerController != null)
-                AddTracker(b, trackerController, keyPrefix + ":dmg");
+            if (trackerController != null) AddTrackerHeroes(b, trackerController, keyPrefix + ":dmg");
 
             var challenge = sidebar._challengeModePanel;
             if (challenge != null && challenge.activeInHierarchy)
@@ -95,7 +113,7 @@ namespace GuildrunAccess.Module.UI
         private static void AddToggle(GraphBuilder b, string key, Toggle toggle, string label)
         {
             if (!GameNodes.IsShown(toggle)) return;
-            b.AddItem(ControlId.Structural(key), GameNodes.Tab(toggle, () => label));
+            b.AddItem(ControlId.Structural(key), GameNodes.Toggle(toggle, () => label));
         }
 
         // "Turtle, 200 health, mana 0 of 60".
@@ -137,19 +155,23 @@ namespace GuildrunAccess.Module.UI
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        // The damage tracker: the mode tabs, then one live line per hero. No context of its own: the
-        // sidebar's "Damage tracker" switch already names it, and the panel's title is the selected
-        // mode's name, which the mode tab already says.
-        private static void AddTracker(GraphBuilder b, DamageTrackerUIController tracker, string keyPrefix)
+        // The damage tracker's mode tabs (in the strip). The panel's title is the selected mode's name,
+        // which the tab already says.
+        private static void AddTrackerModes(GraphBuilder b, DamageTrackerUIController tracker, string keyPrefix)
         {
             var modes = tracker._modeToggles;
-            if (modes != null)
-                for (int i = 0; i < modes.Length; i++)
-                {
-                    int mode = i;
-                    if (!GameNodes.IsShown(modes[i])) continue;
-                    b.AddItem(ControlId.Structural(keyPrefix + ":mode:" + i), GameNodes.Tab(modes[i], () => Strings.ResultTrackerMode(mode)));
-                }
+            if (modes == null) return;
+            for (int i = 0; i < modes.Length; i++)
+            {
+                int mode = i;
+                if (!GameNodes.IsShown(modes[i])) continue;
+                b.AddItem(ControlId.Structural(keyPrefix + ":mode:" + i), GameNodes.Tab(modes[i], () => Strings.ResultTrackerMode(mode)));
+            }
+        }
+
+        // The damage tracker's page: one live line per hero.
+        private static void AddTrackerHeroes(GraphBuilder b, DamageTrackerUIController tracker, string keyPrefix)
+        {
             var heroes = tracker._heroTrackerViews;
             if (heroes != null)
             {
@@ -173,9 +195,60 @@ namespace GuildrunAccess.Module.UI
                             new NodeAnnouncement(() => TrackerValue(v), kind: AnnouncementKinds.Value),
                         },
                         SearchText = () => TrackerName(v),
+                        // The row's hover tooltip: the shown mode's total broken down by source.
+                        OnTooltip = () => GameNodes.SayTooltip(TrackerTooltip(tracker._tooltipView, tracker._currentMode, v.Tracker)),
                     });
                 }
                 b.PopContext();
+            }
+        }
+
+        /// <summary>
+        /// What a tracker row shows on hover: the game's own breakdown of the row's total for
+        /// <paramref name="mode"/> by source (an ability, a relic's contribution indented under it),
+        /// "Irini: Basic attack 120, Limitless 80". Composed by the tracker's tooltip view from the
+        /// row's data, as the hover does, read, and cleared again without showing it. Null until a
+        /// fight has produced data for the row (the game's hover shows nothing then either).
+        /// </summary>
+        public static string TrackerTooltip(TrackerTooltipView tip, TrackerMode mode, BaseTrackerView row)
+        {
+            if (tip == null || row == null) return null;
+            try
+            {
+                var data = row.TrackerData;
+                if (data == null) return null;
+                tip.UpdateTooltip(mode, data);
+
+                // The used entries in the tooltip's own (hierarchy) order; the pool keeps the free ones
+                // parented too, so membership in the used lists is the filter.
+                var used = new HashSet<IntPtr>();
+                var plain = tip._usedEntryViews;
+                if (plain != null) for (int i = 0; i < plain.Count; i++) if (plain[i] != null) used.Add(plain[i].Pointer);
+                var indented = tip._usedIndentedEntryViews;
+                if (indented != null) for (int i = 0; i < indented.Count; i++) if (indented[i] != null) used.Add(indented[i].Pointer);
+
+                var sb = new StringBuilder();
+                foreach (var entry in tip.GetComponentsInChildren<TrackerTooltipEntryView>(true))
+                {
+                    if (entry == null || !used.Contains(entry.Pointer)) continue;
+                    string title = entry.TitleText != null ? entry.TitleText.text : null;
+                    string value = entry.ValueText != null ? entry.ValueText.text : null;
+                    bool hasTitle = !string.IsNullOrWhiteSpace(title), hasValue = !string.IsNullOrWhiteSpace(value);
+                    if (!hasTitle && !hasValue) continue;
+                    if (sb.Length > 0) sb.Append(", ");
+                    if (hasTitle) sb.Append(title.Trim());
+                    if (hasTitle && hasValue) sb.Append(' ');
+                    if (hasValue) sb.Append(value.Trim());
+                }
+                string heading = tip._heroNameText != null ? tip._heroNameText.text : null;
+                tip.HideTooltip();
+                if (sb.Length == 0) return null;
+                return string.IsNullOrWhiteSpace(heading) ? sb.ToString() : heading.Trim() + ": " + sb;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("TrackerTooltip: " + e.Message);
+                return null;
             }
         }
 
