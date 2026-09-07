@@ -12,7 +12,6 @@ using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.Input;
-using GuildrunAccess.Module.Run;
 using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
@@ -20,7 +19,7 @@ using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The post-fight result panel (victory, defeat, or the run's end): its title as the context, the

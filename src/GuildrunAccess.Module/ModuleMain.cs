@@ -14,6 +14,7 @@ using GuildrunAccess.Module.UI;
 using HarmonyLib;
 using UnityEngine;
 using GuildrunAccess.Module.Interop;
+using GuildrunAccess.Module.GameRun;
 
 namespace GuildrunAccess.Module
 {
@@ -160,7 +161,7 @@ namespace GuildrunAccess.Module
             Navigation.TickTypeahead();
             Safe(_comics.Tick, "comics");
             Safe(_tutorials.Tick, "tutorials");
-            Safe(Run.BattleEvents.Tick, "battle events");
+            Safe(BattleEvents.Tick, "battle events");
         }
 
         // A reader that throws must not take the whole tick (and every other reader) down with it.

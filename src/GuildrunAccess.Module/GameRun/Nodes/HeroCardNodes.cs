@@ -7,8 +7,9 @@ using Ember.Scopes.GameRun.UI.Slots;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
+using GuildrunAccess.Module.UI;
 
-namespace GuildrunAccess.Module.UI
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// Readers and node factories for the game's hero card (<see cref="HeroCardView"/>), which the

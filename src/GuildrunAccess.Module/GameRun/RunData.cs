@@ -3,6 +3,7 @@ using Ember.Balancing.SimulationBridge;
 using Ember.Scopes.Battle.Board.Controllers;
 using Ember.Scopes.Battle.Board.Data;
 using Ember.Scopes.Battle.Board.Services;
+using Ember.Scopes.Battle.UI.BattleFlow;
 using Ember.Scopes.GameRun.GameRegistry.Data;
 using Ember.Scopes.GameRun.GameRegistry.Data.Characters;
 using Ember.Scopes.GameRun.GameRegistry.Data.Items;
@@ -13,10 +14,9 @@ using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
 using gg.leyline.balancing.Data;
 using GuildrunAccess.Core;
 using GuildrunAccess.Module.Interop;
-using GuildrunAccess.Module.Screens;
 using UnityEngine;
 
-namespace GuildrunAccess.Module.Run
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The run's registry, read and driven the way the game's own views do it: hero and item data by
@@ -27,8 +27,21 @@ namespace GuildrunAccess.Module.Run
     internal static class RunData
     {
         private static NavigationUIController Nav => GameScopes.Controller<NavigationUIController>();
-        private static BottomHeroPanelUIController Party => GameScopes.Controller<BottomHeroPanelUIController>();
+
+        /// <summary>The bottom hero panels (party and reserve), or null outside a run.</summary>
+        public static BottomHeroPanelUIController Party => GameScopes.Controller<BottomHeroPanelUIController>();
+
+        /// <summary>The battle board's controller (its character registries), or null outside a battle scene.</summary>
         public static BoardController BoardController => GameScopes.Controller<BoardController>();
+
+        /// <summary>Whether the run is in the placement phase (the board editable): the battle flow shows
+        /// its placement UI and a board exists.</summary>
+        public static bool Placing()
+        {
+            var flow = GameScopes.Controller<BattleFlowUIStateController>();
+            var placement = flow != null ? flow._placementParent : null;
+            return placement != null && placement.activeInHierarchy && Board() != null;
+        }
 
         /// <summary>The registry reader (hero/item data), or null outside a run.</summary>
         public static GameRegistryDataReader Reader()
@@ -55,7 +68,7 @@ namespace GuildrunAccess.Module.Run
         public static bool TryItemId(PlaceholderSlotView slot, out ItemId id)
         {
             id = default;
-            return slot != null && UI.ItemNodes.HasItem(slot) && Nullables.TryGet(() => slot.ItemId, out id);
+            return slot != null && ItemNodes.HasItem(slot) && Nullables.TryGet(() => slot.ItemId, out id);
         }
 
         public static bool TryOwnerHeroId(PlaceholderSlotView slot, out HeroId id)
@@ -191,7 +204,7 @@ namespace GuildrunAccess.Module.Run
             {
                 if (unit == null || !Nullables.TryGet(() => unit.HeroId, out HeroId id)) return null;
                 var view = ViewOf(id);
-                var abilities = view != null ? UI.HeroCardNodes.Abilities(view._abilitiesView) : null;
+                var abilities = view != null ? HeroCardNodes.Abilities(view._abilitiesView) : null;
                 if (abilities == null || abilities.Count == 0) return null;
                 var pick = abilities[0];
                 foreach (var ability in abilities)

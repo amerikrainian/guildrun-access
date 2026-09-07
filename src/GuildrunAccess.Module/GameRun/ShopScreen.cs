@@ -12,7 +12,7 @@ using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The shop between fights (<see cref="ShopUIController"/>): the hero offers as the shared hero grid

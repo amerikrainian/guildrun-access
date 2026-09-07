@@ -11,7 +11,7 @@ using UnityEngine;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The run's Heroes panel (<see cref="HeroPanelView"/>, opened from the HUD menu): the run's

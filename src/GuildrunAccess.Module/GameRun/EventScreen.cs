@@ -9,7 +9,7 @@ using GuildrunAccess.Module.Interop;
 using Navigation = GuildrunAccess.Core.UI.Navigation;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// A random event (<see cref="EventUIController"/>): the event's name as the context, its story

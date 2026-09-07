@@ -11,7 +11,7 @@ using HarmonyLib;
 using UnityEngine;
 using GuildrunAccess.Module.Interop;
 
-namespace GuildrunAccess.Module.Run
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// What the battle HUD shows as it happens, taken at the moment the game draws it (Harmony postfixes

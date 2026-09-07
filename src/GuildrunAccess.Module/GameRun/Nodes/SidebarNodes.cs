@@ -11,11 +11,11 @@ using Ember.Scopes.GameRun.UI.HeroCard;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
-using GuildrunAccess.Module.Run;
 using TMPro;
 using UnityEngine.UI;
+using GuildrunAccess.Module.UI;
 
-namespace GuildrunAccess.Module.UI
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The run's information sidebar (<see cref="InformationSidebarController"/>) as a strip and a

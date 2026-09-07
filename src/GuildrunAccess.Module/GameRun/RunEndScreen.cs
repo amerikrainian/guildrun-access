@@ -6,7 +6,6 @@ using Ember.Scopes.GameRun.UI.Relics;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
-using GuildrunAccess.Module.Run;
 using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
@@ -14,7 +13,7 @@ using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The run's end screen (<see cref="EndScreenController"/>, after the final result and the comic):

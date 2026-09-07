@@ -1,0 +1,208 @@
+using System;
+using System.Collections.Generic;
+using Ember.Scopes.Battle.Characters;
+using Ember.Scopes.Battle.UI;
+using Ember.Scopes.Battle.UI.Hud;
+using GuildrunAccess.Core;
+using GuildrunAccess.Core.Graph;
+using GuildrunAccess.Core.Screens;
+using GuildrunAccess.Core.Strings;
+using GuildrunAccess.Module.Interop;
+using GuildrunAccess.Module.UI;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using UnityEngine;
+
+namespace GuildrunAccess.Module.GameRun
+{
+    /// <summary>
+    /// The "board" stop, in one of two shapes. While placing: the grid, every cell as a node (enemy rows
+    /// first, then the player's, each side a region), Enter dropping a picked-up hero or opening the
+    /// occupant's menu. During a fight: every unit with a health bar, heroes first, with health and mana.
+    /// </summary>
+    internal sealed class BoardSection : ScreenSection
+    {
+        private readonly HeroActions _actions;
+
+        public BoardSection(HeroActions actions) { _actions = actions; }
+
+        public override void Build(GraphBuilder b)
+        {
+            if (RunData.Placing()) BuildGrid(b);
+            else BuildBattlefield(b);
+        }
+
+        // ---- the placement grid ----
+
+        private void BuildGrid(GraphBuilder b)
+        {
+            var board = RunData.Board();
+            if (board == null) return;
+            int w, h;
+            try { w = board.BoardWidth; h = board.BoardHeight; }
+            catch (Exception) { return; }
+            int playerRows = PlayerRows(h);
+            b.BeginStop("board");
+            b.PushContext(Strings.RunGrid, null, positions: false);
+            b.SetRegion("run:board:enemies");
+            b.PushContext(Strings.RunBoardEnemies, null, positions: false);
+            for (int y = h - 1; y >= playerRows; y--) AddGridRow(b, w, y);
+            b.PopContext();
+            b.SetRegion("run:board:heroes");
+            b.PushContext(Strings.RunBoardHeroes, null, positions: false);
+            for (int y = playerRows - 1; y >= 0; y--) AddGridRow(b, w, y);
+            b.PopContext();
+            b.SetRegion(null);
+            b.PopContext();
+        }
+
+        private void AddGridRow(GraphBuilder b, int width, int y)
+        {
+            b.StartRow("grid");
+            for (int x = 0; x < width; x++)
+                b.AddItem(ControlId.Structural("run:cell:" + x + ":" + y), CellNode(new Vector2Int(x, y)));
+            b.EndRow();
+        }
+
+        // How many rows from the bottom belong to the player (the placeable range).
+        private static int PlayerRows(int height)
+        {
+            int rows = 0;
+            for (int y = 0; y < height; y++)
+                if (RunData.IsPlayerCell(new Vector2Int(0, y))) rows++;
+                else break;
+            return rows;
+        }
+
+        // "Pimenta, wearing Freezing Tome, 5, 1" / "Snake, 3, 6" / "empty, 1, 3": column then row on
+        // the game's one grid, the container saying whose side it is.
+        private NodeVtable CellNode(Vector2Int cell)
+        {
+            return new NodeVtable
+            {
+                Announcements = new List<NodeAnnouncement>
+                {
+                    new NodeAnnouncement(() => Occupant(cell) ?? Strings.RunCellEmpty, kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(() => RunLabels.CellName(cell), kind: AnnouncementKinds.Value),
+                },
+                SearchText = () => Occupant(cell),
+                OnActivate = () => ActivateCell(cell),
+                OnTooltip = () =>
+                {
+                    var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null;
+                    GameNodes.SayTooltip(view != null ? RunLabels.SlotTooltips(view) : null);
+                },
+            };
+        }
+
+        private static string Occupant(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var hero))
+            {
+                string name = RunData.HeroName(hero) ?? Strings.RunParty;
+                var view = RunData.ViewOf(hero);
+                return view != null ? RunLabels.WithItems(name, view._itemSlotViews) : name;
+            }
+            if (RunData.TryEnemyAt(cell, out var enemy)) return RunData.EnemyName(enemy) ?? Strings.RunBoard;
+            return null;
+        }
+
+        // Enter on a cell: drop a picked-up hero here, else open the hero's menu, else nothing to do.
+        private void ActivateCell(Vector2Int cell)
+        {
+            if (_actions.Moves.Pending) { _actions.Moves.Drop(cell); return; }
+            if (RunData.TryHeroAt(cell, out var id))
+            {
+                _actions.OpenHeroMenu(RunData.ViewOf(id), id, cell, reserve: false);
+                return;
+            }
+            Speech.Say(Strings.RunCellEmpty, interrupt: true);
+        }
+
+        // ---- the battlefield ----
+
+        private struct Unit { public string Name; public HealthBarView Bar; public bool IsHero; }
+
+        private void BuildBattlefield(GraphBuilder b)
+        {
+            var units = Units();
+            b.BeginStop("board");
+            b.PushContext(Strings.RunBoard, Strings.RoleList);
+            if (units.Count == 0)
+                b.AddItem(ControlId.Structural("run:board:none"), GameNodes.Text(() => Strings.RunNoUnits));
+            for (int i = 0; i < units.Count; i++)
+            {
+                var u = units[i];
+                b.AddItem(ControlId.Structural("run:unit:" + u.Bar.GetInstanceID()), new NodeVtable
+                {
+                    Announcements = new List<NodeAnnouncement>
+                    {
+                        // "Pimenta, wearing Freezing Tome, hero, 650 health": the hero named as on the board.
+                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Health(u.Bar)), kind: AnnouncementKinds.Label),
+                        // Not live: mana and health change every tick of a fight; re-read on demand (Ctrl+Space).
+                        new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
+                    },
+                    SearchText = () => u.Name,
+                    OnTooltip = () => GameNodes.SayTooltip(ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
+                });
+            }
+            b.PopContext();
+        }
+
+        // The board controller's own registries of character views (heroes by hero id, enemies by
+        // enemy id), matched to the HUD's health bars by entity id.
+        private static List<Unit> Units()
+        {
+            var units = new List<Unit>();
+            var battle = GameScopes.Controller<BattleUIController>();
+            var board = RunData.BoardController;
+            if (battle == null || board == null || battle._healthBars == null) return units;
+            AddUnits(units, battle, ViewsOf(board.CharacterViewControllers), isHero: true);
+            AddUnits(units, battle, ViewsOf(board._enemyViewControllers), isHero: false);
+            units.Sort((x, y) => x.IsHero == y.IsHero ? string.CompareOrdinal(x.Name, y.Name) : (x.IsHero ? -1 : 1));
+            return units;
+        }
+
+        // A registry's views as an array (the value collection copied out: no interop enumerator).
+        private static Il2CppReferenceArray<CharacterViewController> ViewsOf<TKey>(
+            Il2CppSystem.Collections.Generic.Dictionary<TKey, CharacterViewController> views)
+        {
+            try
+            {
+                if (views == null || views.Count == 0) return null;
+                var array = new Il2CppReferenceArray<CharacterViewController>(views.Count);
+                views.Values.CopyTo(array, 0);
+                return array;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("Units: character views unreadable: " + e.Message);
+                return null;
+            }
+        }
+
+        private static void AddUnits(List<Unit> units, BattleUIController battle, Il2CppReferenceArray<CharacterViewController> views, bool isHero)
+        {
+            if (views == null) return;
+            var bars = battle._healthBars;
+            foreach (var c in views)
+            {
+                if (c == null || !c.gameObject.activeInHierarchy) continue;
+                HealthBarView bar;
+                if (!bars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) continue;
+                string name = bar._characterNameText != null ? bar._characterNameText.text : null;
+                if (string.IsNullOrWhiteSpace(name)) name = c.gameObject.name.Replace("(Clone)", "");
+                units.Add(new Unit { Name = name, Bar = bar, IsHero = isHero });
+            }
+        }
+
+        private static string Health(HealthBarView bar)
+            => bar._healthText != null ? bar._healthText.text : "";
+
+        private static string Mana(HealthBarView bar)
+        {
+            var slider = bar._manaSlider;
+            if (slider == null || !slider.gameObject.activeInHierarchy || slider.maxValue <= 0) return null;
+            return Strings.RunMana(((int)slider.value).ToString(), ((int)slider.maxValue).ToString());
+        }
+    }
+}

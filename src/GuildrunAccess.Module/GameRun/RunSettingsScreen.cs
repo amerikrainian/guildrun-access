@@ -8,7 +8,7 @@ using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The run's pause menu (<see cref="SettingsPanelView"/>, opened by the HUD's Settings button or

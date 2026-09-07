@@ -10,6 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
+using GuildrunAccess.Module.GameRun;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens

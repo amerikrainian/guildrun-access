@@ -5,6 +5,7 @@ using GuildrunAccess.Core.Input;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
+using GuildrunAccess.Module.GameRun;
 using Navigation = GuildrunAccess.Core.UI.Navigation;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
@@ -71,9 +72,9 @@ namespace GuildrunAccess.Module.Screens
             b.AddItem(ControlId.Structural("modsettings:focus"), Toggle(() => Strings.ModFocusOnLaunch,
                 () => settings.FocusModeOnLaunch, v => settings.FocusModeOnLaunch = v));
             b.AddItem(ControlId.Structural("modsettings:narrate"), Toggle(() => Strings.ModNarrate,
-                () => Run.BattleEvents.NarrateKeyEvents, Run.BattleEvents.SetNarrateKeyEvents));
+                () => BattleEvents.NarrateKeyEvents, BattleEvents.SetNarrateKeyEvents));
             b.AddItem(ControlId.Structural("modsettings:numbers"), Toggle(() => Strings.ModNarrateNumbers,
-                () => Run.BattleEvents.NarrateNumbers, Run.BattleEvents.SetNarrateNumbers));
+                () => BattleEvents.NarrateNumbers, BattleEvents.SetNarrateNumbers));
             b.PopContext();
         }
 

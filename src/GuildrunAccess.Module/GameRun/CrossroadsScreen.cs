@@ -8,7 +8,7 @@ using GuildrunAccess.Module.UI;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The crossroads after a shop (<see cref="CrossroadsController"/>): the game shows the next paths as

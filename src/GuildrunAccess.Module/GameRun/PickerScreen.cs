@@ -14,7 +14,7 @@ using UnityEngine.EventSystems;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
-namespace GuildrunAccess.Module.Screens
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// A hero's rank-up choice (<see cref="BasePickerView"/>: the specialization picker and the rank

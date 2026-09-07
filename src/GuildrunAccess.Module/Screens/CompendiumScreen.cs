@@ -11,6 +11,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
+using GuildrunAccess.Module.GameRun;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -147,7 +148,7 @@ namespace GuildrunAccess.Module.Screens
         {
             var text = icon._text;
             string name = text != null && text.gameObject.activeInHierarchy ? text.text : null;
-            if (string.IsNullOrWhiteSpace(name)) name = Run.RunData.NameOf(icon._heroEntry) ?? Run.RunData.NameOf(icon._classEntry);
+            if (string.IsNullOrWhiteSpace(name)) name = RunData.NameOf(icon._heroEntry) ?? RunData.NameOf(icon._classEntry);
             return string.IsNullOrWhiteSpace(name) ? icon.gameObject.name : name;
         }
 

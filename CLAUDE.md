@@ -117,13 +117,20 @@ Five projects (see `docs/plan.md` for the port map):
 - **`GuildrunAccess.Core`** (netstandard2.0, RELOADABLE, engine-free, unit-tested): `Graph/` (the
   key-graph engine: `KeyGraph`, `GraphBuilder`, `GraphAnnouncer`, `ControlId`), `UI/` (`GraphNavigator`,
   `GraphSheet`, `ControlTypes`, `TypeAheadSearch`), `Input/` (`InputManager` categories + chord
-  shadowing), `Screens/` (`Screen`, `ScreenManager`), `Strings/` (the authored strings table).
+  shadowing), `Screens/` (`Screen`, `CompositeScreen` + `ScreenSection`, `ScreenManager`), `Strings/` (the authored strings table).
   Engine seams are statics the module sets in Load: `CoreLog`, `Speech.Speak`, `NavInput.Current`,
   `Navigation.FocusActive`, `InputManager.FocusActive`, `GraphAnnouncer.PositionText/ExpandedStateText`.
 - **`GuildrunAccess.Module`** (net6.0, RELOADABLE, engine-coupled; **day-to-day feature work goes
   here**): `ModuleMain` (IModModule + IDevDriver: seams, input registration, screen registration,
-  focus mode, Tick), `Screens/` (one file per screen), `UI/GameNodes` (node factories over uGUI
-  Button/Toggle/Slider/TMP), `UI/FocusMode`, `Input/KeyboardBinding` + `UnityNavInput`.
+  focus mode, Tick), `Screens/` (the menu, settings, dialogs, compendium, comics, mod menu: one file
+  per screen), `GameRun/` (everything of a run: `GameRunScreen` is a `CompositeScreen` of one `Hud/`
+  section per Tab-stop, the sections that act on heroes sharing `HeroActions` (menus, equip, inspect)
+  and its `HeroMoves` (the pending keyboard drag); the other run screens; `RunData` (registry reads
+  and moves), `BattleEvents` (the HUD hooks); `Nodes/` the run's reusable node readers: hero cards,
+  items, sidebar, leaderboard), `UI/GameNodes` (node factories over uGUI Button/Toggle/Slider/TMP),
+  `UI/TooltipReader`, `UI/FocusMode`, `Input/KeyboardBinding` + `UnityNavInput`. A long screen
+  decomposes into sections when they carry state or act on each other; a screen that only reads one
+  panel stays whole (never partial classes).
 - **`GuildrunAccess.Tests`** (net8.0 xUnit): Core + Contracts only; runs serially (static seams).
 
 Rules: new feature/screen/adapter/patch code goes in Module (Core when engine-free). Only entry, native
@@ -177,10 +184,10 @@ action, Escape backs out, Home/End jump, Space reads a description (silent when 
 5. **(done)** The game run: hero picker, run HUD (placement grid with keyboard moves, party/reserve
    with equip/unequip menus, items, relics, info, speed, menu), battle result (all forms), shop,
    crossroads, events (campfire included), rank-up pickers, the Heroes panel, tooltips through the
-   game's own tooltip pipeline. Reusable readers: `UI/HeroCardNodes`, `UI/ItemNodes`,
-   `UI/LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `Run/RunData`.
+   game's own tooltip pipeline. Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
+   `LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `GameRun/RunData`.
 6. **(done)** End screen, progression, the sidebar (inspect cards, damage tracker), battle events
-   (`Run/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties
+   (`GameRun/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties
    bars, cast animations: a run-HUD stop plus narration; only what the game draws is reported: the
    simulation's own `BattleLogger` is developer debug text and is NOT used), the compendium, the
    mod menu (Ctrl+Shift+M: settings, key help), comics. Open: the shop's "sold" filter is a

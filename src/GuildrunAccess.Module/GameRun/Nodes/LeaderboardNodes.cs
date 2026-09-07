@@ -3,8 +3,9 @@ using Ember.Scopes.MainMenu.UI;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using TMPro;
+using GuildrunAccess.Module.UI;
 
-namespace GuildrunAccess.Module.UI
+namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The endless-mode leaderboard (<see cref="LeaderboardController"/>), which the game shows on the
