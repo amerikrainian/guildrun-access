@@ -9,6 +9,7 @@ using GuildrunAccess.Module.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -26,11 +27,11 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 10;
         public override bool Exclusive => true;
 
-        private readonly Finder<ShopUIController> _shop = new Finder<ShopUIController>();
+        private static ShopUIController Shop => GameScopes.Controller<ShopUIController>();
 
         public override bool IsActive()
         {
-            var shop = _shop.Get();
+            var shop = Shop;
             if (shop == null || !shop.gameObject.activeInHierarchy) return false;
             var group = shop._canvasGroup;
             return group == null || group.alpha > 0.5f;
@@ -38,7 +39,7 @@ namespace GuildrunAccess.Module.Screens
 
         public override void Build(GraphBuilder b)
         {
-            var shop = _shop.Get();
+            var shop = Shop;
             if (shop == null) return;
 
             b.PushContext(Strings.ScreenShop, null, positions: false);
@@ -175,7 +176,7 @@ namespace GuildrunAccess.Module.Screens
         {
             yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
             {
-                var shop = _shop.Get();
+                var shop = Shop;
                 if (shop != null && GameNodes.IsShown(shop._proceedButton) && shop._proceedButton.interactable)
                     shop._proceedButton.onClick.Invoke();
             });

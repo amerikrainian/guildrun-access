@@ -11,6 +11,7 @@ using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -28,12 +29,12 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 20;
         public override bool Exclusive => true;
 
-        private readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
+        private static NavigationUIController Nav => GameScopes.Controller<NavigationUIController>();
 
         // Whichever picker the navigation controller currently shows, or null.
         private BasePickerView Picker()
         {
-            var nav = _nav.Get();
+            var nav = Nav;
             if (nav == null) return null;
             BasePickerView spec = nav._specializationPickerView;
             if (spec != null && spec.gameObject.activeInHierarchy) return spec;

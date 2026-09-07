@@ -9,6 +9,7 @@ using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -25,11 +26,11 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 5;
         public override bool Exclusive => true;
 
-        private readonly Finder<DifficultyUIController> _panel = new Finder<DifficultyUIController>();
+        private static DifficultyUIController Difficulty => GameScopes.Controller<DifficultyUIController>();
 
         private DifficultyUIController Panel()
         {
-            var panel = _panel.Get();
+            var panel = Difficulty;
             if (panel == null || !panel.gameObject.activeInHierarchy) return null;
             var root = panel._difficultyUIRoot;
             return root == null || root.activeInHierarchy ? panel : null;

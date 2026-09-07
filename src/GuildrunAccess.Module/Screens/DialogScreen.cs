@@ -8,6 +8,7 @@ using Il2CppInterop.Runtime.InteropTypes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Navigation = GuildrunAccess.Core.UI.Navigation;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
@@ -20,15 +21,11 @@ namespace GuildrunAccess.Module.Screens
     /// before landing on the first line. Escape presses the panel's cancel/close button when it has one.
     /// Active whenever a panel of the type is active in the scene; Exclusive, so only dialog keys live.
     /// </summary>
-    /// <typeparam name="TPanel">The panel MonoBehaviour type (found by scene scan).</typeparam>
+    /// <typeparam name="TPanel">The panel MonoBehaviour type (a permanent child of its scope).</typeparam>
     public sealed class DialogScreen<TPanel> : Screen where TPanel : MonoBehaviour
     {
         private readonly string _key;
         private readonly System.Func<string> _name;
-        private TPanel _panel;
-        private const int SearchEvery = 30;
-        private int _lastSearchFrame = -SearchEvery; // "long ago" without an int.MinValue subtraction overflow
-
         public DialogScreen(string key, System.Func<string> name)
         {
             _key = key;
@@ -40,15 +37,8 @@ namespace GuildrunAccess.Module.Screens
         public override bool Exclusive => true;
         // No ScreenName: the dialog context announces the name via the path diff on entry.
 
-        private TPanel Panel()
-        {
-            if (_panel != null) return _panel;
-            if (Time.frameCount - _lastSearchFrame < SearchEvery) return null;
-            _lastSearchFrame = Time.frameCount;
-            var found = Object.FindObjectOfType(Il2CppType.Of<TPanel>());
-            _panel = found != null ? found.TryCast<TPanel>() : null;
-            return _panel;
-        }
+        // The panel is a permanent, usually inactive child of its area's scope: found once per scope.
+        private static TPanel Panel() => GameScopes.Component<TPanel>();
 
         public override bool IsActive()
         {

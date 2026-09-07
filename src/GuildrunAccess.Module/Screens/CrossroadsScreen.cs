@@ -5,6 +5,7 @@ using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -22,17 +23,17 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 10;
         public override bool Exclusive => true;
 
-        private readonly Finder<CrossroadsController> _crossroads = new Finder<CrossroadsController>();
+        private static CrossroadsController Crossroads => GameScopes.Controller<CrossroadsController>();
 
         public override bool IsActive()
         {
-            var c = _crossroads.Get();
+            var c = Crossroads;
             return c != null && c.gameObject.activeInHierarchy && Gates(c).Count > 0;
         }
 
         public override void Build(GraphBuilder b)
         {
-            var c = _crossroads.Get();
+            var c = Crossroads;
             if (c == null) return;
 
             string title = c._crossroadsTitle != null && !string.IsNullOrWhiteSpace(c._crossroadsTitle.text)

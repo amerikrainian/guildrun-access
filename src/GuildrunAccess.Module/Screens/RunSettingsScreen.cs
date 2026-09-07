@@ -5,6 +5,7 @@ using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -20,11 +21,11 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 26;
         public override bool Exclusive => true;
 
-        private readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
+        private static NavigationUIController Nav => GameScopes.Controller<NavigationUIController>();
 
         private SettingsPanelView Panel()
         {
-            var nav = _nav.Get();
+            var nav = Nav;
             var panel = nav != null ? nav._settingsPanelView : null;
             return panel != null && panel.gameObject.activeInHierarchy ? panel : null;
         }

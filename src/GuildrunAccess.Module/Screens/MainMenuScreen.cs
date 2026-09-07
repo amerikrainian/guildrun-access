@@ -6,6 +6,7 @@ using GuildrunAccess.Module.UI;
 using Il2CppInterop.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -22,20 +23,7 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 0;
         // No ScreenName: the list context announces "Main menu" via the path diff on entry.
 
-        private MainMenuUIController _controller;
-        private const int SearchEvery = 30; // frames between scene scans while the controller is absent
-        private int _lastSearchFrame = -SearchEvery; // "long ago" without an int.MinValue subtraction overflow
-
-        // The live controller, re-found by scene scan (throttled) once the last one was destroyed.
-        private MainMenuUIController Controller()
-        {
-            if (_controller != null) return _controller; // Unity's lifetime-aware null check
-            if (Time.frameCount - _lastSearchFrame < SearchEvery) return null;
-            _lastSearchFrame = Time.frameCount;
-            var found = Object.FindObjectOfType(Il2CppType.Of<MainMenuUIController>());
-            _controller = found != null ? found.TryCast<MainMenuUIController>() : null;
-            return _controller;
-        }
+        private static MainMenuUIController Controller() => GameScopes.Controller<MainMenuUIController>();
 
         public override bool IsActive()
         {

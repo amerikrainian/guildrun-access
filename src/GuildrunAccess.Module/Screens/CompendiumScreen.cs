@@ -10,6 +10,7 @@ using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -28,11 +29,11 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 22;
         public override bool Exclusive => true;
 
-        private readonly Finder<CompendiumUIController> _compendium = new Finder<CompendiumUIController>();
+        private static CompendiumUIController Compendium => GameScopes.Controller<CompendiumUIController>();
 
         private CompendiumUIController Panel()
         {
-            var c = _compendium.Get();
+            var c = Compendium;
             if (c == null || !c.gameObject.activeInHierarchy) return null;
             var root = c._compendiumUIRoot;
             return root == null || root.activeInHierarchy ? c : null;

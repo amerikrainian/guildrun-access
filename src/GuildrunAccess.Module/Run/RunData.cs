@@ -26,21 +26,21 @@ namespace GuildrunAccess.Module.Run
     /// </summary>
     internal static class RunData
     {
-        private static readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
-        private static readonly Finder<BottomHeroPanelUIController> _party = new Finder<BottomHeroPanelUIController>();
-        private static readonly Finder<BoardController> _board = new Finder<BoardController>();
+        private static NavigationUIController Nav => GameScopes.Controller<NavigationUIController>();
+        private static BottomHeroPanelUIController Party => GameScopes.Controller<BottomHeroPanelUIController>();
+        public static BoardController BoardController => GameScopes.Controller<BoardController>();
 
         /// <summary>The registry reader (hero/item data), or null outside a run.</summary>
         public static GameRegistryDataReader Reader()
         {
-            var party = _party.Get();
+            var party = Party;
             return party != null ? party._gameRegistryReader : null;
         }
 
         /// <summary>The registry service (equip, move, discard), or null outside a run.</summary>
         public static IGameRegistryService Service()
         {
-            var nav = _nav.Get();
+            var nav = Nav;
             return nav != null ? nav._gameRegistryService : null;
         }
 
@@ -253,7 +253,7 @@ namespace GuildrunAccess.Module.Run
         /// <summary>The battle board's tile reader (size, occupants), or null outside a battle scene.</summary>
         public static BoardDataReader Board()
         {
-            var controller = _board.Get();
+            var controller = BoardController;
             return controller != null ? controller._boardDataReader : null;
         }
 
@@ -350,7 +350,7 @@ namespace GuildrunAccess.Module.Run
         /// <summary>The first empty reserve slot's index, or -1.</summary>
         public static int FreeReserveIndex()
         {
-            var party = _party.Get();
+            var party = Party;
             var panel = party != null ? party._reserveHeroPanel : null;
             var views = panel != null && panel.gameObject.activeInHierarchy ? panel.HeroViews : null;
             if (views == null) return -1;
@@ -362,7 +362,7 @@ namespace GuildrunAccess.Module.Run
         /// <summary>The party or reserve slot view showing the hero, or null.</summary>
         public static BottomHeroView ViewOf(HeroId id)
         {
-            var party = _party.Get();
+            var party = Party;
             if (party == null) return null;
             foreach (var panel in new[] { party._activeHeroPanel, party._reserveHeroPanel })
             {

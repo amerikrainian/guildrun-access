@@ -7,6 +7,7 @@ using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -23,7 +24,7 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 10;
         public override bool Exclusive => true;
 
-        private readonly Finder<HeroPickerController> _controller = new Finder<HeroPickerController>();
+        private static HeroPickerController Picker => GameScopes.Controller<HeroPickerController>();
 
         // The offered cards, in on-screen order: the active choice views under the holder.
         private static List<InitialHeroChoiceView> Choices(HeroPickerController c)
@@ -38,7 +39,7 @@ namespace GuildrunAccess.Module.Screens
 
         public override bool IsActive()
         {
-            var c = _controller.Get();
+            var c = Picker;
             if (c == null) return false;
             var panel = c._panelParent;
             return panel != null && panel.activeInHierarchy && Choices(c).Count > 0;
@@ -46,7 +47,7 @@ namespace GuildrunAccess.Module.Screens
 
         public override void Build(GraphBuilder b)
         {
-            var c = _controller.Get();
+            var c = Picker;
             if (c == null) return;
             var choices = Choices(c);
             if (choices.Count == 0) return;

@@ -8,6 +8,7 @@ using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -24,16 +25,16 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 15;
         public override bool Exclusive => true;
 
-        private readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
-        private readonly Finder<Ember.Scopes.Battle.UI.BattleFlow.BattleFlowUIStateController> _flow = new Finder<Ember.Scopes.Battle.UI.BattleFlow.BattleFlowUIStateController>();
+        private static NavigationUIController Nav => GameScopes.Controller<NavigationUIController>();
+        private static Ember.Scopes.Battle.UI.BattleFlow.BattleFlowUIStateController Flow => GameScopes.Controller<Ember.Scopes.Battle.UI.BattleFlow.BattleFlowUIStateController>();
 
         // The HUD's own Heroes panel, not the summary form the result panel reuses.
         private HeroPanelView Panel()
         {
-            var nav = _nav.Get();
+            var nav = Nav;
             var panel = nav != null ? nav._heroPanelView : null;
             if (panel == null || !panel.gameObject.activeInHierarchy || panel._isSummary) return null;
-            var flow = _flow.Get();
+            var flow = Flow;
             var result = flow != null ? flow._resultParent : null;
             return result != null && result.activeInHierarchy ? null : panel;
         }
@@ -105,7 +106,7 @@ namespace GuildrunAccess.Module.Screens
         // The HUD's Heroes button toggles the panel; pressing it again closes it.
         private void Close()
         {
-            var nav = _nav.Get();
+            var nav = Nav;
             var button = nav != null ? nav._heroPanelButton : null;
             if (GameNodes.IsShown(button)) button.onClick.Invoke();
         }

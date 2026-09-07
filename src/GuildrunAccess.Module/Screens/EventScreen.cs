@@ -5,6 +5,7 @@ using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
+using GuildrunAccess.Module.Interop;
 using Navigation = GuildrunAccess.Core.UI.Navigation;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
@@ -22,7 +23,7 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 10;
         public override bool Exclusive => true;
 
-        private readonly Finder<EventUIController> _event = new Finder<EventUIController>();
+        private static EventUIController EventUI => GameScopes.Controller<EventUIController>();
         private string _lastOutcome;
         private string _lastChoices;
 
@@ -31,7 +32,7 @@ namespace GuildrunAccess.Module.Screens
         // event that branches, like the campfire), land on the first new choice.
         public override void OnUpdate()
         {
-            var e = _event.Get();
+            var e = EventUI;
             if (e == null) return;
             var typewriter = e._eventOutcomeTypewriterEffect;
             string outcome = typewriter != null && typewriter.gameObject.activeInHierarchy ? FullText(typewriter, null) : null;
@@ -57,13 +58,13 @@ namespace GuildrunAccess.Module.Screens
 
         public override bool IsActive()
         {
-            var e = _event.Get();
+            var e = EventUI;
             return e != null && e.gameObject.activeInHierarchy && !e._isCovered;
         }
 
         public override void Build(GraphBuilder b)
         {
-            var e = _event.Get();
+            var e = EventUI;
             if (e == null) return;
 
             string title = e._eventNameText != null && !string.IsNullOrWhiteSpace(e._eventNameText.text)
@@ -185,7 +186,7 @@ namespace GuildrunAccess.Module.Screens
         {
             yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
             {
-                var e = _event.Get();
+                var e = EventUI;
                 if (e != null && GameNodes.IsShown(e._proceedButton) && e._proceedButton.interactable)
                     e._proceedButton.onClick.Invoke();
             });

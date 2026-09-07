@@ -95,7 +95,14 @@ fresh every render, focus persisting by `ControlId` identity), read labels from 
 and activate through the widget's own event (`button.onClick.Invoke()`), so the game's handler runs as
 for a click. While focus mode owns the keyboard, `FocusMode` mutes uGUI navigation events
 (`EventSystem.sendNavigationEvents = false`) and clears the selection. Screens resolve their activity
-by finding a live controller/panel by scene scan (throttled) and checking `activeInHierarchy`.
+by asking `GameScopes` for their live controller/panel and checking `activeInHierarchy`.
+
+**No scene scans.** `Module/Interop/GameScopes` holds the game's live VContainer scopes, registered by
+Harmony postfixes on the scope build path (`BootstrappedScope.InjectControllers`, `LifetimeScope.Build`)
+and dropped on `OnDestroy`; each bootstrapped scope lists its `MonoBehaviourController`s, so
+`GameScopes.Controller<T>()` is a list walk cached per type (`Component<T>()` for non-controller views,
+found once per scope under its hierarchy). `FindObjectOfType` walks ~43k objects and costs ~18 ms
+here: never add one. The only scan is `GameScopes.Seed()` on a module (re)load.
 
 ## Architecture — HOST/MODULE split (hot reload; the NonVisualCalculus pattern, plus reloadable Core)
 Five projects (see `docs/plan.md` for the port map):

@@ -11,6 +11,7 @@ using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -28,11 +29,11 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 20;
         public override bool Exclusive => true;
 
-        private readonly Finder<EndScreenController> _end = new Finder<EndScreenController>();
+        private static EndScreenController EndScreen => GameScopes.Controller<EndScreenController>();
 
         private EndScreenController Controller()
         {
-            var end = _end.Get();
+            var end = EndScreen;
             return end != null && end.gameObject.activeInHierarchy ? end : null;
         }
 

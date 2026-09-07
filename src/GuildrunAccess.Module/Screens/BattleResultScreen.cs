@@ -17,6 +17,7 @@ using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -35,11 +36,11 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 10;
         public override bool Exclusive => true;
 
-        private readonly Finder<BattleFlowUIStateController> _flow = new Finder<BattleFlowUIStateController>();
+        private static BattleFlowUIStateController Flow => GameScopes.Controller<BattleFlowUIStateController>();
 
         private BattleResultPanelView Panel()
         {
-            var flow = _flow.Get();
+            var flow = Flow;
             var result = flow != null ? flow._resultParent : null;
             var panel = flow != null ? flow._battleResultPanelView : null;
             return result != null && result.activeInHierarchy && panel != null && panel.gameObject.activeInHierarchy ? panel : null;

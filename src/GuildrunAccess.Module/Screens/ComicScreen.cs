@@ -8,6 +8,7 @@ using GuildrunAccess.Module.Input;
 using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -24,13 +25,13 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 40;
         public override bool Exclusive => true;
 
-        private readonly Finder<ComicController> _comic = new Finder<ComicController>();
+        private static ComicController Comic => GameScopes.Controller<ComicController>();
 
         // A comic is playing when one of its panels is actually active (the container keeps inactive
         // panel prefabs around between comics).
         private ComicController Playing()
         {
-            var c = _comic.Get();
+            var c = Comic;
             var container = c != null && c.gameObject.activeInHierarchy ? c._panelContainer : null;
             if (container == null) return null;
             for (int i = 0; i < container.childCount; i++)

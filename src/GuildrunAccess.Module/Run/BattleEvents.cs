@@ -9,6 +9,7 @@ using GuildrunAccess.Core;
 using GuildrunAccess.Core.Strings;
 using HarmonyLib;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 
 namespace GuildrunAccess.Module.Run
 {
@@ -99,8 +100,7 @@ namespace GuildrunAccess.Module.Run
         {
             try
             {
-                var found = UnityEngine.Object.FindObjectOfType(Il2CppInterop.Runtime.Il2CppType.Of<Ember.Scopes.Battle.UI.BattleUIController>());
-                var battle = found != null ? found.TryCast<Ember.Scopes.Battle.UI.BattleUIController>() : null;
+                var battle = GameScopes.Controller<Ember.Scopes.Battle.UI.BattleUIController>();
                 var bars = battle != null ? battle._healthBars : null;
                 HealthBarView bar;
                 return bars != null && bars.TryGetValue(unit.EntityId, out bar) ? bar : null;

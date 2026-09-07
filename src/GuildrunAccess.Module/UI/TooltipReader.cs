@@ -8,6 +8,7 @@ using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes;
 using TMPro;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 
 namespace GuildrunAccess.Module.UI
 {
@@ -21,9 +22,6 @@ namespace GuildrunAccess.Module.UI
     /// </summary>
     internal static class TooltipReader
     {
-        private static AppTooltipController _controller;
-        private const int SearchEvery = 60;
-        private static int _lastSearchFrame = -SearchEvery;
 
         /// <summary>The tooltip's title alone (a stat's or ability's name), or null.</summary>
         public static string Title(TooltipRaycastTarget target)
@@ -128,15 +126,9 @@ namespace GuildrunAccess.Module.UI
             if (item != null) item.Context = run.Context;
         }
 
-        // The scene's tooltip controller (the run one in a run, the application one in the menu).
+        // The area's tooltip controller (the run's in a run, the application's in the menu): a listed
+        // controller of its scope, or, for the application scope (which lists none), a child of it.
         private static AppTooltipController Controller()
-        {
-            if (_controller != null) return _controller;
-            if (Time.frameCount - _lastSearchFrame < SearchEvery) return null;
-            _lastSearchFrame = Time.frameCount;
-            var found = UnityEngine.Object.FindObjectOfType(Il2CppType.Of<AppTooltipController>());
-            _controller = found != null ? found.TryCast<AppTooltipController>() : null;
-            return _controller;
-        }
+            => GameScopes.Controller<AppTooltipController>() ?? GameScopes.Component<AppTooltipController>();
     }
 }

@@ -4,6 +4,7 @@ using GuildrunAccess.Core;
 using Il2CppInterop.Runtime;
 using TMPro;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 
 namespace GuildrunAccess.Module.Readers
 {
@@ -15,9 +16,6 @@ namespace GuildrunAccess.Module.Readers
     /// </summary>
     internal sealed class ComicReader
     {
-        private ComicController _controller;
-        private const int SearchEvery = 30;
-        private int _lastSearchFrame = -SearchEvery;
         private readonly HashSet<int> _spoken = new HashSet<int>();
         private bool _wasPlaying;
 
@@ -51,14 +49,6 @@ namespace GuildrunAccess.Module.Readers
             return group == null || group.alpha > 0.05f;
         }
 
-        private ComicController Controller()
-        {
-            if (_controller != null) return _controller;
-            if (Time.frameCount - _lastSearchFrame < SearchEvery) return null;
-            _lastSearchFrame = Time.frameCount;
-            var found = Object.FindObjectOfType(Il2CppType.Of<ComicController>());
-            _controller = found != null ? found.TryCast<ComicController>() : null;
-            return _controller;
-        }
+        private static ComicController Controller() => GameScopes.Controller<ComicController>();
     }
 }

@@ -13,6 +13,7 @@ using GuildrunAccess.Module.Screens;
 using GuildrunAccess.Module.UI;
 using HarmonyLib;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 
 namespace GuildrunAccess.Module
 {
@@ -62,6 +63,8 @@ namespace GuildrunAccess.Module
             // The game-event hooks (the battle log). Patched by this load's Harmony id, unpatched in Dispose.
             try { _harmony.PatchAll(typeof(ModuleMain).Assembly); }
             catch (Exception e) { host.LogError("Harmony patching failed: " + e); }
+            // The scopes that exist already (a reload); from here on the scope hooks feed GameScopes.
+            GameScopes.Seed();
 
             FocusMode.Set(host.Settings.FocusModeOnLaunch);
             host.LogInfo("Module loaded: " + ScreenManager.Registered.Count + " screens, "
@@ -177,6 +180,7 @@ namespace GuildrunAccess.Module
             try { FocusMode.Shutdown(restore); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
             try { ScreenManager.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] screens: " + e); }
             try { InputManager.Clear(); } catch (Exception e) { _host?.LogError("[dispose] input: " + e); }
+            try { GameScopes.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] scopes: " + e); }
             try { _harmony?.UnpatchSelf(); } catch (Exception e) { _host?.LogError("[dispose] harmony: " + e); }
             _harmony = null;
             _host = null;

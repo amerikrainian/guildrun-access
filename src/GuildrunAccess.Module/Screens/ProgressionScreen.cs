@@ -8,6 +8,7 @@ using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
 using TMPro;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -24,11 +25,11 @@ namespace GuildrunAccess.Module.Screens
         public override int Layer => 25;
         public override bool Exclusive => true;
 
-        private readonly Finder<ProgressionUnlockUIController> _panel = new Finder<ProgressionUnlockUIController>();
+        private static ProgressionUnlockUIController Progression => GameScopes.Controller<ProgressionUnlockUIController>();
 
         private ProgressionUnlockUIController Panel()
         {
-            var panel = _panel.Get();
+            var panel = Progression;
             return panel != null && panel.gameObject.activeInHierarchy ? panel : null;
         }
 

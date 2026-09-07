@@ -3,6 +3,7 @@ using gg.leyline.tutorialsystem.UI;
 using GuildrunAccess.Core;
 using Il2CppInterop.Runtime;
 using UnityEngine;
+using GuildrunAccess.Module.Interop;
 
 namespace GuildrunAccess.Module.Readers
 {
@@ -14,15 +15,12 @@ namespace GuildrunAccess.Module.Readers
     /// </summary>
     internal sealed class TutorialReader
     {
-        private TutorialTextDisplay[] _displays;
-        private const int SearchEvery = 60;
-        private int _lastSearchFrame = -SearchEvery;
         private readonly Dictionary<int, string> _lastSpoken = new Dictionary<int, string>();
 
         public void Tick()
         {
-            var displays = Displays();
-            if (displays == null) return;
+            // The displays are permanent children of the run scope's tutorial controller.
+            var displays = GameScopes.Components<TutorialTextDisplay>();
             foreach (var d in displays)
             {
                 if (d == null) continue;
@@ -42,27 +40,5 @@ namespace GuildrunAccess.Module.Readers
             }
         }
 
-        // The displays live on a persistent canvas; re-scan when none are known or one was destroyed.
-        private TutorialTextDisplay[] Displays()
-        {
-            if (_displays != null)
-            {
-                bool alive = true;
-                foreach (var d in _displays) if (d == null) { alive = false; break; }
-                if (alive) return _displays;
-            }
-            if (Time.frameCount - _lastSearchFrame < SearchEvery) return null;
-            _lastSearchFrame = Time.frameCount;
-            var found = Object.FindObjectsOfType(Il2CppType.Of<TutorialTextDisplay>());
-            var list = new List<TutorialTextDisplay>();
-            if (found != null)
-                foreach (var o in found)
-                {
-                    var d = o != null ? o.TryCast<TutorialTextDisplay>() : null;
-                    if (d != null) list.Add(d);
-                }
-            _displays = list.Count > 0 ? list.ToArray() : null;
-            return _displays;
-        }
     }
 }

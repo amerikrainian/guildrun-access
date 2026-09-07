@@ -8,6 +8,7 @@ using Il2CppInterop.Runtime;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.Screens
@@ -26,19 +27,7 @@ namespace GuildrunAccess.Module.Screens
         public override bool Exclusive => true;
         public override object InitialFocusStop => "tabs"; // the section tabs first, as the panel opens on them
 
-        private SettingsUIController _controller;
-        private const int SearchEvery = 30;
-        private int _lastSearchFrame = -SearchEvery;
-
-        private SettingsUIController Controller()
-        {
-            if (_controller != null) return _controller;
-            if (Time.frameCount - _lastSearchFrame < SearchEvery) return null;
-            _lastSearchFrame = Time.frameCount;
-            var found = Object.FindObjectOfType(Il2CppType.Of<SettingsUIController>());
-            _controller = found != null ? found.TryCast<SettingsUIController>() : null;
-            return _controller;
-        }
+        private static SettingsUIController Controller() => GameScopes.Controller<SettingsUIController>();
 
         public override bool IsActive()
         {

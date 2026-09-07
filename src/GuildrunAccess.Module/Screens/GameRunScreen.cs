@@ -27,6 +27,8 @@ using Il2CppInterop.Runtime;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using GuildrunAccess.Module.Interop;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Navigation = GuildrunAccess.Core.UI.Navigation;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
@@ -50,21 +52,21 @@ namespace GuildrunAccess.Module.Screens
         public GameRunScreen() { Wrap = true; }
 
         // The controllers, each re-found by scene scan (throttled) when absent.
-        private readonly Finder<BottomHeroPanelUIController> _party = new Finder<BottomHeroPanelUIController>();
-        private readonly Finder<BattleFlowUIStateController> _flow = new Finder<BattleFlowUIStateController>();
-        private readonly Finder<BattleUIController> _battle = new Finder<BattleUIController>();
-        private readonly Finder<ItemReserveUIController> _reserve = new Finder<ItemReserveUIController>();
-        private readonly Finder<RelicUIController> _relics = new Finder<RelicUIController>();
-        private readonly Finder<BasicInfoUIPanelController> _info = new Finder<BasicInfoUIPanelController>();
-        private readonly Finder<ChunkUIController> _chunk = new Finder<ChunkUIController>();
-        private readonly Finder<BattleTimerController> _timer = new Finder<BattleTimerController>();
-        private readonly Finder<BattleSpeedController> _speed = new Finder<BattleSpeedController>();
-        private readonly Finder<NavigationUIController> _nav = new Finder<NavigationUIController>();
-        private readonly Finder<InformationSidebarController> _sidebar = new Finder<InformationSidebarController>();
+        private static BottomHeroPanelUIController Party => GameScopes.Controller<BottomHeroPanelUIController>();
+        private static BattleFlowUIStateController Flow => GameScopes.Controller<BattleFlowUIStateController>();
+        private static BattleUIController Battle => GameScopes.Controller<BattleUIController>();
+        private static ItemReserveUIController Reserve => GameScopes.Controller<ItemReserveUIController>();
+        private static RelicUIController Relics => GameScopes.Controller<RelicUIController>();
+        private static BasicInfoUIPanelController Info => GameScopes.Controller<BasicInfoUIPanelController>();
+        private static ChunkUIController Chunk => GameScopes.Controller<ChunkUIController>();
+        private static BattleTimerController Timer => GameScopes.Controller<BattleTimerController>();
+        private static BattleSpeedController Speed => GameScopes.Controller<BattleSpeedController>();
+        private static NavigationUIController Nav => GameScopes.Controller<NavigationUIController>();
+        private static InformationSidebarController Sidebar => GameScopes.Controller<InformationSidebarController>();
 
         public override bool IsActive()
         {
-            var party = _party.Get();
+            var party = Party;
             return party != null && party.gameObject.activeInHierarchy;
         }
 
@@ -90,7 +92,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildActions(GraphBuilder b)
         {
-            var flow = _flow.Get();
+            var flow = Flow;
             var placement = flow != null ? flow._placementParent : null;
             if (placement == null || !placement.activeInHierarchy) return;
             b.BeginStop("actions");
@@ -115,7 +117,7 @@ namespace GuildrunAccess.Module.Screens
 
         private bool Placing()
         {
-            var flow = _flow.Get();
+            var flow = Flow;
             var placement = flow != null ? flow._placementParent : null;
             return placement != null && placement.activeInHierarchy && RunData.Board() != null;
         }
@@ -260,7 +262,7 @@ namespace GuildrunAccess.Module.Screens
             yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
             {
                 if (_moveSource != MoveSource.None) { CancelMove(); return; }
-                var nav = _nav.Get();
+                var nav = Nav;
                 if (nav != null && GameNodes.IsShown(nav._settingsButton) && nav._settingsButton.interactable)
                     nav._settingsButton.onClick.Invoke();
             });
@@ -270,31 +272,51 @@ namespace GuildrunAccess.Module.Screens
 
         private struct Unit { public string Name; public HealthBarView Bar; public bool IsHero; }
 
+        // The board controller's own registries of character views (heroes by hero id, enemies by
+        // enemy id), matched to the HUD's health bars by entity id.
         private List<Unit> Units()
         {
             var units = new List<Unit>();
-            var battle = _battle.Get();
-            var bars = battle != null ? battle._healthBars : null;
-            if (bars == null) return units;
-            foreach (var o in UnityEngine.Object.FindObjectsOfType(Il2CppType.Of<CharacterViewController>()))
+            var battle = Battle;
+            var board = RunData.BoardController;
+            if (battle == null || board == null || battle._healthBars == null) return units;
+            AddUnits(units, battle, ViewsOf(board.CharacterViewControllers), isHero: true);
+            AddUnits(units, battle, ViewsOf(board._enemyViewControllers), isHero: false);
+            units.Sort((x, y) => x.IsHero == y.IsHero ? string.CompareOrdinal(x.Name, y.Name) : (x.IsHero ? -1 : 1));
+            return units;
+        }
+
+        // A registry's views as an array (the value collection copied out: no interop enumerator).
+        private static Il2CppReferenceArray<CharacterViewController> ViewsOf<TKey>(
+            Il2CppSystem.Collections.Generic.Dictionary<TKey, CharacterViewController> views)
+        {
+            try
             {
-                var c = o != null ? o.TryCast<CharacterViewController>() : null;
+                if (views == null || views.Count == 0) return null;
+                var array = new Il2CppReferenceArray<CharacterViewController>(views.Count);
+                views.Values.CopyTo(array, 0);
+                return array;
+            }
+            catch (Exception e)
+            {
+                Core.CoreLog.Warning("Units: character views unreadable: " + e.Message);
+                return null;
+            }
+        }
+
+        private static void AddUnits(List<Unit> units, BattleUIController battle, Il2CppReferenceArray<CharacterViewController> views, bool isHero)
+        {
+            if (views == null) return;
+            var bars = battle._healthBars;
+            foreach (var c in views)
+            {
                 if (c == null || !c.gameObject.activeInHierarchy) continue;
                 HealthBarView bar;
                 if (!bars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) continue;
                 string name = bar._characterNameText != null ? bar._characterNameText.text : null;
                 if (string.IsNullOrWhiteSpace(name)) name = c.gameObject.name.Replace("(Clone)", "");
-                units.Add(new Unit { Name = name, Bar = bar, IsHero = IsHero(c) });
+                units.Add(new Unit { Name = name, Bar = bar, IsHero = isHero });
             }
-            units.Sort((x, y) => x.IsHero == y.IsHero ? string.CompareOrdinal(x.Name, y.Name) : (x.IsHero ? -1 : 1));
-            return units;
-        }
-
-        // A hero character carries a hero id; the interop nullable throws when there is none (an enemy).
-        private static bool IsHero(CharacterViewController c)
-        {
-            try { return c.HeroId.HasValue; }
-            catch (NullReferenceException) { return false; }
         }
 
         private void BuildBoard(GraphBuilder b)
@@ -339,7 +361,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildParty(GraphBuilder b)
         {
-            var party = _party.Get();
+            var party = Party;
             if (party == null) return;
             b.BeginStop("party");
             AddHeroPanel(b, party._activeHeroPanel, Strings.RunParty, "party", false);
@@ -445,7 +467,7 @@ namespace GuildrunAccess.Module.Screens
             if (!RunData.TryItemId(slot, out var itemId)) return;
             string itemName = ItemNodes.ItemName(slot) ?? Strings.RunItems;
             var options = new List<ChoiceOption>();
-            var party = _party.Get();
+            var party = Party;
             if (party != null)
             {
                 AddEquipTargets(options, party._activeHeroPanel, itemId, itemName);
@@ -489,7 +511,7 @@ namespace GuildrunAccess.Module.Screens
         // and drops any focus request made before that, so the landing is applied from OnUpdate.
         private void InspectHero(HeroId heroId)
         {
-            var sidebar = _sidebar.Get();
+            var sidebar = Sidebar;
             if (sidebar == null || !sidebar.gameObject.activeInHierarchy)
             {
                 Core.CoreLog.Warning("Inspect: no information sidebar in the scene");
@@ -515,7 +537,7 @@ namespace GuildrunAccess.Module.Screens
         private void LandOnInspectedCard()
         {
             if (!_inspectPending) return;
-            var sidebar = _sidebar.Get();
+            var sidebar = Sidebar;
             var card = sidebar != null ? sidebar._heroCardView : null;
             if (card != null && card.gameObject.activeInHierarchy)
             {
@@ -534,7 +556,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildItems(GraphBuilder b)
         {
-            var reserve = _reserve.Get();
+            var reserve = Reserve;
             if (reserve == null || !reserve.gameObject.activeInHierarchy) return;
             b.BeginStop("items");
             b.PushContext(Strings.RunItems, Strings.RoleList);
@@ -554,7 +576,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildRelics(GraphBuilder b)
         {
-            var relics = _relics.Get();
+            var relics = Relics;
             if (relics == null || !relics.gameObject.activeInHierarchy) return;
             b.BeginStop("relics");
             b.PushContext(Strings.RunRelics, Strings.RoleList);
@@ -575,7 +597,7 @@ namespace GuildrunAccess.Module.Screens
         {
             b.BeginStop("info");
             b.PushContext(Strings.RunInfo, Strings.RoleList);
-            var info = _info.Get();
+            var info = Info;
             if (info != null && info.gameObject.activeInHierarchy)
             {
                 AddValue(b, "gold", () => TooltipReader.Title(info._currentGoldTooltip) ?? Strings.RunGold,
@@ -588,7 +610,7 @@ namespace GuildrunAccess.Module.Screens
                         () => { var tmp = difficulty.GetComponentInChildren<TMP_Text>(false); return tmp != null ? tmp.text : null; },
                         info._difficultyTooltip);
             }
-            var timer = _timer.Get();
+            var timer = Timer;
             if (timer != null && timer._timerText != null && timer._timerText.gameObject.activeInHierarchy)
                 AddValue(b, "timer", () => Strings.RunTimer, () => timer._timerText.text, null);
             b.PopContext();
@@ -623,7 +645,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildMap(GraphBuilder b)
         {
-            var chunk = _chunk.Get();
+            var chunk = Chunk;
             if (chunk == null || !chunk.gameObject.activeInHierarchy) return;
             var nodes = MapNodes(chunk);
             if (nodes.Count == 0) return;
@@ -672,7 +694,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildSpeed(GraphBuilder b)
         {
-            var speed = _speed.Get();
+            var speed = Speed;
             if (speed == null || !speed.gameObject.activeInHierarchy) return;
             b.BeginStop("speed");
             b.PushContext(Strings.RunSpeed, null, positions: false);
@@ -705,7 +727,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildSidebar(GraphBuilder b)
         {
-            var sidebar = _sidebar.Get();
+            var sidebar = Sidebar;
             if (sidebar == null || !sidebar.gameObject.activeInHierarchy) return;
             b.BeginStop("sidebar");
             SidebarNodes.Add(b, sidebar, "run:sidebar");
@@ -731,7 +753,7 @@ namespace GuildrunAccess.Module.Screens
 
         private void BuildMenu(GraphBuilder b)
         {
-            var nav = _nav.Get();
+            var nav = Nav;
             if (nav == null || !nav.gameObject.activeInHierarchy) return;
             b.BeginStop("menu");
             b.PushContext(Strings.RunMenu, Strings.RoleList);
@@ -746,25 +768,6 @@ namespace GuildrunAccess.Module.Screens
             if (GameNodes.IsShown(nav._settingsButton))
                 b.AddItem(ControlId.Structural("run:menu:settings"), GameNodes.Button(nav._settingsButton, () => Strings.RunSettings));
             b.PopContext();
-        }
-    }
-
-    /// <summary>A throttled scene-scan cache for one controller type: re-finds it only after it was
-    /// destroyed, at most every few frames, so screens can poll it every frame cheaply.</summary>
-    internal sealed class Finder<T> where T : MonoBehaviour
-    {
-        private T _value;
-        private const int SearchEvery = 30;
-        private int _lastSearchFrame = -SearchEvery;
-
-        public T Get()
-        {
-            if (_value != null) return _value;
-            if (Time.frameCount - _lastSearchFrame < SearchEvery) return null;
-            _lastSearchFrame = Time.frameCount;
-            var found = UnityEngine.Object.FindObjectOfType(Il2CppType.Of<T>());
-            _value = found != null ? found.TryCast<T>() : null;
-            return _value;
         }
     }
 }
