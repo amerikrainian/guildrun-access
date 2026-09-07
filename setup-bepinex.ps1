@@ -44,6 +44,26 @@ Write-Host "Installing $($Zip.Name) into $Game ..." -ForegroundColor Cyan
 # so it extracts straight into the game folder.
 Expand-Archive -Path $Zip.FullName -DestinationPath $Game -Force
 
+# --- No BepInEx console window: the mod speaks, and a second window only steals focus from the
+# screen reader. BepInEx keeps whatever values it finds in BepInEx.cfg and fills in the rest on the
+# first launch, so seeding just this key is enough; on re-runs the existing file is patched in place.
+$ConfigDir = "$Game\BepInEx\config"
+$Config = "$ConfigDir\BepInEx.cfg"
+$Seed = "[Logging.Console]`r`nEnabled = false`r`n"
+New-Item -ItemType Directory -Force $ConfigDir | Out-Null
+if (Test-Path $Config) {
+    $text = [IO.File]::ReadAllText($Config)
+    if ($text -match "\[Logging\.Console\]") {
+        $patched = [regex]::Replace($text, "(\[Logging\.Console\][^\[]*?^Enabled = )true", "`$1false", "Multiline, Singleline")
+    } else {
+        $patched = $text.TrimEnd() + "`r`n`r`n" + $Seed
+    }
+    if ($patched -ne $text) { [IO.File]::WriteAllText($Config, $patched) }
+} else {
+    [IO.File]::WriteAllText($Config, $Seed)
+}
+Write-Host "BepInEx console window disabled ([Logging.Console] Enabled = false in BepInEx\config\BepInEx.cfg)." -ForegroundColor Cyan
+
 Write-Host ""
 Write-Host "BepInEx installed. Now launch the game once through Steam (steam.exe -applaunch 4425970)" -ForegroundColor Cyan
 Write-Host "and wait for the main menu; the first launch generates the interop assemblies the build" -ForegroundColor Cyan

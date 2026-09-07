@@ -86,7 +86,9 @@ restart**: `dotnet build src/GuildrunAccess.Module/GuildrunAccess.Module.csproj`
 ## Logs
 Our lines go through the BepInEx logger with a `[Guildrun Access]` source into
 `<game>\BepInEx\LogOutput.log` (truncated each launch), and in-band via `GET /log?since=N&grep=S`.
-BepInEx/Il2CppInterop boot problems are at the top of that file.
+BepInEx/Il2CppInterop boot problems are at the top of that file. The BepInEx console window is off
+(`setup-bepinex.ps1` seeds `[Logging.Console] Enabled = false` in `BepInEx\config\BepInEx.cfg`; a second
+window steals focus from the screen reader). Flip it back to `true` there to watch a boot live.
 
 ## Navigation strategy (decided)
 **Custom keyboard navigation over the live uGUI widgets** — NOT the game's own EventSystem selection.
