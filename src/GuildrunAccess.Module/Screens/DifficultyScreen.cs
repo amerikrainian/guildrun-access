@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Ember.Balancing.Difficulty;
 using Ember.Scopes.Application.Difficulty;
 using Ember.Scopes.MainMenu.UI;
+using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -58,7 +60,8 @@ namespace GuildrunAccess.Module.Screens
                     var toggle = option._toggle != null ? option._toggle : option.GetComponent<Toggle>();
                     if (toggle == null) continue;
                     var o = option;
-                    b.AddItem(ControlId.Structural("difficulty:tier:" + i), Tier(toggle, o));
+                    int index = i;
+                    b.AddItem(ControlId.Structural("difficulty:tier:" + i), Tier(toggle, o, index));
                 }
             b.PopContext();
 
@@ -108,8 +111,9 @@ namespace GuildrunAccess.Module.Screens
         }
 
         // A tier: its caption, radio-button role, selected state, and "disabled" while locked. Landing
-        // on an unlocked tier selects it, as Enter does.
-        private static NodeVtable Tier(Toggle toggle, DifficultyOptionItemView option)
+        // on an unlocked tier selects it, as Enter does. Space reads what the tier means from the
+        // game's difficulty data, locked or not (the screen itself describes only the selected tier).
+        private static NodeVtable Tier(Toggle toggle, DifficultyOptionItemView option, int index)
         {
             Action select = () => { if (toggle.interactable && !option._isLocked && !toggle.isOn) toggle.isOn = true; };
             return new NodeVtable
@@ -124,7 +128,41 @@ namespace GuildrunAccess.Module.Screens
                 SearchText = () => Caption(option),
                 OnActivate = select,
                 OnFocus = select,
+                OnTooltip = () => GameNodes.SayTooltip(TierInfo(index)),
             };
+        }
+
+        // The tier's own name and description from the balancing ("Difficulty: C. Heroes take 10% Max
+        // HP damage at the start of each combat."): the configs run parallel to the controller's tier
+        // items (Base, then C to SSS); The Red Rift has no config and stays silent. The lock hover
+        // panel is one shared object the game fills only on hover, so it is no source.
+        private static string TierInfo(int index)
+        {
+            var panel = Difficulty;
+            var singleton = panel != null && panel._difficultiesSingleton != null
+                ? panel._difficultiesSingleton.TryCast<DifficultiesSingleton>() : null;
+            var configs = singleton != null ? singleton._difficulties : null;
+            if (configs == null || index < 0 || index >= configs.Length || configs[index] == null) return null;
+            var config = configs[index];
+            var sb = new System.Text.StringBuilder();
+            foreach (var text in new[] { Localized(config.DisplayName), Localized(config.DisplayDescription) })
+            {
+                if (string.IsNullOrWhiteSpace(text)) continue;
+                if (sb.Length > 0) sb.Append(". ");
+                sb.Append(text.Trim());
+            }
+            return sb.Length > 0 ? sb.ToString() : null;
+        }
+
+        private static string Localized(UnityEngine.Localization.LocalizedString text)
+        {
+            if (text == null) return null;
+            try { return text.GetLocalizedString(); }
+            catch (Exception e)
+            {
+                CoreLog.Warning("Difficulty: localized string unreadable: " + e.Message);
+                return null;
+            }
         }
 
         // The tier's name label ("Base", "LETHAL", "THE RED RIFT"), with the rank its icon shows when it
