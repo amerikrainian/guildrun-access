@@ -200,7 +200,10 @@ slot, cell, unit or card concerns and the items it carries: `GameRun/Nodes/HeroL
 (the run's, one line each), **party** and **enemies** (one line per unit, placement and fights),
 **combat** (the battle events log, following its latest line). Conventions: a tooltip is ONE line,
 never joined with others; helpers return `List<string>` (`ItemTooltips`, `AbilitiesTooltips`,
-`SlotTooltips`...); a node's details go in `Details = () => ...`, never spoken directly. The dev
+`SlotTooltips`...); a node's details go in `Details = () => ...`, never spoken directly. An item's
+tooltip lines end with one definition per stat it modifies ("Attack Speed: Increases how often a
+character auto attacks.", the game's `StatTextHelper` text, appended by `TooltipReader.Lines`), since
+the game's own item tooltip defines none. The dev
 server drives them through the action keys: `POST /input` with `buffer.next`, `buffer.prev`,
 `buffer.line.next`, `buffer.line.prev`.
 

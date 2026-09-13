@@ -2,10 +2,14 @@ using System.Collections.Generic;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
+using Ember.Balancing.Sheets.Items;
 using Ember.Scopes.Application.UI.Tooltips;
+using Ember.Scopes.Application.UI.Tooltips.Sources;
+using Ember.Scopes.Application.Utilities;
 using Ember.Scopes.GameRun.Utilities.Tooltips;
 using Ember.Scopes.GameRun.Utilities.Tooltips.Sources;
 using GuildrunAccess.Core;
+using GuildrunAccess.Core.Strings;
 using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes;
 using TMPro;
@@ -51,7 +55,9 @@ namespace GuildrunAccess.Module.UI
         /// text of every section the details mode shows as a line of its own (the summary, then each
         /// keyword definition it uses: what the game shows while Shift is held, without the hint to hold
         /// Shift), in the game's own order; the summary alone when <paramref name="details"/> is false.
-        /// Empty when the control has no tooltip.</summary>
+        /// An item's tooltip goes on with one definition line per stat it modifies ("Attack Speed:
+        /// Increases how often a character auto attacks."), the game's own stat text, which its item
+        /// tooltip leaves out. Empty when the control has no tooltip.</summary>
         public static List<string> Lines(TooltipRaycastTarget target, bool details = true)
         {
             var lines = new List<string>();
@@ -78,7 +84,45 @@ namespace GuildrunAccess.Module.UI
                 }
             }
             view.Clear();
+            if (details) AddStatDefinitions(lines, target);
             return lines;
+        }
+
+        // An item's stat lines ("+10 Attack Speed") define nothing: the game keeps a stat's definition
+        // in its stat text helper, what a hero card's stat tooltip shows. One line per stat the item
+        // modifies, after the sections; stats the game has no text for are skipped.
+        private static void AddStatDefinitions(List<string> lines, TooltipRaycastTarget target)
+        {
+            try
+            {
+                var entry = ItemEntry(target != null ? target.TooltipSource : null);
+                var mods = entry != null ? entry.StatModifications : null;
+                if (mods == null) return;
+                for (int i = 0; i < mods.Length; i++)
+                {
+                    var type = mods[i].TargetStat;
+                    if (type == TargetStatType.None) continue;
+                    string name = StatTextHelper.GetStatName(type);
+                    string description = StatTextHelper.GetStatDescription(type);
+                    if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(description)) continue;
+                    lines.Add(Strings.StatDefinition(name.Trim(), description.Trim()));
+                }
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("TooltipReader: stat definitions failed: " + e.Message);
+            }
+        }
+
+        // The item entry behind an item's tooltip (a run's item instance or a catalogue entry), else null.
+        private static IItemEntry ItemEntry(ITooltipSource source)
+        {
+            var obj = source as Il2CppObjectBase;
+            if (obj == null) return null;
+            var instance = obj.TryCast<ItemInstanceTooltipSource>();
+            if (instance != null) return instance._itemEntry;
+            var entry = obj.TryCast<ItemEntryTooltipSource>();
+            return entry != null ? entry.ItemEntry : null;
         }
 
         // A section text holds one paragraph per line break (the keyword definitions come as one text,

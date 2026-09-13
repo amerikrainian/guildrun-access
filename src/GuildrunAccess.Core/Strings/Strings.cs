@@ -68,6 +68,7 @@ namespace GuildrunAccess.Core.Strings
             D("buffer.none", "no buffer lines"),
             // {0} = the buffer's name, {1} = its current line.
             D("buffer.line", "{0}: {1}"),
+            D("tooltip.stat_definition", "{0}: {1}"),
             D("drag.no_target", "nothing to drag"),
             D("delete.no_target", "nothing to remove"),
             D("nav.minimum", "minimum"),
@@ -434,6 +435,7 @@ namespace GuildrunAccess.Core.Strings
         public static string BufferCombat => Get("buffer.combat");
         public static string BufferNone => Get("buffer.none");
         public static string BufferLine(string name, string line) => F("buffer.line", name, line);
+        public static string StatDefinition(string name, string description) => F("tooltip.stat_definition", name, description);
         public static string NoDragTarget => Get("drag.no_target");
         public static string NoDeleteTarget => Get("delete.no_target");
         public static string Minimum => Get("nav.minimum");
