@@ -43,10 +43,17 @@ namespace GuildrunAccess.Module.GameRun
         public override bool AllowsTypeahead => true;
         protected override string ContextLabel => Strings.ScreenRun;
 
+        // The HUD is the player's place only while the board is editable (placement) or a fight is on
+        // (units with health bars). In the flow's other states (a result fading in, the shop, the
+        // crossroads, an event, the run's start and end) it is covered or in transition, and being
+        // the top screen for those frames only announces a landing nobody asked for ("battlefield,
+        // no units on the board" at every battle end and between every two panels). Inactive then,
+        // the screen pops and comes back fresh on the next placement, landing on Fight.
         public override bool IsActive()
         {
             var party = RunData.Party;
-            return party != null && party.gameObject.activeInHierarchy;
+            if (party == null || !party.gameObject.activeInHierarchy) return false;
+            return RunData.Placing() || BoardSection.HasUnits();
         }
 
         protected override IEnumerable<ElementAction> OwnActions()

@@ -122,13 +122,38 @@ namespace GuildrunAccess.Module.GameRun
 
         private struct Unit { public string Name; public HealthBarView Bar; public bool IsHero; }
 
+        /// <summary>Whether any unit stands on the battlefield: a character view with a live health bar,
+        /// which is the fight itself. The run screen's activity hangs on it (see
+        /// <see cref="GameRunScreen.IsActive"/>), so it is polled every frame: first match wins.</summary>
+        internal static bool HasUnits()
+        {
+            var battle = GameScopes.Controller<BattleUIController>();
+            var board = RunData.BoardController;
+            if (battle == null || board == null || battle._healthBars == null || battle._healthBars.Count == 0) return false;
+            return AnyUnit(battle, ViewsOf(board.CharacterViewControllers)) || AnyUnit(battle, ViewsOf(board._enemyViewControllers));
+        }
+
+        private static bool AnyUnit(BattleUIController battle, Il2CppReferenceArray<CharacterViewController> views)
+        {
+            if (views == null) return false;
+            var bars = battle._healthBars;
+            foreach (var c in views)
+            {
+                if (c == null || !c.gameObject.activeInHierarchy) continue;
+                HealthBarView bar;
+                if (bars.TryGetValue(c.EntityId, out bar) && bar != null && bar.gameObject.activeInHierarchy) return true;
+            }
+            return false;
+        }
+
+        // An empty battlefield declares nothing: the run screen is not active then (a fight has just
+        // ended, or the HUD is between panels), so there is no landing to announce.
         private void BuildBattlefield(GraphBuilder b)
         {
             var units = Units();
+            if (units.Count == 0) return;
             b.BeginStop("board");
             b.PushContext(Strings.RunBoard, Strings.RoleList);
-            if (units.Count == 0)
-                b.AddItem(ControlId.Structural("run:board:none"), GameNodes.Text(() => Strings.RunNoUnits));
             for (int i = 0; i < units.Count; i++)
             {
                 var u = units[i];

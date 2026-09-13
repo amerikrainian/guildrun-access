@@ -15,7 +15,8 @@ namespace GuildrunAccess.Module.GameRun
     /// A random event (<see cref="EventUIController"/>): the event's name as the context, its story
     /// text as a line (the whole text at once, not the typewriter's trickle), the choices as buttons
     /// (an item or relic on offer named on its button, Space for its tooltip), then the outcome text and
-    /// the Proceed button once a choice was made. Escape presses Proceed when it is up.
+    /// the Proceed button once a choice was made, all one Tab-stop read top to bottom with the arrows.
+    /// Escape presses Proceed when it is up.
     /// </summary>
     public sealed class EventScreen : Screen
     {
@@ -26,6 +27,9 @@ namespace GuildrunAccess.Module.GameRun
         private static EventUIController EventUI => GameScopes.Controller<EventUIController>();
         private string _lastOutcome;
         private string _lastChoices;
+
+        private static readonly ControlId OutcomeId = ControlId.Structural("event:outcome");
+        private static ControlId ChoiceId(ChoiceButtonView choice) => ControlId.Structural("event:choice:" + choice.GetInstanceID());
 
         // When the outcome text appears (the chosen button is gone by then), land on it so the result
         // is spoken and Proceed is a step away; when a new set of choices replaces the old one (an
@@ -39,15 +43,16 @@ namespace GuildrunAccess.Module.GameRun
             if (outcome != _lastOutcome)
             {
                 _lastOutcome = outcome;
-                if (!string.IsNullOrWhiteSpace(outcome)) { Navigation.FocusStop("outcome"); return; }
+                if (!string.IsNullOrWhiteSpace(outcome)) { Navigation.FocusNode(OutcomeId); return; }
             }
+            var live = Choices(e);
             var sb = new System.Text.StringBuilder();
-            foreach (var choice in Choices(e)) sb.Append(choice.GetInstanceID()).Append(',');
+            foreach (var choice in live) sb.Append(choice.GetInstanceID()).Append(',');
             string choices = sb.ToString();
             if (choices == _lastChoices) return;
             bool hadChoices = !string.IsNullOrEmpty(_lastChoices);
             _lastChoices = choices;
-            if (hadChoices && choices.Length > 0) Navigation.FocusStop("choices");
+            if (hadChoices && live.Count > 0) Navigation.FocusNode(ChoiceId(live[0]));
         }
 
         public override void OnPop()
@@ -71,6 +76,7 @@ namespace GuildrunAccess.Module.GameRun
                 ? e._eventNameText.text : Strings.ScreenEvent;
             b.PushContext(title, null, positions: false);
 
+            // One Tab-stop: the story reads top to bottom with the arrows alone.
             b.BeginStop("story");
             b.AddItem(ControlId.Structural("event:description"), GameNodes.Text(() => FullText(e._eventDescriptionTypewriterEffect, e._eventDescriptionText)));
 
@@ -78,10 +84,9 @@ namespace GuildrunAccess.Module.GameRun
             var choices = Choices(e);
             if (choices.Count > 0)
             {
-                b.BeginStop("choices");
                 b.PushContext(Strings.EventChoices, Strings.RoleList);
                 for (int i = 0; i < choices.Count; i++)
-                    b.AddItem(ControlId.Structural("event:choice:" + choices[i].GetInstanceID()), Choice(choices[i]));
+                    b.AddItem(ChoiceId(choices[i]), Choice(choices[i]));
                 b.PopContext();
             }
 
@@ -93,20 +98,16 @@ namespace GuildrunAccess.Module.GameRun
             bool summaryShown = summary != null && summary.gameObject.activeInHierarchy;
             if (outcomeShown || summaryShown)
             {
-                b.BeginStop("outcome");
                 b.PushContext(Strings.EventOutcome, null, positions: false);
                 if (outcomeShown)
-                    b.AddItem(ControlId.Structural("event:outcome"), GameNodes.Text(() => FullText(outcomeText, null)));
+                    b.AddItem(OutcomeId, GameNodes.Text(() => FullText(outcomeText, null)));
                 if (summaryShown)
                     b.AddItem(ControlId.Structural("event:summary"), Summary(summary));
                 b.PopContext();
             }
 
             if (GameNodes.IsShown(e._proceedButton))
-            {
-                b.BeginStop("actions");
                 b.AddItem(ControlId.Structural("event:proceed"), GameNodes.Button(e._proceedButton, () => Strings.RunProceed));
-            }
 
             b.PopContext();
         }

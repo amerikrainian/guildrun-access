@@ -127,7 +127,6 @@ namespace GuildrunAccess.Core.Strings
             D("run.unit_enemy", "{0}, enemy, {1} health"),
             // {0} = current mana, {1} = max mana.
             D("run.mana", "mana {0} of {1}"),
-            D("run.no_units", "no units on the board"),
             // {0} = slot number (1-based).
             D("run.party_slot", "party slot {0}"),
             D("run.reserve_slot", "reserve slot {0}"),
@@ -458,7 +457,6 @@ namespace GuildrunAccess.Core.Strings
         public static string RunMenu => Get("run.menu");
         public static string RunUnit(bool hero, string name, string health) => F(hero ? "run.unit_hero" : "run.unit_enemy", name, health);
         public static string RunMana(string current, string max) => F("run.mana", current, max);
-        public static string RunNoUnits => Get("run.no_units");
         public static string RunPartySlot(int index) => F("run.party_slot", index);
         public static string RunReserveSlot(int index) => F("run.reserve_slot", index);
         public static string RunSlotEmpty => Get("run.slot_empty");
