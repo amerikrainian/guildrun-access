@@ -10,8 +10,8 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The endless-mode leaderboard (<see cref="LeaderboardController"/>), which the game shows on the
     /// difficulty screen and on the run's final result panel: its Global / Friend List tabs, the
-    /// streak and loading lines, every entry as "rank, name, floor", and the reset countdown (its tooltip a
-    /// buffer line). Two Tab-stops of its own: the tabs and lines, then the entries, so a
+    /// visibility toggle (the eye), the streak and loading lines, every entry as "rank, name, floor",
+    /// and the reset countdown (its tooltip a buffer line). Two Tab-stops of its own: the tabs and lines, then the entries, so a
     /// player can skip the list without arrowing through it.
     /// </summary>
     internal static class LeaderboardNodes
@@ -20,7 +20,11 @@ namespace GuildrunAccess.Module.GameRun
         {
             if (lb == null || !lb.gameObject.activeInHierarchy) return;
             b.BeginStop(keyPrefix + ":tabs");
-            b.PushContext(Strings.ResultLeaderboard, null, positions: false);
+            b.PushContext(Title(lb), null, positions: false);
+            // The eye: shows or hides the board (its own view; the toggle inside it is the widget).
+            var eye = lb._visibilityToggle != null ? lb._visibilityToggle._visibilityToggle : null;
+            if (GameNodes.IsShown(eye))
+                b.AddItem(ControlId.Structural(keyPrefix + ":visible"), GameNodes.Toggle(eye, () => Strings.LeaderboardVisible));
             if (GameNodes.IsShown(lb._globalTab))
                 b.AddItem(ControlId.Structural(keyPrefix + ":global"), GameNodes.Tab(lb._globalTab));
             if (GameNodes.IsShown(lb._friendsTab))
@@ -50,6 +54,22 @@ namespace GuildrunAccess.Module.GameRun
                     Details = () => TooltipReader.Lines(lb._resetTooltipRaycastTarget),
                 });
             b.PopContext();
+        }
+
+        // The board's shown title ("Endless Mode Leaderboard", or the challenge one), else our word.
+        private static string Title(LeaderboardController lb)
+        {
+            foreach (var titles in new[] { lb._regularTitles, lb._challengeModeTitles })
+            {
+                if (titles == null) continue;
+                foreach (var go in titles)
+                {
+                    if (go == null || !go.activeInHierarchy) continue;
+                    var tmp = go.GetComponentInChildren<TMP_Text>(false);
+                    if (tmp != null && !string.IsNullOrWhiteSpace(tmp.text)) return tmp.text.Trim();
+                }
+            }
+            return Strings.ResultLeaderboard;
         }
 
         private static void AddLine(GraphBuilder b, string key, TMP_Text text)

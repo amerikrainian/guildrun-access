@@ -18,7 +18,9 @@ namespace GuildrunAccess.Module.Screens
     /// A modal dialog panel (the privacy/GDPR consent, the generic confirmation, the error box, the exit
     /// and survey prompts), read generically: every text under the panel becomes a read-only line and
     /// every button a control, in hierarchy order, so entering the dialog speaks its title and message
-    /// before landing on the first line. Escape presses the panel's cancel/close button when it has one.
+    /// before landing on the first line; an input field (the error box's stack trace) is a control
+    /// whose buffer holds its text line by line. Escape presses the panel's cancel/close button when
+    /// it has one.
     /// Active whenever a panel of the type is active in the scene; Exclusive, so only dialog keys live.
     /// </summary>
     /// <typeparam name="TPanel">The panel MonoBehaviour type (a permanent child of its scope).</typeparam>
@@ -69,6 +71,18 @@ namespace GuildrunAccess.Module.Screens
             {
                 var t = texts[i];
                 b.AddItem(ControlId.Structural(_key + ":text" + i), GameNodes.Text(() => t.text));
+            }
+
+            int k = 0;
+            foreach (var field in p.GetComponentsInChildren<TMP_InputField>(false))
+            {
+                if (field == null || string.IsNullOrWhiteSpace(field.text)) continue;
+                var f = field;
+                b.AddItem(ControlId.Structural(_key + ":field" + k++), new NodeVtable
+                {
+                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Strings.DialogStackTrace) },
+                    Details = () => GameNodes.Lines(f.text.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries)),
+                });
             }
 
             int j = 0;

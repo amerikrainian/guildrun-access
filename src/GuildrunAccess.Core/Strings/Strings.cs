@@ -103,6 +103,9 @@ namespace GuildrunAccess.Core.Strings
             D("screen.privacy", "Privacy"),
             D("screen.confirm", "Confirm"),
             D("screen.error", "Error"),
+            D("dialog.stack_trace", "stack trace"),
+            D("mainmenu.version", "version {0}"),
+            D("leaderboard.visible", "Show leaderboard"),
             D("screen.exit", "Exit"),
             D("screen.survey", "Survey"),
             // The role word for a modal dialog context.
@@ -457,6 +460,9 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenPrivacy => Get("screen.privacy");
         public static string ScreenConfirm => Get("screen.confirm");
         public static string ScreenError => Get("screen.error");
+        public static string DialogStackTrace => Get("dialog.stack_trace");
+        public static string MainMenuVersion(string version) => F("mainmenu.version", version);
+        public static string LeaderboardVisible => Get("leaderboard.visible");
         public static string ScreenExit => Get("screen.exit");
         public static string ScreenSurvey => Get("screen.survey");
         public static string RoleDialog => Get("role.dialog");

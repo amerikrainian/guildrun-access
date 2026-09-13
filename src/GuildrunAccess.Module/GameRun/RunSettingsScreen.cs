@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Ember.Scopes.Application.Compendium;
 using Ember.Scopes.GameRun.UI.Navigation;
+using TMPro;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -12,8 +14,9 @@ namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The run's pause menu (<see cref="SettingsPanelView"/>, opened by the HUD's Settings button or
-    /// the game's Escape): Continue, Settings (the full settings panel opens above it), Abandon Run,
-    /// Quit to Menu, Quit Game, each with the game's own caption. Escape presses Continue.
+    /// the game's Escape), under the window's own title ("Game paused"): Continue, Settings (the full
+    /// settings panel opens above it), Compendium, Abandon Run, Quit to Menu, Quit Game, each with
+    /// the game's own caption. Escape presses Continue.
     /// </summary>
     public sealed class RunSettingsScreen : Screen
     {
@@ -36,13 +39,28 @@ namespace GuildrunAccess.Module.GameRun
         {
             var panel = Panel();
             if (panel == null) return;
-            b.PushContext(Strings.RunSettings, Strings.RoleList);
-            foreach (var button in new[] { panel.ContinueButton, panel.SettingsButton, panel.AbandonRunButton, panel.QuitToMenuButton, panel.QuitGameButton })
+            b.PushContext(Title(panel), Strings.RoleList);
+            foreach (var button in new[] { panel.ContinueButton, panel.SettingsButton, CompendiumButton(panel), panel.AbandonRunButton, panel.QuitToMenuButton, panel.QuitGameButton })
             {
                 if (!GameNodes.IsShown(button)) continue;
                 b.AddItem(ControlId.Structural("pause:" + button.GetInstanceID()), GameNodes.Button(button));
             }
             b.PopContext();
+        }
+
+        // The window's own title text ("Game paused"), else our name for it.
+        private static string Title(SettingsPanelView panel)
+        {
+            foreach (var tmp in panel.GetComponentsInChildren<TMP_Text>(false))
+                if (tmp != null && tmp.gameObject.name == "TitleText" && !string.IsNullOrWhiteSpace(tmp.text)) return tmp.text.Trim();
+            return Strings.RunSettings;
+        }
+
+        // The window's Compendium button has no field on the view: it is the opener component inside it.
+        private static UnityEngine.UI.Button CompendiumButton(SettingsPanelView panel)
+        {
+            var opener = panel.GetComponentInChildren<OpenCompendiumButton>(true);
+            return opener != null ? opener._button : null;
         }
 
         public override IEnumerable<ElementAction> GetActions()

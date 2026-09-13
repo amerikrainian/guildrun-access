@@ -144,6 +144,9 @@ namespace GuildrunAccess.Module.GameRun
         {
             var lines = new List<string>();
             if (card == null) return lines;
+            // The bars first (Max HP, Starting Mana: their tooltips define them), then every stat.
+            lines.AddRange(TooltipReader.Lines(card._healthTooltip));
+            lines.AddRange(TooltipReader.Lines(card._manaTooltip));
             foreach (var stat in card.GetComponentsInChildren<StatView>(false))
             {
                 if (stat == null) continue;

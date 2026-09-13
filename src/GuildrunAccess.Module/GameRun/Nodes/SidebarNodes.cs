@@ -154,6 +154,8 @@ namespace GuildrunAccess.Module.GameRun
         internal static List<string> StatTooltips(EnemyCardView enemy)
         {
             var lines = new List<string>();
+            lines.AddRange(TooltipReader.Lines(enemy._healthTooltip));
+            lines.AddRange(TooltipReader.Lines(enemy._manaTooltip));
             foreach (var stat in enemy.GetComponentsInChildren<StatView>(false))
             {
                 if (stat != null) lines.AddRange(TooltipReader.Lines(stat._tooltipRaycastTarget));

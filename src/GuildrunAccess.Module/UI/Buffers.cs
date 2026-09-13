@@ -77,9 +77,12 @@ namespace GuildrunAccess.Module.UI
             }
         }
 
-        // The battle events log, oldest first (the buffer follows the latest line).
+        // The battle events log, oldest first (the buffer follows the latest line); a run's alone, so
+        // the last fight's lines do not linger on the menus after it.
         private static IEnumerable<string> CombatLines()
         {
+            var party = RunData.Party;
+            if (party == null || !party.gameObject.activeInHierarchy) yield break;
             var lines = BattleEvents.Lines;
             for (int i = 0; i < lines.Count; i++) yield return lines[i].Text;
         }
