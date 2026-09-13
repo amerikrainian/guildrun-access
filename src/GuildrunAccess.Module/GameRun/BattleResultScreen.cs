@@ -118,6 +118,10 @@ namespace GuildrunAccess.Module.GameRun
                     b.AddItem(ControlId.Structural("result:tab:" + t.GetInstanceID()), GameNodes.Tab(t));
                 }
 
+            // What the selected tab shows, a stop of its own: the durations and the tabs stay behind,
+            // and a Tab reaches the rows (the hero cards, or the tracker) without arrowing past them.
+            b.BeginStop("stats:entries");
+
             // Hero Stats: one card per hero (name, stats, items).
             var cards = stats._heroCards;
             if (cards != null)
