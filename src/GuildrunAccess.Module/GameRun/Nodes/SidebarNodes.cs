@@ -118,7 +118,7 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         // "Turtle, 200 health, mana 0 of 60".
-        private static string EnemyLine(EnemyCardView enemy)
+        internal static string EnemyLine(EnemyCardView enemy)
         {
             var sb = new StringBuilder();
             if (enemy._nameText != null) sb.Append(enemy._nameText.text);
@@ -129,7 +129,7 @@ namespace GuildrunAccess.Module.GameRun
             return sb.ToString();
         }
 
-        private static string Stats(EnemyCardView enemy)
+        internal static string Stats(EnemyCardView enemy)
         {
             var sb = new StringBuilder();
             foreach (var stat in enemy.GetComponentsInChildren<StatView>(false))
@@ -143,7 +143,7 @@ namespace GuildrunAccess.Module.GameRun
             return sb.Length > 0 ? sb.ToString() : Strings.EndNoHighlights;
         }
 
-        private static List<string> StatTooltips(EnemyCardView enemy)
+        internal static List<string> StatTooltips(EnemyCardView enemy)
         {
             var lines = new List<string>();
             foreach (var stat in enemy.GetComponentsInChildren<StatView>(false))

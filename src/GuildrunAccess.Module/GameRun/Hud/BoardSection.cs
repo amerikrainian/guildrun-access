@@ -86,21 +86,67 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => Occupant(cell),
                 OnActivate = () => ActivateCell(cell),
-                Details = () =>
-                {
-                    var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null;
-                    return view != null ? RunLabels.SlotTooltips(view) : null;
-                },
-                SideLines = HeroLines.Side(
-                    () =>
-                    {
-                        // A hero: its name and abilities; an enemy: its unit line (name, health, mana).
-                        if (RunData.TryHeroAt(cell, out var id)) { var view = RunData.ViewOf(id); return view != null ? HeroLines.ForSlot(view) : null; }
-                        if (RunData.TryEnemyAt(cell, out var enemy)) { string line = UnitLineFor(enemy); return line != null ? new[] { line } : null; }
-                        return null;
-                    },
+                // Landing on an occupied cell shows its card in the sidebar, as the mouse hovering it
+                // does; the buffers below read that card, so what the inspect panel shows is what
+                // review reads, without leaving the grid.
+                OnFocus = () => Peek(cell),
+                Details = () => CellDetails(cell),
+                SideLines = HeroLines.Side(() => CellHeroLines(cell),
                     () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? ItemNodes.ItemTooltips(view._itemSlotViews) : null; }),
             };
+        }
+
+        private static void Peek(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var hero)) HeroActions.PeekHero(hero);
+            else if (RunData.TryEnemyAt(cell, out var enemy)) HeroActions.PeekEnemy(enemy);
+        }
+
+        // The control buffer: a hero's abilities and items (its slot), plus its card's stat tooltips
+        // when the sidebar shows it; an enemy's abilities and stats from its card.
+        private static IEnumerable<string> CellDetails(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var id))
+            {
+                var view = RunData.ViewOf(id);
+                var lines = view != null ? RunLabels.SlotTooltips(view) : new List<string>();
+                var card = HeroActions.ShownHeroCard(RunData.HeroName(id));
+                if (card != null) lines.AddRange(HeroCardNodes.StatsTooltips(card));
+                return lines;
+            }
+            if (RunData.TryEnemyAt(cell, out var enemy))
+            {
+                var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
+                if (card == null) return null;
+                var lines = HeroCardNodes.AbilitiesTooltips(card);
+                lines.AddRange(SidebarNodes.StatTooltips(card));
+                return lines;
+            }
+            return null;
+        }
+
+        // The hero buffer: the card's rows as the sidebar reads them (name with health and mana, the
+        // abilities line, the stats line); a hero without its card shown falls back to its slot, an
+        // enemy to its unit line.
+        private static IEnumerable<string> CellHeroLines(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var id))
+            {
+                var card = HeroActions.ShownHeroCard(RunData.HeroName(id));
+                if (card != null)
+                    return GameNodes.Lines(HeroCardNodes.NameAndClass(card), HeroCardNodes.StatsLine(card), HeroCardNodes.AbilitiesLine(card));
+                var view = RunData.ViewOf(id);
+                return view != null ? HeroLines.ForSlot(view) : null;
+            }
+            if (RunData.TryEnemyAt(cell, out var enemy))
+            {
+                var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
+                if (card != null)
+                    return GameNodes.Lines(SidebarNodes.EnemyLine(card), HeroCardNodes.AbilitiesLine(card), SidebarNodes.Stats(card));
+                string line = UnitLineFor(enemy);
+                return line != null ? new[] { line } : null;
+            }
+            return null;
         }
 
         private static string Occupant(Vector2Int cell)

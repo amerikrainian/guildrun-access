@@ -4,6 +4,8 @@ using Ember.Balancing.SimulationBridge;
 using Ember.Scopes.Battle.UI.Sidebar;
 using Ember.Scopes.GameRun.GameRegistry.Data.Characters;
 using Ember.Scopes.GameRun.GameRegistry.Data.Items;
+using Ember.Scopes.GameRun.UI.HeroCard;
+using Ember.Scopes.GameRun.UI.EnemyCard;
 using Ember.Scopes.GameRun.UI.Slots;
 using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
 using GuildrunAccess.Core;
@@ -172,6 +174,44 @@ namespace GuildrunAccess.Module.GameRun
             _inspectPending = true;
             _inspectEnemy = true;
             _inspectDeadline = NavInput.Current.FrameCount + InspectLandingFrames;
+        }
+
+        /// <summary>Show a hero's card in the sidebar without moving focus: what the game does when the
+        /// mouse hovers the hero; a board cell does it on landing so the buffers can read the card.</summary>
+        public static void PeekHero(HeroId heroId)
+        {
+            var sidebar = Sidebar;
+            if (sidebar == null || !sidebar.gameObject.activeInHierarchy) return;
+            try { sidebar.ShowHeroCard(heroId); }
+            catch (Exception e) { CoreLog.Warning("Peek: ShowHeroCard threw: " + e.Message); }
+        }
+
+        /// <summary>The same for an enemy on the board.</summary>
+        public static void PeekEnemy(EnemyId enemyId)
+        {
+            var sidebar = Sidebar;
+            if (sidebar == null || !sidebar.gameObject.activeInHierarchy) return;
+            try { sidebar.ShowEnemyCard(enemyId); }
+            catch (Exception e) { CoreLog.Warning("Peek: ShowEnemyCard threw: " + e.Message); }
+        }
+
+        /// <summary>The sidebar's enemy card when it is showing the named enemy, else null.</summary>
+        public static EnemyCardView ShownEnemyCard(string enemyName)
+        {
+            var sidebar = Sidebar;
+            var card = sidebar != null ? sidebar._enemyCardView : null;
+            if (card == null || !card.gameObject.activeInHierarchy || card._nameText == null) return null;
+            return string.Equals(card._nameText.text, enemyName, StringComparison.Ordinal) ? card : null;
+        }
+
+        /// <summary>The sidebar's hero card when it is showing the named hero, else null.</summary>
+        public static HeroCardView ShownHeroCard(string heroName)
+        {
+            var sidebar = Sidebar;
+            var card = sidebar != null ? sidebar._heroCardView : null;
+            if (card == null || !card.gameObject.activeInHierarchy) return null;
+            string shown = HeroCardNodes.NameAndClass(card);
+            return shown != null && heroName != null && shown.StartsWith(heroName, StringComparison.Ordinal) ? card : null;
         }
 
         // The card's name row is the landing; the card may take a frame or two to show.
