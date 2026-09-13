@@ -37,8 +37,10 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   `uv run python tools/python/dump_game.py`): every type, field with offset, method with RVA.
   **Look a shape up before guessing it**: `uv run python tools/python/show.py SettingsUIController`.
 - `game/il2cppdump/DummyDll/` — stub assemblies for ilspycmd browsing (signatures only, no bodies).
-- `game/analysis/types.tsv` — one row per type: typedef, assembly, namespace, kind, name (committed);
-  `game/analysis/version.json` — the Steam build id the dump was taken from.
+- `game/analysis/types.tsv` — one row per type: typedef, assembly, namespace, kind, name;
+  `game/analysis/version.json` — the Steam build id the dump was taken from. The whole of `game/`
+  is gitignored and was purged from history: decompiled game material is never committed;
+  `dump_game.py` regenerates all of it on a fresh clone.
 - For real behavior use the live game: `GET /gui` for structure, `POST /eval` for values (see Dev driver).
 
 ## Tools (`tools/python/`, standard library only; run them with `uv run python tools/python/<tool>.py`)
@@ -82,6 +84,28 @@ restart**: `dotnet build src/GuildrunAccess.Module/GuildrunAccess.Module.csproj`
   `curl -s --retry 60 --retry-connrefused --retry-delay 2 --retry-all-errors http://127.0.0.1:8771/health`.
 - Tests: `dotnet test src/GuildrunAccess.Tests/GuildrunAccess.Tests.csproj` (Core + Contracts; no game).
 - Release: `dotnet build -c Release` compiles without deploying.
+
+## Releases (the tooling is the dd2a11y / Non-Visual Calculus pattern)
+The version lives in `Directory.Build.props` alone (`<Version>`, now 0.0.1; the host's
+`BuildVersion` constant is generated from it). A release is: bump the version, add a `## Vx.y.z`
+section to `CHANGELOG.md` (the release notes are read from it, an empty section fails), commit, tag
+`vx.y.z` and push the tag, then:
+- `build_release.ps1` — `releases\GuildrunAccess-vX.Y.Z.zip`: the vendored BepInEx 6 zip's game-folder
+  layout (BepInEx\, dotnet\, winhttp.dll, doorstop_config.ini; its changelog.txt dropped), the four mod
+  DLLs (host, Contracts, Core, Module) under `BepInEx\plugins\GuildrunAccess`, `prism.dll` at the root,
+  `BepInEx\config\BepInEx.cfg` seeded with the console window off, `lang\*.txt` and the mdbook manual
+  (`docs_src`) when they exist. The dev server's Roslyn assemblies are Debug-only and are NOT shipped.
+  The zip root is the game folder: a manual user extracts it over the game dir.
+- `build-installer.ps1` — `releases\GuildrunAccessInstaller.exe` from `installer\` (Rust + wxWidgets:
+  needs cargo, libclang, ninja; `test-installer.ps1` runs its unit tests). It finds the Steam install
+  (registry, library folders, `GUILDRUN_DIR`), downloads the newest release's zip from GitHub, verifies,
+  installs with backups and an install manifest, updates, repairs, uninstalls. Its game facts are the
+  constants in `installer\src\core\paths.rs` (exe, folder names, the IL2CPP metadata marker, the plugin
+  path, the releases URL: `amerikrainian/guildrun-access`).
+- `create-release.ps1 vX.Y.Z` — the GitHub release (gh) for the pushed tag, uploading the zip and the
+  installer with the CHANGELOG section as notes. The installer matches assets by the exact name
+  `GuildrunAccess-vX.Y.Z.zip`, so tags are strict three-part versions.
+`releases\`, `installer\target\` and `docs_src\book\` are gitignored.
 
 ## Logs
 Our lines go through the BepInEx logger with a `[Guildrun Access]` source into
