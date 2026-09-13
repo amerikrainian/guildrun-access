@@ -102,6 +102,12 @@ namespace GuildrunAccess.Core.Graph
         /// nearest-survivor walk.</summary>
         public string LandGroup;
 
+        /// <summary>Optional. When this node vanishes on a rebuild while focused, the reconcile landing on
+        /// its replacement is NOT spoken (focus moves silently; the next key reads from there). For rows
+        /// that come and go on their own all the time, like the units of a fight: reading out a neighbour
+        /// at every death is noise, not information.</summary>
+        public bool QuietVanish;
+
         /// <summary>Optional. Primary activation, the left-click equivalent (Enter).</summary>
         public Action OnActivate;
 
@@ -270,6 +276,10 @@ namespace GuildrunAccess.Core.Graph
         /// <summary>The focused node's <see cref="NodeVtable.LandGroup"/> (null when it had none); the
         /// row-vanish fallback prefers survivors of this group.</summary>
         public string LastLandGroup;
+
+        /// <summary>Set by a rebuild whose reconcile moved focus off a vanished <see cref="NodeVtable.QuietVanish"/>
+        /// node; the navigator's next frame takes the landing as already spoken and clears it.</summary>
+        public bool QuietLanding;
 
         /// <summary>Remembered position per Tab-stop: where Tab lands when cycling back into a stop.</summary>
         public readonly Dictionary<object, ControlId> StopMemory = new Dictionary<object, ControlId>();

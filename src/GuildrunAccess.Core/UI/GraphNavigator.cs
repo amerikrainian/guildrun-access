@@ -213,6 +213,20 @@ namespace GuildrunAccess.Core.UI
             var node = _graph.CurrentNode;
             if (node == null) return;
 
+            // A rebuild moved focus off a vanished QuietVanish node: take that landing as spoken. A key
+            // press that rerendered spoke and recorded its own landing already, so only the silent
+            // per-frame re-seat is affected.
+            if (_graph.State.QuietLanding)
+            {
+                _graph.State.QuietLanding = false;
+                if (_lastSpokenKey != null && !_lastSpokenKey.Equals(node.Id))
+                {
+                    _lastSpokenKey = node.Id;
+                    _lastSpokenNode = node;
+                    _reannounce = false;
+                }
+            }
+
             if (_reannounce || _lastSpokenKey == null || !_lastSpokenKey.Equals(node.Id))
             {
                 // Queued (not interrupting): landings follow the screen name / preceding feedback. A

@@ -15,6 +15,7 @@ namespace GuildrunAccess.Tests
         private sealed class MenuScreen : Screen
         {
             public List<string> Items = new List<string> { "Continue", "New run", "Settings", "Quit" };
+            public bool QuietRows; // rows that vanish without their replacement being spoken
             public override string Key => "test.menu";
             public override string ScreenName => "Test menu";
             public override bool IsActive() => true;
@@ -25,6 +26,7 @@ namespace GuildrunAccess.Tests
                     b.AddItem(ControlId.Structural(item), new NodeVtable
                     {
                         ControlType = ControlTypes.Button,
+                        QuietVanish = QuietRows,
                         Announcements = new[] { new NodeAnnouncement(() => item, kind: AnnouncementKinds.Label) },
                     });
                 b.PopContext();
@@ -114,6 +116,45 @@ namespace GuildrunAccess.Tests
                 nav.EnsureFocus();
                 Assert.Equal(before + 1, spoken.Count);
                 Assert.Equal("Settings, button, 3 of 3", spoken[spoken.Count - 1]);
+            }
+            finally
+            {
+                Speech.Speak = (t, i) => { };
+                GraphAnnouncer.PositionText = null;
+            }
+        }
+
+        [Fact]
+        public void AQuietRowVanishingUnderFocusMovesSilentlyAndTheNextKeySpeaks()
+        {
+            var spoken = new List<string>();
+            var input = new FakeNavInput { FrameCount = 1 };
+            Speech.Speak = (t, i) => spoken.Add(t);
+            NavInput.Current = input;
+            GraphAnnouncer.PositionText = (i, n) => i + " of " + n;
+            try
+            {
+                var nav = new GraphNavigator();
+                var screen = new MenuScreen { QuietRows = true };
+                nav.Attach(screen);
+                nav.EnsureFocus();
+                Assert.True(nav.OnInputJustPressed(Action(UiActions.Down)));
+                Assert.Equal("New run, button, 2 of 4", spoken[spoken.Count - 1]);
+
+                // The focused quiet row goes: focus slides to the nearest survivor without a word.
+                screen.Items.Remove("New run");
+                int before = spoken.Count;
+                input.FrameCount += 10;
+                nav.EnsureFocus();
+                Assert.Equal(before, spoken.Count);
+                input.FrameCount += 10;
+                nav.EnsureFocus(); // and stays quiet on later frames
+                Assert.Equal(before, spoken.Count);
+
+                // The next key reads from where focus now sits (the plain nearest-survivor walk went to
+                // the previous row, Continue).
+                Assert.True(nav.OnInputJustPressed(Action(UiActions.Down)));
+                Assert.Equal("Settings, button, 2 of 3", spoken[spoken.Count - 1]);
             }
             finally
             {

@@ -28,6 +28,40 @@ namespace GuildrunAccess.Tests
         }
 
         [Fact]
+        public void QuietVanishFlagsTheLandingOnlyWhenTheFocusedQuietNodeIsGone()
+        {
+            var state = new GraphState();
+            var items = new List<string> { "a", "b", "c" };
+            var g = new KeyGraph(() =>
+            {
+                var b = new GraphBuilder();
+                foreach (var i in items) b.AddItem(Id(i), new NodeVtable { Announcements = new[] { NodeAnnouncement.Static(i) }, QuietVanish = i == "b" });
+                return b.Build();
+            }, state);
+
+            Assert.True(g.Rerender());
+            g.Move(GraphDir.Down); // on b (quiet)
+            Assert.Equal(Id("b"), state.CurKey);
+
+            items.Remove("a"); // an unfocused node going is nothing
+            Assert.True(g.Rerender());
+            Assert.Equal(Id("b"), state.CurKey);
+            Assert.False(state.QuietLanding);
+
+            items.Remove("b"); // the focused quiet node goes: focus lands on c, quietly
+            Assert.True(g.Rerender());
+            Assert.Equal(Id("c"), state.CurKey);
+            Assert.True(state.QuietLanding);
+
+            state.QuietLanding = false;
+            items.Remove("c"); // a plain node going under focus flags nothing
+            items.Add("d");
+            Assert.True(g.Rerender());
+            Assert.Equal(Id("d"), state.CurKey);
+            Assert.False(state.QuietLanding);
+        }
+
+        [Fact]
         public void MoveStepsAndStopsAtEdges()
         {
             var state = new GraphState();

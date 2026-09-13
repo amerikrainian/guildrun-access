@@ -53,6 +53,7 @@ namespace GuildrunAccess.Core.Graph
         /// nothing (the caller should treat the graph as closed/empty).</summary>
         public bool Rerender()
         {
+            var focused = CurrentNode; // before the rebuild: the node focus may be about to lose
             _current = _renderCallback();
             if (_current == null || _current.Nodes.Count == 0)
             {
@@ -60,6 +61,10 @@ namespace GuildrunAccess.Core.Graph
                 return false;
             }
             Reconcile(_current, _state);
+            // A quiet node vanished from under focus: the landing it caused is not to be spoken.
+            if (focused != null && focused.Vtable != null && focused.Vtable.QuietVanish
+                && !_current.Nodes.ContainsKey(focused.Id) && _state.CurKey != null && !_state.CurKey.Equals(focused.Id))
+                _state.QuietLanding = true;
             return true;
         }
 

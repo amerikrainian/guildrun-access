@@ -159,6 +159,9 @@ namespace GuildrunAccess.Module.GameRun
                 var u = units[i];
                 b.AddItem(ControlId.Structural("run:unit:" + u.Bar.GetInstanceID()), new NodeVtable
                 {
+                    // Units fall all through a fight: when the focused one does, focus slides to a
+                    // neighbour without reading it out (the death itself is narrated).
+                    QuietVanish = true,
                     Announcements = new List<NodeAnnouncement>
                     {
                         // "Pimenta, wearing Freezing Tome, hero, 650 health": the hero named as on the board.
