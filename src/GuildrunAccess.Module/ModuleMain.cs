@@ -200,8 +200,10 @@ namespace GuildrunAccess.Module
 
         public string DispatchAction(string actionKey)
         {
-            // Not a key: the coverage report of the screen on show, for the dev driver alone.
+            // Not keys: the dev driver's own verbs (the coverage report; the run shortcuts).
             if (actionKey == "dev.audit") return Dev.ScreenAudit.Run();
+            if (actionKey != null && actionKey.StartsWith("dev.floor:")) return Dev.RunJump.Floor(actionKey.Substring("dev.floor:".Length));
+            if (actionKey == "dev.shop") return Dev.RunJump.Shop();
             if (string.IsNullOrEmpty(actionKey) || InputManager.Find(actionKey) == null) return null;
             InputManager.Dispatch(actionKey);
             var nav = Navigation.Active as GraphNavigator;

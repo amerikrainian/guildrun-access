@@ -150,8 +150,11 @@ Five projects (see `docs/plan.md` for the port map):
   per screen), `GameRun/` (everything of a run: `GameRunScreen` is a `CompositeScreen` of one `Hud/`
   section per Tab-stop, the sections that act on heroes sharing `HeroActions` (menus, equip, inspect)
   and its `HeroMoves` (the pending keyboard drag); the other run screens; `RunData` (registry reads
-  and moves), `BattleEvents` (the HUD hooks); `Nodes/` the run's reusable node readers: hero cards,
-  items, sidebar, leaderboard), `UI/GameNodes` (node factories over uGUI Button/Toggle/Slider/TMP),
+  and moves), `BattleEvents` (the HUD hooks); the shop, crossroads and event panels are
+  `RunPanelScreen`s: their own stops first, then the HUD sections the game leaves on screen and
+  interactable under them (party, items, relics, info, map, sidebar, menu), where a hero's or item's
+  menu offers Sell while the shop is up (`ShopService.SellItem/SellHero`); `Nodes/` the run's reusable
+  node readers: hero cards, items, sidebar, leaderboard), `UI/GameNodes` (node factories over uGUI Button/Toggle/Slider/TMP),
   `UI/TooltipReader`, `UI/FocusMode`, `Input/KeyboardBinding` + `UnityNavInput`. A long screen
   decomposes into sections when they carry state or act on each other; a screen that only reads one
   panel stays whole (never partial classes).
@@ -187,6 +190,13 @@ runs; spoken text is still captured. The game already runs in the background whe
   verdict (a widget with no caption, such as a portrait button, always lists). It scans the scene,
   so it is for the dev driver only. Before a `confirm` through the driver, read the readout the
   previous input returned: a guessed focus has bought a relic on a live run.
+- `POST /input` with `dev.floor:N` or `dev.shop` (`Module/Dev/RunJump`) skips through a run for
+  inspection: the run session's floor-node index is writable and its service proceeds from wherever
+  it is, so `dev.floor:4` shows floor 4's crossroads next (act one: 0 the starter kit, 1 and 3 random
+  events, 2 the challenge combat, 4 the campfire) and `dev.shop` opens the shop as a result would.
+  The game keeps whatever that skips. The game's `ScopeService.SwitchToScope` is NOT a shortcut: its
+  Campfire scope config names a scene the demo does not ship (an error dialog, then a dead run); the
+  campfire is an event (`FirstCampfireEvent`: Train, Study, Recharge, Rest) and reads as one.
 - Re-show a dismissed panel for testing: find its scene instance with `Resources.FindObjectsOfTypeAll`
   in `/eval` and `SetActive(true)`; `SetActive(false)` afterwards. Never press a consent button for the player.
 

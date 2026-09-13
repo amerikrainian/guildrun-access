@@ -296,6 +296,9 @@ namespace GuildrunAccess.Core.Strings
             // {0} = the item's name.
             D("run.unequip", "Unequip {0}"),
             D("run.unequipped", "{0} unequipped"),
+            D("run.sell", "Sell {0}"),
+            D("run.sell_for", "Sell {0} for {1} shards"),
+            D("run.sold", "{0} sold"),
             D("run.no_heroes", "no heroes to equip"),
             // The placement grid: rows counted from the player's back line; the enemy rows beyond.
             D("run.grid", "board"),
@@ -594,6 +597,9 @@ namespace GuildrunAccess.Core.Strings
         public static string RunInspect => Get("run.inspect");
         public static string RunInspectFailed => Get("run.inspect_failed");
         public static string RunUnequip(string item) => F("run.unequip", item);
+        public static string RunSell(string name) => F("run.sell", name);
+        public static string RunSellFor(string name, int shards) => F("run.sell_for", name, shards);
+        public static string RunSold(string name) => F("run.sold", name);
         public static string RunUnequipped(string item) => F("run.unequipped", item);
         public static string RunNoHeroes => Get("run.no_heroes");
         public static string RunGrid => Get("run.grid");

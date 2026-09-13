@@ -3,6 +3,7 @@ using Ember.Scopes.GameRun.Shop.UI;
 using Ember.Scopes.GameRun.Shop.UI.Views;
 using Ember.Scopes.GameRun.UI.HeroCard;
 using GuildrunAccess.Core.Graph;
+using GuildrunAccess.Core.Screens;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
@@ -10,96 +11,113 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
-using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The shop between fights (<see cref="ShopUIController"/>): the hero offers as the shared hero list
     /// with each card's price on its line, the items and relics for sale as controls carrying name,
-    /// cost and description (the full tooltip in the control buffer), and the actions (reroll, freeze, the key
-    /// fragment offer, proceed). Buying goes through the view's own click handler, so the game's
-    /// purchase flow runs as for a mouse click. Escape presses Proceed.
+    /// cost, sale tag and description (the full tooltip in the control buffer), and the actions (reroll,
+    /// freeze, the key fragment offer, proceed); then the run HUD the shop leaves on screen (the party,
+    /// the item reserve, relics, info, map, sidebar, menu), where a hero's or item's menu offers Sell.
+    /// Buying goes through the view's own click handler, so the game's purchase flow runs as for a
+    /// mouse click. Escape presses Proceed.
     /// </summary>
-    public sealed class ShopScreen : Screen
+    internal sealed class ShopScreen : RunPanelScreen
     {
+        public ShopScreen()
+        {
+            Add(new ShopSection());
+            AddHud();
+        }
+
         public override string Key => "gamerun.shop";
-        public override int Layer => 10;
-        public override bool Exclusive => true;
+        protected override string ContextLabel => Strings.ScreenShop;
 
         private static ShopUIController Shop => GameScopes.Controller<ShopUIController>();
 
-        public override bool IsActive()
+        /// <summary>The shop controller while its panel is up and shown, else null: the shop's actions
+        /// (selling) are offered only then.</summary>
+        public static ShopUIController Open()
         {
             var shop = Shop;
-            if (shop == null || !shop.gameObject.activeInHierarchy) return false;
+            if (shop == null || !shop.gameObject.activeInHierarchy) return null;
             var group = shop._canvasGroup;
-            return group == null || group.alpha > 0.5f;
+            return group == null || group.alpha > 0.5f ? shop : null;
         }
 
-        public override void Build(GraphBuilder b)
+        public override bool IsActive() => Open() != null;
+
+        protected override void PanelBack()
         {
             var shop = Shop;
-            if (shop == null) return;
+            if (shop != null && GameNodes.IsShown(shop._proceedButton) && shop._proceedButton.interactable)
+                shop._proceedButton.onClick.Invoke();
+        }
 
-            b.PushContext(Strings.ScreenShop, null, positions: false);
-
-            // Heroes for sale: the shared grid, price on the name.
-            var cards = new List<HeroCardView>();
-            var views = new List<HeroCardShopItemView>();
-            var heroes = shop._heroChoicesPanel;
-            if (heroes != null && heroes.gameObject.activeInHierarchy && heroes._heroCardShopItemViews != null)
-                foreach (var v in heroes._heroCardShopItemViews)
-                {
-                    if (v == null || !v.gameObject.activeInHierarchy || v._heroCardView == null || Sold(v)) continue;
-                    views.Add(v);
-                    cards.Add(v._heroCardView);
-                }
-            if (cards.Count > 0)
+        // The shop's own stops: heroes, items, relics, actions.
+        private sealed class ShopSection : ScreenSection
+        {
+            public override void Build(GraphBuilder b)
             {
-                b.BeginStop("heroes");
-                b.PushContext(Strings.ShopHeroes, null, positions: true);
-                HeroCardNodes.AddGrid(b, "shop:hero", cards,
-                    i => () => Buy(views[i]),
-                    i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; });
+                var shop = Shop;
+                if (shop == null) return;
+
+                // Heroes for sale: the shared list, price on the line.
+                var cards = new List<HeroCardView>();
+                var views = new List<HeroCardShopItemView>();
+                var heroes = shop._heroChoicesPanel;
+                if (heroes != null && heroes.gameObject.activeInHierarchy && heroes._heroCardShopItemViews != null)
+                    foreach (var v in heroes._heroCardShopItemViews)
+                    {
+                        if (v == null || !v.gameObject.activeInHierarchy || v._heroCardView == null || Sold(v)) continue;
+                        views.Add(v);
+                        cards.Add(v._heroCardView);
+                    }
+                if (cards.Count > 0)
+                {
+                    b.BeginStop("shop:heroes");
+                    b.PushContext(Strings.ShopHeroes, null, positions: true);
+                    HeroCardNodes.AddGrid(b, "shop:hero", cards,
+                        i => () => Buy(views[i]),
+                        i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; });
+                    b.PopContext();
+                }
+
+                // Items, then relics (the regular panels, or the super-shop ones when those are up).
+                AddOffers(b, "items", Strings.ShopItems, shop._itemToBuyPanel, shop._superShopItemToBuyPanel);
+                AddOffers(b, "relics", Strings.ShopRelics, shop._relicsToBuyPanel, shop._superShopRelicsToBuyPanel, shop._superShopTeamSizeRelicsToBuyPanel);
+
+                // Actions.
+                b.BeginStop("shop:actions");
+                b.PushContext(Strings.ShopActions, Strings.RoleList);
+                if (GameNodes.IsShown(shop._rerollShopButton))
+                    b.AddItem(ControlId.Structural("shop:reroll"), GameNodes.Button(shop._rerollShopButton, () => Caption(shop._rerollShopButton, Strings.ShopReroll)));
+                if (GameNodes.IsShown(shop._freezeShopButton))
+                    b.AddItem(ControlId.Structural("shop:freeze"), GameNodes.Button(shop._freezeShopButton, () => Caption(shop._freezeShopButton, Strings.ShopFreeze)));
+                var key = shop._keyFragmentButton;
+                if (key != null && GameNodes.IsShown(key.PayButton))
+                {
+                    var pay = key.PayButton;
+                    b.AddItem(ControlId.Structural("shop:keyfragment"), new NodeVtable
+                    {
+                        ControlType = ControlTypes.Button,
+                        Announcements = new List<NodeAnnouncement>
+                        {
+                            GameNodes.LabelPart(() => key.ButtonText != null && !string.IsNullOrWhiteSpace(key.ButtonText.text) ? key.ButtonText.text : GameNodes.LabelOf(pay)),
+                            new NodeAnnouncement(() => key.RemainingShopsText != null && key.RemainingShopsText.gameObject.activeInHierarchy ? key.RemainingShopsText.text : null, kind: AnnouncementKinds.Value),
+                            GameNodes.DisabledPart(() => pay.interactable),
+                        },
+                        OnActivate = () => { if (pay.interactable) pay.onClick.Invoke(); },
+                        Details = () => TooltipReader.Lines(key.TooltipRaycastTarget),
+                    });
+                }
+                if (shop._threatLevelText != null && shop._threatLevelText.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(shop._threatLevelText.text))
+                    b.AddItem(ControlId.Structural("shop:threat"), GameNodes.Text(() => Strings.ShopThreat + " " + shop._threatLevelText.text));
+                if (GameNodes.IsShown(shop._proceedButton))
+                    b.AddItem(ControlId.Structural("shop:proceed"), GameNodes.Button(shop._proceedButton));
                 b.PopContext();
             }
-
-            // Items, then relics (the regular panels, or the super-shop ones when those are up).
-            AddOffers(b, "items", Strings.ShopItems, shop._itemToBuyPanel, shop._superShopItemToBuyPanel);
-            AddOffers(b, "relics", Strings.ShopRelics, shop._relicsToBuyPanel, shop._superShopRelicsToBuyPanel, shop._superShopTeamSizeRelicsToBuyPanel);
-
-            // Actions.
-            b.BeginStop("actions");
-            b.PushContext(Strings.ShopActions, Strings.RoleList);
-            if (GameNodes.IsShown(shop._rerollShopButton))
-                b.AddItem(ControlId.Structural("shop:reroll"), GameNodes.Button(shop._rerollShopButton, () => Caption(shop._rerollShopButton, Strings.ShopReroll)));
-            if (GameNodes.IsShown(shop._freezeShopButton))
-                b.AddItem(ControlId.Structural("shop:freeze"), GameNodes.Button(shop._freezeShopButton, () => Caption(shop._freezeShopButton, Strings.ShopFreeze)));
-            var key = shop._keyFragmentButton;
-            if (key != null && GameNodes.IsShown(key.PayButton))
-            {
-                var pay = key.PayButton;
-                b.AddItem(ControlId.Structural("shop:keyfragment"), new NodeVtable
-                {
-                    ControlType = ControlTypes.Button,
-                    Announcements = new List<NodeAnnouncement>
-                    {
-                        GameNodes.LabelPart(() => key.ButtonText != null && !string.IsNullOrWhiteSpace(key.ButtonText.text) ? key.ButtonText.text : GameNodes.LabelOf(pay)),
-                        new NodeAnnouncement(() => key.RemainingShopsText != null && key.RemainingShopsText.gameObject.activeInHierarchy ? key.RemainingShopsText.text : null, kind: AnnouncementKinds.Value),
-                        GameNodes.DisabledPart(() => pay.interactable),
-                    },
-                    OnActivate = () => { if (pay.interactable) pay.onClick.Invoke(); },
-                    Details = () => TooltipReader.Lines(key.TooltipRaycastTarget),
-                });
-            }
-            if (shop._threatLevelText != null && shop._threatLevelText.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(shop._threatLevelText.text))
-                b.AddItem(ControlId.Structural("shop:threat"), GameNodes.Text(() => Strings.ShopThreat + " " + shop._threatLevelText.text));
-            if (GameNodes.IsShown(shop._proceedButton))
-                b.AddItem(ControlId.Structural("shop:proceed"), GameNodes.Button(shop._proceedButton));
-            b.PopContext();
-
-            b.PopContext();
         }
 
         // A bought card stays in the row with its card view hidden (HideHeroCard), so its price is
@@ -133,7 +151,7 @@ namespace GuildrunAccess.Module.GameRun
                 foreach (var item in panel.GetComponentsInChildren<ShopItemView>(false))
                     if (item != null && item.gameObject.activeInHierarchy && IsOffer(item)) items.Add(item);
             }
-            b.BeginStop(key);
+            b.BeginStop("shop:" + key);
             b.PushContext(label, Strings.RoleList);
             if (items.Count == 0)
                 b.AddItem(ControlId.Structural("shop:" + key + ":none"), GameNodes.Text(() => Strings.ShopNothing));
@@ -144,9 +162,12 @@ namespace GuildrunAccess.Module.GameRun
 
         private static bool IsOffer(ShopItemView item) => item._shopItemEntry != null || item._relicEntry != null;
 
-        // An item or relic for sale: "name, cost X, description"; Enter buys, the tooltip is its buffer line.
+        // An item or relic for sale: "name, cost X, Sale, description"; Enter buys, the tooltip is its
+        // buffer line. The sale tag is the discount view's own text (the game's "Sale", or its
+        // mark-up word), shown only on a discounted offer.
         private static NodeVtable Offer(ShopItemView item)
         {
+            var discount = item.GetComponentInChildren<Ember.Scopes.GameRun.UI.Common.DiscountView>(true);
             return new NodeVtable
             {
                 Announcements = new List<NodeAnnouncement>
@@ -155,6 +176,7 @@ namespace GuildrunAccess.Module.GameRun
                         ? item._itemNameText.text : TooltipReader.Title(item._tooltipRaycastTarget)),
                     new NodeAnnouncement(() => item._itemCostText != null && !string.IsNullOrWhiteSpace(item._itemCostText.text)
                         ? Strings.ShopCost(item._itemCostText.text) : null, live: true, kind: AnnouncementKinds.Value),
+                    new NodeAnnouncement(() => SaleTag(discount), live: true, kind: AnnouncementKinds.Value),
                     new NodeAnnouncement(() => item._itemDescriptionText != null && item._itemDescriptionText.gameObject.activeInHierarchy
                         ? item._itemDescriptionText.text : null, kind: AnnouncementKinds.Tooltip),
                 },
@@ -162,6 +184,13 @@ namespace GuildrunAccess.Module.GameRun
                 OnActivate = () => Click(item),
                 Details = () => TooltipReader.Lines(item._tooltipRaycastTarget),
             };
+        }
+
+        private static string SaleTag(Ember.Scopes.GameRun.UI.Common.DiscountView discount)
+        {
+            if (discount == null || !discount.gameObject.activeInHierarchy) return null;
+            var text = discount._discountText;
+            return text != null && text.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(text.text) ? text.text : null;
         }
 
         // The view handles its own click (the game's purchase flow, confirmation and all).
@@ -178,16 +207,6 @@ namespace GuildrunAccess.Module.GameRun
             var card = view._heroCardView;
             if (card == null) return;
             card.OnPointerClick(new PointerEventData(EventSystem.current));
-        }
-
-        public override IEnumerable<ElementAction> GetActions()
-        {
-            yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
-            {
-                var shop = Shop;
-                if (shop != null && GameNodes.IsShown(shop._proceedButton) && shop._proceedButton.interactable)
-                    shop._proceedButton.onClick.Invoke();
-            });
         }
     }
 }

@@ -4,6 +4,7 @@ using Ember.Balancing.SimulationBridge;
 using Ember.Scopes.Battle.UI.Sidebar;
 using Ember.Scopes.GameRun.GameRegistry.Data.Characters;
 using Ember.Scopes.GameRun.GameRegistry.Data.Items;
+using Ember.Scopes.GameRun.Shop.UI;
 using Ember.Scopes.GameRun.UI.HeroCard;
 using Ember.Scopes.GameRun.UI.EnemyCard;
 using Ember.Scopes.GameRun.UI.Slots;
@@ -21,8 +22,8 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// What Enter does to a hero or an item in the run HUD, the keyboard's version of the mouse's drags
     /// and clicks: a hero's menu (inspect its card, pick it up to move, send it to the reserve, unequip
-    /// an item), an item's "equip to which hero" list, and the inspect itself with its landing on the
-    /// sidebar card. Declares no nodes of its own: the board, party and items sections call it, and the
+    /// an item, sell it or an item while the shop is up), an item's "equip to which hero" list (and
+    /// Sell in the shop), and the inspect itself with its landing on the sidebar card. Declares no nodes of its own: the board, party and items sections call it, and the
     /// screen's Escape consults <see cref="Moves"/>. A section so that its per-frame landing and its
     /// pop cleanup ride the composite screen's lifecycle.
     /// </summary>
@@ -75,6 +76,7 @@ namespace GuildrunAccess.Module.GameRun
                     }, enabled: free >= 0));
                 }
             }
+            var shop = ShopScreen.Open();
             if (view != null && view._itemSlotViews != null)
             {
                 foreach (var slot in view._itemSlotViews)
@@ -86,7 +88,18 @@ namespace GuildrunAccess.Module.GameRun
                     {
                         if (RunData.Unequip(heroId, id)) Speech.Say(Strings.RunUnequipped(itemName), interrupt: true);
                     }));
+                    if (shop != null) options.Add(SellItemOption(shop, id, itemName));
                 }
+            }
+            // In the shop, the hero itself sells (what dragging it onto the selling panel does).
+            if (shop != null && shop._shopService != null)
+            {
+                var service = shop._shopService;
+                options.Add(new ChoiceOption(Strings.RunSell(heroName), () =>
+                {
+                    try { service.SellHero(heroId); Speech.Say(Strings.RunSold(heroName), interrupt: true); }
+                    catch (Exception e) { CoreLog.Warning("Sell hero failed: " + e.Message); Speech.Say(Strings.RunMoveFailed, interrupt: true); }
+                }));
             }
             ChoiceSubmenuScreen.Open(Strings.RunHeroActions(heroName), options);
         }
@@ -105,8 +118,32 @@ namespace GuildrunAccess.Module.GameRun
                 AddEquipTargets(options, party._activeHeroPanel, itemId, itemName);
                 AddEquipTargets(options, party._reserveHeroPanel, itemId, itemName);
             }
+            var shop = ShopScreen.Open();
+            if (shop != null) options.Add(SellItemOption(shop, itemId, itemName));
             if (options.Count == 0) { Speech.Say(Strings.RunNoHeroes, interrupt: true); return; }
             ChoiceSubmenuScreen.Open(Strings.RunEquipTo(itemName), options);
+        }
+
+        // "Sell X for N shards": the shop service sells by item id, the price by the item's rarity (what
+        // the selling panel shows while an item is dragged over it).
+        private static ChoiceOption SellItemOption(ShopUIController shop, ItemId itemId, string itemName)
+        {
+            int price = -1;
+            try
+            {
+                var data = RunData.Item(itemId);
+                var entry = data != null ? data.ItemEntry : null;
+                if (entry != null && shop._shopReader != null) price = shop._shopReader.GetItemSellPrice(entry.Rarity);
+            }
+            catch (Exception e) { CoreLog.Warning("Sell price: " + e.Message); }
+            string label = price >= 0 ? Strings.RunSellFor(itemName, price) : Strings.RunSell(itemName);
+            var service = shop._shopService;
+            return new ChoiceOption(label, () =>
+            {
+                if (service == null) return;
+                try { service.SellItem(itemId); Speech.Say(Strings.RunSold(itemName), interrupt: true); }
+                catch (Exception e) { CoreLog.Warning("Sell item failed: " + e.Message); Speech.Say(Strings.RunMoveFailed, interrupt: true); }
+            }, enabled: service != null);
         }
 
         private static void AddEquipTargets(List<ChoiceOption> options, BottomHeroPanelView panel, ItemId itemId, string itemName)
