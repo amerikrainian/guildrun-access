@@ -80,15 +80,11 @@ namespace GuildrunAccess.Module.GameRun
             b.BeginStop("story");
             b.AddItem(ControlId.Structural("event:description"), GameNodes.Text(() => FullText(e._eventDescriptionTypewriterEffect, e._eventDescriptionText)));
 
-            // The choices the controller spawned for this event (the holder also keeps inactive templates).
+            // The choices the controller spawned for this event (the holder also keeps inactive templates),
+            // bare: no list context and no counts, each choice is its own caption.
             var choices = Choices(e);
-            if (choices.Count > 0)
-            {
-                b.PushContext(Strings.EventChoices, Strings.RoleList);
-                for (int i = 0; i < choices.Count; i++)
-                    b.AddItem(ChoiceId(choices[i]), Choice(choices[i]));
-                b.PopContext();
-            }
+            for (int i = 0; i < choices.Count; i++)
+                b.AddItem(ChoiceId(choices[i]), Choice(choices[i]));
 
             // After choosing: the outcome text, the summary line(s), then Proceed.
             var outcomeText = e._eventOutcomeTypewriterEffect;

@@ -320,7 +320,6 @@ namespace GuildrunAccess.Core.Strings
 
             // A random event: story, choices, outcome.
             D("screen.event", "Event"),
-            D("event.choices", "choices"),
             D("event.outcome", "outcome"),
 
             // A hero's rank-up choice (specialization / rank modifier picker).
@@ -599,7 +598,6 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenCrossroads => Get("screen.crossroads");
         public static string CrossroadsPaths => Get("crossroads.paths");
         public static string ScreenEvent => Get("screen.event");
-        public static string EventChoices => Get("event.choices");
         public static string EventOutcome => Get("event.outcome");
         public static string ScreenPicker => Get("screen.picker");
         public static string PickerHero => Get("picker.hero");
