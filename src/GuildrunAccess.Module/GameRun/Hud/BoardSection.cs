@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Ember.Scopes.Battle.Characters;
 using Ember.Scopes.Battle.UI;
 using Ember.Scopes.Battle.UI.Hud;
+using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
 using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Screens;
@@ -82,6 +83,9 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement>
                 {
                     new NodeAnnouncement(() => Occupant(cell) ?? Strings.RunCellEmpty, kind: AnnouncementKinds.Label),
+                    // "health 675, mana 40 of 75": the occupant's vitals from its bar, which stands during
+                    // placement too; nothing on an empty cell.
+                    new NodeAnnouncement(() => VitalsAt(cell), kind: AnnouncementKinds.Value),
                     new NodeAnnouncement(() => RunLabels.CellName(cell), kind: AnnouncementKinds.Value),
                 },
                 SearchText = () => Occupant(cell),
@@ -136,13 +140,13 @@ namespace GuildrunAccess.Module.GameRun
                 if (card != null)
                     return GameNodes.Lines(HeroCardNodes.NameAndClass(card), HeroCardNodes.StatsLine(card), HeroCardNodes.AbilitiesLine(card));
                 var view = RunData.ViewOf(id);
-                return view != null ? HeroLines.ForSlot(view) : null;
+                return view != null ? HeroLines.ForSlot(view, VitalsOf(id)) : null;
             }
             if (RunData.TryEnemyAt(cell, out var enemy))
             {
                 var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
                 if (card != null)
-                    return GameNodes.Lines(SidebarNodes.EnemyLine(card), HeroCardNodes.AbilitiesLine(card), SidebarNodes.Stats(card));
+                    return GameNodes.Lines(SidebarNodes.EnemyLine(card), SidebarNodes.Stats(card), HeroCardNodes.AbilitiesLine(card));
                 string line = UnitLineFor(enemy);
                 return line != null ? new[] { line } : null;
             }
@@ -304,17 +308,73 @@ namespace GuildrunAccess.Module.GameRun
             return string.Join(", ", parts);
         }
 
+        // A unit's live bar by its registry id (heroes and enemies keep separate registries), or null
+        // when it stands nowhere or its bar is not up.
+        private static HealthBarView BarOf(Il2CppSystem.Collections.Generic.Dictionary<Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId, CharacterViewController> views, Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId id)
+        {
+            CharacterViewController c;
+            return views != null && views.TryGetValue(id, out c) ? BarOf(c) : null;
+        }
+
+        private static HealthBarView BarOf(Il2CppSystem.Collections.Generic.Dictionary<Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId, CharacterViewController> views, Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId id)
+        {
+            CharacterViewController c;
+            return views != null && views.TryGetValue(id, out c) ? BarOf(c) : null;
+        }
+
+        private static HealthBarView BarOf(CharacterViewController c)
+        {
+            var battle = GameScopes.Controller<BattleUIController>();
+            if (c == null || !c.gameObject.activeInHierarchy || battle == null || battle._healthBars == null) return null;
+            HealthBarView bar;
+            return battle._healthBars.TryGetValue(c.EntityId, out bar) && bar != null && bar.gameObject.activeInHierarchy ? bar : null;
+        }
+
+        /// <summary>"health 675, shield 40, mana 40 of 75": what a unit's bar shows, read live; null
+        /// without a bar.</summary>
+        internal static string Vitals(HealthBarView bar)
+        {
+            if (bar == null) return null;
+            var parts = new List<string> { Strings.HeroStat(Strings.HeroHealth, Health(bar)) };
+            string shield = Shield(bar);
+            if (shield != null) parts.Add(shield);
+            string mana = Mana(bar);
+            if (mana != null) parts.Add(mana);
+            return string.Join(", ", parts);
+        }
+
+        internal static string VitalsOf(Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId id)
+        {
+            var board = RunData.BoardController;
+            return Vitals(BarOf(board != null ? board.CharacterViewControllers : null, id));
+        }
+
+        internal static string VitalsOf(Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId id)
+        {
+            var board = RunData.BoardController;
+            return Vitals(BarOf(board != null ? board._enemyViewControllers : null, id));
+        }
+
+        /// <summary>A slot's hero's vitals, or null when it stands on no board.</summary>
+        internal static string VitalsOf(BottomHeroView view)
+            => RunData.TryHeroId(view, out var id) ? VitalsOf(id) : null;
+
+        private static string VitalsAt(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var hero)) return VitalsOf(hero);
+            if (RunData.TryEnemyAt(cell, out var enemy)) return VitalsOf(enemy);
+            return null;
+        }
+
         // The line of one enemy on the board, by its id; null when it has no live bar.
         private static string UnitLineFor(Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId enemy)
         {
-            var battle = GameScopes.Controller<BattleUIController>();
             var board = RunData.BoardController;
             var views = board != null ? board._enemyViewControllers : null;
-            if (battle == null || views == null || battle._healthBars == null) return null;
             CharacterViewController c;
-            HealthBarView bar;
-            if (!views.TryGetValue(enemy, out c) || c == null || !c.gameObject.activeInHierarchy) return null;
-            if (!battle._healthBars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) return null;
+            if (views == null || !views.TryGetValue(enemy, out c) || c == null) return null;
+            var bar = BarOf(c);
+            if (bar == null) return null;
             string name = bar._characterNameText != null ? bar._characterNameText.text : null;
             if (string.IsNullOrWhiteSpace(name)) name = c.gameObject.name.Replace("(Clone)", "");
             return UnitLine(new Unit { Name = name, Bar = bar, IsHero = false });

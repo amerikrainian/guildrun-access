@@ -47,7 +47,7 @@ namespace GuildrunAccess.Module.GameRun
                     SearchText = () => RunLabels.SlotSummary(view),
                     OnActivate = () => _actions.OpenHeroMenu(view, reserve),
                     Details = () => RunLabels.SlotTooltips(view),
-                    SideLines = HeroLines.Side(() => HeroLines.ForSlot(view), () => ItemNodes.ItemTooltips(view._itemSlotViews)),
+                    SideLines = HeroLines.Side(() => HeroLines.ForSlot(view, BoardSection.VitalsOf(view)), () => ItemNodes.ItemTooltips(view._itemSlotViews)),
                 });
             }
             b.PopContext();

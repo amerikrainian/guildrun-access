@@ -37,12 +37,13 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var line in HeroCardNodes.AbilitiesTooltips(card)) yield return line;
         }
 
-        /// <summary>A party or reserve slot's hero: its name, then one line per ability tooltip (the
-        /// slot shows no stats).</summary>
-        public static IEnumerable<string> ForSlot(BottomHeroView view)
+        /// <summary>A party or reserve slot's hero: its name, its vitals when it stands on the board
+        /// ("health 675, mana 40 of 75"), then one line per ability tooltip (the slot shows no other stats).</summary>
+        public static IEnumerable<string> ForSlot(BottomHeroView view, string vitals = null)
         {
             if (view == null || view.IsEmpty) yield break;
             yield return RunData.HeroName(view);
+            if (!string.IsNullOrEmpty(vitals)) yield return vitals;
             foreach (var line in HeroCardNodes.AbilitiesTooltips(view._abilitiesView)) yield return line;
         }
     }
