@@ -81,19 +81,24 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- the hooks' readers ----
 
+        // The unit a bar belongs to, by the name the bar shows; null when the bar carries none. The
+        // game drives the same bar views while it sets a board up (an ability icon shown on a bar
+        // whose name is not filled in yet, as placement opens), and those are not fight events: a
+        // hook drops its line rather than narrate "battlefield casts ...".
         internal static string UnitName(HealthBarView bar)
         {
             var text = bar != null ? bar._characterNameText : null;
             string name = text != null ? text.text : null;
-            return string.IsNullOrWhiteSpace(name) ? Strings.RunBoard : name;
+            return string.IsNullOrWhiteSpace(name) ? null : name;
         }
 
+        // A unit is fighting when it has a named bar; a character view animating without one (placement,
+        // a rank-up flourish) is not narrated.
         internal static string UnitName(CharacterViewController unit)
         {
-            if (unit == null) return Strings.RunBoard;
+            if (unit == null) return null;
             var bar = HealthBar(unit);
-            if (bar != null) return UnitName(bar);
-            return unit.gameObject.name.Replace("(Clone)", "");
+            return bar != null && bar.gameObject.activeInHierarchy ? UnitName(bar) : null;
         }
 
         private static HealthBarView HealthBar(CharacterViewController unit)
@@ -121,6 +126,7 @@ namespace GuildrunAccess.Module.GameRun
             try
             {
                 string unit = BattleEvents.UnitName(__instance);
+                if (unit == null) return; // not a fighting unit: no named bar
                 if (changeState.Heal)
                 {
                     int healed = Math.Max(changeState.TotalDamage, changeState.HealthDamage);
@@ -146,6 +152,7 @@ namespace GuildrunAccess.Module.GameRun
             try
             {
                 string unit = BattleEvents.UnitName(__instance);
+                if (unit == null) return; // not a fighting unit: no named bar
                 string status = Strings.Status(type.ToString());
                 BattleEvents.Add(stackCount > 0 ? Strings.BattleStatus(unit, status, stackCount) : Strings.BattleStatusGone(unit, status), key: false);
             }
@@ -162,6 +169,7 @@ namespace GuildrunAccess.Module.GameRun
             try
             {
                 string unit = BattleEvents.UnitName(__instance);
+                if (unit == null) return; // not a fighting unit: no named bar
                 BattleEvents.Add(Strings.BattleCast(unit, string.IsNullOrWhiteSpace(tooltipTitle) ? Strings.BattleAbility : tooltipTitle), key: true);
             }
             catch (Exception e) { CoreLog.Warning("BattleEvents: ability icon hook failed: " + e.Message); }
@@ -178,6 +186,7 @@ namespace GuildrunAccess.Module.GameRun
             {
                 if (animationType != AnimationType.SkillAttack) return;
                 string unit = BattleEvents.UnitName(__instance);
+                if (unit == null) return; // not a fighting unit: no named bar
                 string ability = RunData.ActiveAbilityName(__instance);
                 BattleEvents.Add(Strings.BattleCast(unit, ability ?? Strings.BattleAbility), key: true);
             }
