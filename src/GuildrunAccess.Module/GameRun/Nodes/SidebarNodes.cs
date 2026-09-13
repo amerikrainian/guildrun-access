@@ -228,7 +228,10 @@ namespace GuildrunAccess.Module.GameRun
                 tip.UpdateTooltip(mode, data);
 
                 // The used entries in the tooltip's own (hierarchy) order; the pool keeps the free ones
-                // parented too, so membership in the used lists is the filter.
+                // parented too, so membership in the used lists is one filter, and the entry being
+                // active the other: the used lists also hold the prefab's template rows ("TotalTotal...
+                // 9999999", "Defensive Energy Crystal") and rows left over from another mode, all of
+                // them inactive, which the result screen's tooltip never tidies.
                 var used = new HashSet<IntPtr>();
                 var plain = tip._usedEntryViews;
                 if (plain != null) for (int i = 0; i < plain.Count; i++) if (plain[i] != null) used.Add(plain[i].Pointer);
@@ -238,7 +241,7 @@ namespace GuildrunAccess.Module.GameRun
                 var sb = new StringBuilder();
                 foreach (var entry in tip.GetComponentsInChildren<TrackerTooltipEntryView>(true))
                 {
-                    if (entry == null || !used.Contains(entry.Pointer)) continue;
+                    if (entry == null || !used.Contains(entry.Pointer) || !entry.gameObject.activeSelf) continue;
                     string title = entry.TitleText != null ? entry.TitleText.text : null;
                     string value = entry.ValueText != null ? entry.ValueText.text : null;
                     bool hasTitle = !string.IsNullOrWhiteSpace(title), hasValue = !string.IsNullOrWhiteSpace(value);
