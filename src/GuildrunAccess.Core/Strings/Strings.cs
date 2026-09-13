@@ -199,6 +199,8 @@ namespace GuildrunAccess.Core.Strings
             D("difficulty.levels", "difficulty"),
             D("difficulty.modifiers", "modifiers"),
             D("difficulty.streak", "streak"),
+            // {0} = the tier's name as the game labels it ("LETHAL"), {1} = the rank its icon shows (C, B, A, S, SS, SSS).
+            D("difficulty.tier_rank", "{0} {1}"),
 
             // The run's Heroes panel.
             D("heroes.counters", "counters"),
@@ -515,6 +517,7 @@ namespace GuildrunAccess.Core.Strings
         public static string DifficultyLevels => Get("difficulty.levels");
         public static string DifficultyModifiers => Get("difficulty.modifiers");
         public static string DifficultyStreak => Get("difficulty.streak");
+        public static string DifficultyTierRank(string name, string rank) => F("difficulty.tier_rank", name, rank);
         public static string HeroesCounters => Get("heroes.counters");
         public static string HeroesClose => Get("heroes.close");
         public static string HeroesNone => Get("heroes.none");

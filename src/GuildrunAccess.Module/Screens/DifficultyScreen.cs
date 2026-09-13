@@ -127,10 +127,31 @@ namespace GuildrunAccess.Module.Screens
             };
         }
 
+        // The tier's name label ("Base", "LETHAL", "THE RED RIFT"), with the rank its icon shows when it
+        // has one: the six lethal tiers all carry the label "LETHAL" and tell apart, to the eye, only by
+        // their rank icon (Difficulty_C ... Difficulty_SSS), so the rank is the distinguishing word.
         private static string Caption(DifficultyOptionItemView option)
         {
             var tmp = option.GetComponentInChildren<TMP_Text>(true);
-            return tmp != null && !string.IsNullOrWhiteSpace(tmp.text) ? tmp.text : option.gameObject.name;
+            string name = tmp != null && !string.IsNullOrWhiteSpace(tmp.text) ? tmp.text : option.gameObject.name;
+            string rank = Rank(option);
+            return rank != null ? Strings.DifficultyTierRank(name, rank) : name;
+        }
+
+        private static readonly string[] Ranks = { "C", "B", "A", "S", "SS", "SSS" };
+        private const string RankSpritePrefix = "Difficulty_";
+
+        private static string Rank(DifficultyOptionItemView option)
+        {
+            foreach (var image in option.GetComponentsInChildren<Image>(true))
+            {
+                var sprite = image != null ? image.sprite : null;
+                string spriteName = sprite != null ? sprite.name : null;
+                if (spriteName == null || !spriteName.StartsWith(RankSpritePrefix, StringComparison.Ordinal)) continue;
+                string suffix = spriteName.Substring(RankSpritePrefix.Length);
+                if (Array.IndexOf(Ranks, suffix) >= 0) return suffix;
+            }
+            return null;
         }
 
         private static string Title(DifficultyUIController panel)
