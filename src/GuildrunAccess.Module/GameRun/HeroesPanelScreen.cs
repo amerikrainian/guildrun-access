@@ -80,8 +80,7 @@ namespace GuildrunAccess.Module.GameRun
             if (cards.Count == 0)
                 b.AddItem(ControlId.Structural("heroes:none"), GameNodes.Text(() => Strings.HeroesNone));
             else
-                HeroCardNodes.AddGrid(b, "heroes", cards, i => null, null,
-                    HeroCardNodes.StatsRow, HeroCardNodes.AbilitiesRow, HeroCardNodes.ItemsRow);
+                HeroCardNodes.AddGrid(b, "heroes", cards, i => null, null);
             b.PopContext();
 
             b.BeginStop("actions");

@@ -18,8 +18,8 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The run's end screen (<see cref="EndScreenController"/>, after the final result and the comic):
     /// the outcome as the context, the run info (difficulty, floor, leaderboard standing), each hero of
-    /// the final team as a grid column (name and title, the stat highlights, abilities, items; their
-    /// tooltips buffer lines), the backup team, the relics held, then the buttons (Quit to Menu, Summary, Continue).
+    /// the final team as a list (name and title; the stat highlights, abilities and items in the
+    /// buffers), the backup team, the relics held, then the buttons (Quit to Menu, Summary, Continue).
     /// Sits above the result panel that stays behind it. Escape presses Continue.
     /// </summary>
     public sealed class RunEndScreen : Screen
@@ -106,46 +106,31 @@ namespace GuildrunAccess.Module.GameRun
 
             b.BeginStop("heroes");
             b.PushContext(Strings.EndHeroes, null, positions: true);
-            const string rowKey = "end:heroes";
-
-            // One row per detail, every card a column (the loop variable is copied per cell: the
-            // cell closures read the card at speak time).
-            var rows = new (string Key, string Caption, System.Func<EndScreenHeroCardView, string> Text, System.Func<EndScreenHeroCardView, IEnumerable<string>> Tooltip)[]
+            // One control per hero: its name and title; the buffers hold the rest (the hero buffer
+            // name, stat highlights, abilities; the control buffer the ability and item tooltips; the
+            // items buffer the items worn).
+            for (int i = 0; i < cards.Count; i++)
             {
-                ("name", null, NameAndTitle, c => HeroCardNodes.AbilitiesTooltips(c._abilitiesView)),
-                ("stats", Strings.HeroStats, c => Highlights(c) ?? Strings.EndNoHighlights, null),
-                ("abilities", Strings.HeroAbilities, c => HeroCardNodes.AbilitiesLine(c._abilitiesView), c => HeroCardNodes.AbilitiesTooltips(c._abilitiesView)),
-                ("items", Strings.RunItems, c => Items(c) ?? Strings.EndNoItems, ItemTooltips),
-            };
-            foreach (var row in rows)
-            {
-                b.StartRow(rowKey);
-                for (int i = 0; i < cards.Count; i++)
+                var card = cards[i];
+                b.AddItem(ControlId.Structural("end:hero:" + i), new NodeVtable
                 {
-                    var card = cards[i];
-                    var r = row;
-                    b.AddItem(ControlId.Structural("end:hero:" + i + ":" + r.Key), Cell(card, () => r.Text(card), r.Caption, r.Tooltip));
-                }
-                b.EndRow();
+                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => NameAndTitle(card)) },
+                    SearchText = () => card._heroNameText != null ? card._heroNameText.text : null,
+                    Details = () => HeroDetails(card),
+                    SideLines = HeroLines.Side(
+                        () => GameNodes.Lines(NameAndTitle(card), Highlights(card), HeroCardNodes.AbilitiesLine(card._abilitiesView)),
+                        () => ItemTooltips(card)),
+                });
             }
 
             b.PopContext();
         }
 
-        private static NodeVtable Cell(EndScreenHeroCardView card, System.Func<string> text, string caption, System.Func<EndScreenHeroCardView, IEnumerable<string>> tooltip)
+        private static List<string> HeroDetails(EndScreenHeroCardView card)
         {
-            var parts = new List<NodeAnnouncement>();
-            if (caption != null) parts.Add(new NodeAnnouncement(() => caption));
-            parts.Add(GameNodes.LabelPart(text));
-            return new NodeVtable
-            {
-                Announcements = parts,
-                SearchText = () => card._heroNameText != null ? card._heroNameText.text : null,
-                Details = () => tooltip != null ? tooltip(card) : null,
-                SideLines = HeroLines.Side(
-                    () => GameNodes.Lines(NameAndTitle(card), Highlights(card), HeroCardNodes.AbilitiesLine(card._abilitiesView)),
-                    () => ItemTooltips(card)),
-            };
+            var lines = HeroCardNodes.AbilitiesTooltips(card._abilitiesView);
+            lines.AddRange(ItemTooltips(card));
+            return lines;
         }
 
         private static string NameAndTitle(EndScreenHeroCardView card)

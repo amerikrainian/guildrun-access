@@ -86,6 +86,8 @@ namespace GuildrunAccess.Module.GameRun
                     // "health 675, mana 40 of 75": the occupant's vitals from its bar, which stands during
                     // placement too; nothing on an empty cell.
                     new NodeAnnouncement(() => VitalsAt(cell), kind: AnnouncementKinds.Value),
+                    // The card's other non-zero stats, once the landing has shown the card.
+                    new NodeAnnouncement(() => BriefStatsAt(cell), kind: AnnouncementKinds.Value),
                     new NodeAnnouncement(() => RunLabels.CellName(cell), kind: AnnouncementKinds.Value),
                 },
                 SearchText = () => Occupant(cell),
@@ -147,25 +149,44 @@ namespace GuildrunAccess.Module.GameRun
             return lines;
         }
 
-        // The control buffer: a hero's abilities and items (its slot), plus its card's stat tooltips
-        // when the sidebar shows it; an enemy's abilities and stats from its card.
+        // The control buffer: the full stats line from the card the landing showed, then a hero's
+        // abilities and items (its slot) and the card's stat tooltips; an enemy's abilities and stats.
         private static IEnumerable<string> CellDetails(Vector2Int cell)
         {
             if (RunData.TryHeroAt(cell, out var id))
             {
-                var view = RunData.ViewOf(id);
-                var lines = view != null ? RunLabels.SlotTooltips(view) : new List<string>();
+                var lines = new List<string>();
                 var card = HeroActions.ShownHeroCard(RunData.HeroName(id));
+                string stats = card != null ? HeroCardNodes.StatsLine(card) : VitalsOf(id);
+                if (!string.IsNullOrEmpty(stats)) lines.Add(stats);
+                var view = RunData.ViewOf(id);
+                if (view != null) lines.AddRange(RunLabels.SlotTooltips(view));
                 if (card != null) lines.AddRange(HeroCardNodes.StatsTooltips(card));
                 return lines;
             }
             if (RunData.TryEnemyAt(cell, out var enemy))
             {
                 var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
-                if (card == null) return null;
-                var lines = HeroCardNodes.AbilitiesTooltips(card);
-                lines.AddRange(SidebarNodes.StatTooltips(card));
-                return lines;
+                if (card != null) return SidebarNodes.EnemyDetails(card);
+                string line = VitalsOf(enemy);
+                return line != null ? new[] { line } : null;
+            }
+            return null;
+        }
+
+        // The non-zero stats of the card the landing showed for this cell, past health and mana (the bar
+        // already gave those, live).
+        private static string BriefStatsAt(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var id))
+            {
+                var card = HeroActions.ShownHeroCard(RunData.HeroName(id));
+                return card != null ? HeroCardNodes.StatsBrief(card, vitals: false) : null;
+            }
+            if (RunData.TryEnemyAt(cell, out var enemy))
+            {
+                var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
+                return card != null ? SidebarNodes.StatsBrief(card) : null;
             }
             return null;
         }

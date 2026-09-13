@@ -36,6 +36,9 @@ namespace GuildrunAccess.Module.GameRun
             if (!string.IsNullOrEmpty(name)) parts.Add(name);
             string vitals = BoardSection.VitalsOf(view);
             if (!string.IsNullOrEmpty(vitals)) parts.Add(vitals);
+            var card = HeroActions.ShownHeroCard(name);
+            string brief = card != null ? HeroCardNodes.StatsBrief(card, vitals: vitals == null) : null;
+            if (!string.IsNullOrEmpty(brief)) parts.Add(brief);
             string abilities = HeroCardNodes.AbilitiesLine(view._abilitiesView);
             if (!string.IsNullOrEmpty(abilities)) parts.Add(abilities);
             string items = ItemNodes.ItemNames(view._itemSlotViews);

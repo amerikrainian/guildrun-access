@@ -66,10 +66,37 @@ namespace GuildrunAccess.Module.GameRun
         public static string StatsLine(HeroCardView card)
             => card == null ? null : StatsLine(card, card._healthText, card._manaText);
 
-        /// <summary>"health 650, mana 85": the card's health and mana alone, for the focus line of a
-        /// control that stands for the hero.</summary>
+        /// <summary>"health 650, mana 85": the card's health and mana alone.</summary>
         public static string Vitals(HeroCardView card)
             => card == null ? null : Vitals(card._healthText, card._manaText);
+
+        /// <summary>The focus line's stats: health and mana (when <paramref name="vitals"/>), then every
+        /// stat panel whose value is not zero ("Mana Regen 4, Base Attack Damage 30, Magic 25, Crit 15,
+        /// Defense 34, Attack Range 2"); the zeros are left to the full line in the buffer.</summary>
+        public static string StatsBrief(HeroCardView card, bool vitals)
+            => card == null ? null : StatsBrief(card, vitals ? card._healthText : null, vitals ? card._manaText : null);
+
+        public static string StatsBrief(UnityEngine.Component root, TMPro.TMP_Text health, TMPro.TMP_Text mana)
+        {
+            if (root == null) return null;
+            var parts = new List<string>();
+            string v = Vitals(health, mana);
+            if (!string.IsNullOrEmpty(v)) parts.Add(v);
+            foreach (var stat in root.GetComponentsInChildren<StatView>(false))
+            {
+                if (stat == null || stat._statText == null || string.IsNullOrWhiteSpace(stat._statText.text) || IsZero(stat._statText.text)) continue;
+                string name = TooltipReader.Title(stat._tooltipRaycastTarget) ?? StatNameFromObject(stat.gameObject.name);
+                if (string.IsNullOrEmpty(name)) continue;
+                parts.Add(Strings.HeroStat(name, stat._statText.text));
+            }
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
+        }
+
+        // "0", "0%", "0.0", "+0": a value that says nothing on a focus line.
+        private static readonly System.Text.RegularExpressions.Regex Zero =
+            new System.Text.RegularExpressions.Regex(@"^\s*[+-]?0+(?:[.,]0+)?\s*%?\s*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        public static bool IsZero(string value) => value != null && Zero.IsMatch(value);
 
         public static string Vitals(TMPro.TMP_Text health, TMPro.TMP_Text mana)
         {
@@ -161,10 +188,10 @@ namespace GuildrunAccess.Module.GameRun
             return lines;
         }
 
-        // ---- the grid ----
+        // ---- the hero list ----
 
-        /// <summary>One detail row of the hero grid: a spoken caption, the cell text per card, and the
-        /// cell's detail lines per card (the ui buffer, one per tooltip).</summary>
+        /// <summary>An extra row a screen adds to a hero's buffers: a captioned line for the hero buffer
+        /// ("relic, Starter Kit: Sustained Shard Boost") and its tooltip lines for the control buffer.</summary>
         public sealed class GridRow
         {
             public string Key;
@@ -181,11 +208,6 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
-        public static readonly GridRow StatsRow = new GridRow("stats", () => Strings.HeroStats, StatsLine, StatsTooltips);
-        public static readonly GridRow AbilitiesRow = new GridRow("abilities", () => Strings.HeroAbilities, AbilitiesLine, AbilitiesTooltips);
-        public static readonly GridRow ItemsRow = new GridRow("items", () => Strings.HeroItems,
-            card => ItemNodes.ItemNames(Slots(card)) ?? Strings.HeroNoItems, card => ItemNodes.ItemTooltips(Slots(card)));
-
         /// <summary>The card's equipment slots (the ones it shows).</summary>
         public static List<PlaceholderSlotView> Slots(HeroCardView card)
         {
@@ -197,55 +219,84 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         /// <summary>
-        /// Declare a grid of hero cards inside the current Tab-stop: row 1 is each card's name and
-        /// class (plus <paramref name="nameSuffix"/>, e.g. a price), then <paramref name="rows"/> in
-        /// order. Every cell of a column activates through <paramref name="activate"/> for that card;
-        /// the name cell is a button only when it has an action (a picker), plain text otherwise (an
-        /// inspected card).
+        /// Declare hero cards as one vertical list inside the current Tab-stop, one control per hero:
+        /// "Sal, Mage, Frost, cost Shard 15, health 725, mana 100, Magic 25, Crit 15, ..." (the
+        /// <paramref name="nameSuffix"/>, a price, before the stats; only the non-zero stats). The rest
+        /// waits in the buffers: the control buffer reads the full stats line, then every ability's and
+        /// stat's tooltip lines (then the extras' tooltips); the hero buffer name, stats, abilities (then
+        /// any <paramref name="extras"/>); the items buffer the items worn. Enter runs <paramref name="activate"/> for that card; the control is a button
+        /// only when it has an action (a picker), plain text otherwise (an inspected card).
         /// </summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
-            Func<int, Action> activate, Func<int, string> nameSuffix, params GridRow[] rows)
+            Func<int, Action> activate, Func<int, string> nameSuffix, params GridRow[] extras)
         {
             if (cards == null || cards.Count == 0) return;
-            string rowKey = keyPrefix + ":grid";
-
-            b.StartRow(rowKey);
             for (int i = 0; i < cards.Count; i++)
             {
                 int index = i;
                 var card = cards[i];
                 var action = activate != null ? activate(index) : null;
-                b.AddItem(ControlId.Structural(keyPrefix + ":" + i + ":name"), Cell(card,
+                b.AddItem(ControlId.Structural(keyPrefix + ":" + i + ":name"), HeroNode(card,
                     () =>
                     {
-                        // "Karsu, Duelist, Frost, health 650, mana 85, cost Shard 15": the same shape as
-                        // every other control that stands for a hero.
                         var parts = new List<string> { NameAndClass(card) };
-                        string vitals = Vitals(card);
-                        if (!string.IsNullOrEmpty(vitals)) parts.Add(vitals);
                         string suffix = nameSuffix != null ? nameSuffix(index) : null;
                         if (!string.IsNullOrEmpty(suffix)) parts.Add(suffix);
+                        string stats = StatsBrief(card, vitals: true);
+                        if (!string.IsNullOrEmpty(stats)) parts.Add(stats);
                         return string.Join(", ", parts);
                     },
-                    action != null ? ControlTypes.Button : null, () => AbilitiesTooltips(card), null, action));
+                    action != null ? ControlTypes.Button : null, action, extras));
             }
-            b.EndRow();
+        }
 
-            foreach (var row in rows)
+        // One hero as a control: its line; Enter runs the action; Backspace opens its compendium page;
+        // the card fills the buffers.
+        private static NodeVtable HeroNode(HeroCardView card, Func<string> text, ControlType type, Action activate, GridRow[] extras)
+        {
+            return new NodeVtable
             {
-                if (row == null) continue;
-                b.StartRow(rowKey);
-                for (int i = 0; i < cards.Count; i++)
-                {
-                    int index = i;
-                    var card = cards[i];
-                    var r = row;
-                    b.AddItem(ControlId.Structural(keyPrefix + ":" + i + ":" + r.Key), Cell(card,
-                        () => r.Text(card), null, () => r.Tooltip != null ? r.Tooltip(card) : null, r.Caption,
-                        activate != null ? activate(index) : null));
-                }
-                b.EndRow();
+                ControlType = type,
+                Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(text) },
+                SearchText = () => NameAndClass(card),
+                OnActivate = activate,
+                OnSecondary = () => OpenCompendium(card),
+                Details = () => CardDetails(card, extras),
+                SideLines = HeroLines.Side(() => CardRows(card, extras), () => ItemNodes.ItemTooltips(Slots(card))),
+            };
+        }
+
+        // The hero buffer: name, stats, abilities, then each extra as "caption, text".
+        private static IEnumerable<string> CardRows(HeroCardView card, GridRow[] extras)
+        {
+            foreach (var line in HeroLines.ForCard(card)) yield return line;
+            if (extras == null) yield break;
+            foreach (var r in extras)
+            {
+                if (r == null || r.Text == null) continue;
+                string text = r.Text(card);
+                if (string.IsNullOrWhiteSpace(text)) continue;
+                string caption = r.Caption != null ? r.Caption() : null;
+                yield return string.IsNullOrEmpty(caption) ? text : caption + ", " + text;
             }
+        }
+
+        // The control buffer: the full stats line, every ability's, then every stat's tooltip lines, then
+        // the extras' tooltips.
+        private static List<string> CardDetails(HeroCardView card, GridRow[] extras)
+        {
+            var lines = new List<string>();
+            string stats = StatsLine(card);
+            if (!string.IsNullOrEmpty(stats)) lines.Add(stats);
+            lines.AddRange(AbilitiesTooltips(card));
+            lines.AddRange(StatsTooltips(card));
+            if (extras != null)
+                foreach (var r in extras)
+                {
+                    var more = r != null && r.Tooltip != null ? r.Tooltip(card) : null;
+                    if (more != null) lines.AddRange(more);
+                }
+            return lines;
         }
 
         /// <summary>Press the card's own compendium button (the game opens the compendium on that hero).</summary>

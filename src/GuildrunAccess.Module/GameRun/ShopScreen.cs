@@ -15,8 +15,8 @@ using Screen = GuildrunAccess.Core.Screens.Screen;
 namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
-    /// The shop between fights (<see cref="ShopUIController"/>): the hero offers as the shared hero grid
-    /// with each card's price on its name, the items and relics for sale as controls carrying name,
+    /// The shop between fights (<see cref="ShopUIController"/>): the hero offers as the shared hero list
+    /// with each card's price on its line, the items and relics for sale as controls carrying name,
     /// cost and description (the full tooltip in the control buffer), and the actions (reroll, freeze, the key
     /// fragment offer, proceed). Buying goes through the view's own click handler, so the game's
     /// purchase flow runs as for a mouse click. Escape presses Proceed.
@@ -61,8 +61,7 @@ namespace GuildrunAccess.Module.GameRun
                 b.PushContext(Strings.ShopHeroes, null, positions: true);
                 HeroCardNodes.AddGrid(b, "shop:hero", cards,
                     i => () => Buy(views[i]),
-                    i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; },
-                    HeroCardNodes.StatsRow, HeroCardNodes.AbilitiesRow);
+                    i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; });
                 b.PopContext();
             }
 

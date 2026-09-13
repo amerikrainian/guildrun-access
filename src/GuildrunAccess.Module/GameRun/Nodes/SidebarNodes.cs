@@ -56,8 +56,7 @@ namespace GuildrunAccess.Module.GameRun
             if (hero != null && hero.gameObject.activeInHierarchy)
             {
                 b.PushContext(Strings.RunInspect, null, positions: false);
-                HeroCardNodes.AddGrid(b, keyPrefix + ":hero", new List<HeroCardView> { hero }, i => null, null,
-                    HeroCardNodes.StatsRow, HeroCardNodes.AbilitiesRow, HeroCardNodes.ItemsRow);
+                HeroCardNodes.AddGrid(b, keyPrefix + ":hero", new List<HeroCardView> { hero }, i => null, null);
                 b.PopContext();
             }
 
@@ -65,34 +64,18 @@ namespace GuildrunAccess.Module.GameRun
             if (enemy != null && enemy.gameObject.activeInHierarchy)
             {
                 b.PushContext(Strings.RunInspect, null, positions: false);
-                // Name, stats, abilities: the order every hero and enemy reads in, here and in the buffers.
-                var enemySide = HeroLines.Side(() => EnemyRows(enemy), null);
+                // One control, as a hero card is: its line; the buffers hold the rest (the hero buffer
+                // name, stats, abilities; the control buffer every ability and stat tooltip).
                 b.AddItem(ControlId.Structural(keyPrefix + ":enemy:name"), new NodeVtable
                 {
-                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => EnemyLine(enemy)) },
+                    Announcements = new List<NodeAnnouncement>
+                    {
+                        GameNodes.LabelPart(() => EnemyLine(enemy)),
+                        new NodeAnnouncement(() => StatsBrief(enemy), kind: AnnouncementKinds.Value),
+                    },
                     SearchText = () => enemy._nameText != null ? enemy._nameText.text : null,
                     Details = () => EnemyDetails(enemy),
-                    SideLines = enemySide,
-                });
-                b.AddItem(ControlId.Structural(keyPrefix + ":enemy:stats"), new NodeVtable
-                {
-                    Announcements = new List<NodeAnnouncement>
-                    {
-                        new NodeAnnouncement(() => Strings.HeroStats),
-                        GameNodes.LabelPart(() => Stats(enemy)),
-                    },
-                    Details = () => StatTooltips(enemy),
-                    SideLines = enemySide,
-                });
-                b.AddItem(ControlId.Structural(keyPrefix + ":enemy:abilities"), new NodeVtable
-                {
-                    Announcements = new List<NodeAnnouncement>
-                    {
-                        new NodeAnnouncement(() => Strings.HeroAbilities),
-                        GameNodes.LabelPart(() => HeroCardNodes.AbilitiesLine(enemy)),
-                    },
-                    Details = () => HeroCardNodes.AbilitiesTooltips(enemy),
-                    SideLines = enemySide,
+                    SideLines = HeroLines.Side(() => EnemyRows(enemy), null),
                 });
                 b.PopContext();
             }
@@ -128,13 +111,20 @@ namespace GuildrunAccess.Module.GameRun
         internal static IEnumerable<string> EnemyRows(EnemyCardView enemy)
             => GameNodes.Lines(EnemyLine(enemy), Stats(enemy), HeroCardNodes.AbilitiesLine(enemy));
 
-        /// <summary>The enemy card's tooltips as control-buffer lines: every ability, then every stat.</summary>
+        /// <summary>The enemy card as control-buffer lines: the full stats line, every ability, then every
+        /// stat tooltip.</summary>
         internal static List<string> EnemyDetails(EnemyCardView enemy)
         {
-            var lines = HeroCardNodes.AbilitiesTooltips(enemy);
+            var lines = new List<string>();
+            string stats = Stats(enemy);
+            if (!string.IsNullOrEmpty(stats)) lines.Add(stats);
+            lines.AddRange(HeroCardNodes.AbilitiesTooltips(enemy));
             lines.AddRange(StatTooltips(enemy));
             return lines;
         }
+
+        /// <summary>The enemy card's non-zero stats, for a focus line.</summary>
+        internal static string StatsBrief(EnemyCardView enemy) => HeroCardNodes.StatsBrief(enemy, null, null);
 
         internal static string EnemyLine(EnemyCardView enemy)
         {

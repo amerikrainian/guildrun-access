@@ -11,6 +11,26 @@ namespace GuildrunAccess.Module.GameRun
     /// name, abilities and items; Enter opens the hero's menu.</summary>
     internal sealed class PartySection : ScreenSection
     {
+        // The control buffer: the full stats line (the card the landing showed, else the bar vitals),
+        // the abilities and items tooltips, then the stat tooltips.
+        private static IEnumerable<string> SlotDetails(BottomHeroView view)
+        {
+            var lines = new List<string>();
+            var card = HeroActions.ShownHeroCard(RunData.HeroName(view));
+            string stats = card != null ? HeroCardNodes.StatsLine(card) : BoardSection.VitalsOf(view);
+            if (!string.IsNullOrEmpty(stats)) lines.Add(stats);
+            lines.AddRange(RunLabels.SlotTooltips(view));
+            if (card != null) lines.AddRange(HeroCardNodes.StatsTooltips(card));
+            return lines;
+        }
+
+        // The hero buffer: the card rows when shown, else name, vitals, abilities.
+        private static IEnumerable<string> SlotRows(BottomHeroView view)
+        {
+            var card = HeroActions.ShownHeroCard(RunData.HeroName(view));
+            return card != null ? HeroLines.ForCard(card) : HeroLines.ForSlot(view, BoardSection.VitalsOf(view));
+        }
+
         private readonly HeroActions _actions;
 
         public PartySection(HeroActions actions) { _actions = actions; }
@@ -46,8 +66,11 @@ namespace GuildrunAccess.Module.GameRun
                     },
                     SearchText = () => RunLabels.SlotSummary(view),
                     OnActivate = () => _actions.OpenHeroMenu(view, reserve),
-                    Details = () => RunLabels.SlotTooltips(view),
-                    SideLines = HeroLines.Side(() => HeroLines.ForSlot(view, BoardSection.VitalsOf(view)), () => ItemNodes.ItemTooltips(view._itemSlotViews)),
+                    // Landing shows the hero's card in the sidebar, as hovering the slot does; the line
+                    // and the buffers read it.
+                    OnFocus = () => { if (RunData.TryHeroId(view, out var id)) HeroActions.PeekHero(id); },
+                    Details = () => SlotDetails(view),
+                    SideLines = HeroLines.Side(() => SlotRows(view), () => ItemNodes.ItemTooltips(view._itemSlotViews)),
                 });
             }
             b.PopContext();

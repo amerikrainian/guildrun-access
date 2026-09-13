@@ -59,8 +59,7 @@ namespace GuildrunAccess.Module.GameRun
             {
                 b.BeginStop("hero");
                 b.PushContext(Strings.PickerHero, null, positions: false);
-                HeroCardNodes.AddGrid(b, "picker:hero", new List<HeroCardView> { card }, i => null, null,
-                    HeroCardNodes.StatsRow, HeroCardNodes.AbilitiesRow);
+                HeroCardNodes.AddGrid(b, "picker:hero", new List<HeroCardView> { card }, i => null, null);
                 b.PopContext();
             }
 

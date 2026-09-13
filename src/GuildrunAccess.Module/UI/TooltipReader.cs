@@ -82,12 +82,12 @@ namespace GuildrunAccess.Module.UI
         }
 
         // A section text holds one paragraph per line break (the keyword definitions come as one text,
-        // "Rank: ...\nCrit: ..."): each is a line of its own. A line opening with an icon sprite that
-        // names the very word after it ("<sprite name=Rank> Rank:") drops the sprite, or speech would
-        // say the word twice; the sprite names carry a size suffix ("Shard_S") the word does not.
+        // "Rank: ...\nCrit: ..."): each is a line of its own. A line opening with an icon sprite whose
+        // spoken name comes up again in the line ("<sprite name=Rank> Rank:", "<sprite name=ManaRegen>
+        // +2 Mana Regen") drops the icon, or speech would say the name twice.
         private static readonly Regex LeadingIcon = new Regex(
-            @"^\s*<sprite\s+name=""?(?<name>[A-Za-z]+)(?:_[A-Za-z0-9]+)?""?\s*/?>\s*(?=(?:<[^>]+>\s*)*(?<word>[A-Za-z]+))",
-            RegexOptions.Compiled);
+            @"^\s*<sprite\s+name=""?(?<name>[^""\s>]+)""?[^>]*>\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex AnyTag = new Regex("<[^>]+>", RegexOptions.Compiled);
 
         private static void AddLines(List<string> lines, string text)
         {
@@ -97,8 +97,13 @@ namespace GuildrunAccess.Module.UI
                 string line = raw.Trim();
                 if (line.Length == 0) continue;
                 var m = LeadingIcon.Match(line);
-                if (m.Success && string.Equals(m.Groups["name"].Value, m.Groups["word"].Value, StringComparison.OrdinalIgnoreCase))
-                    line = line.Substring(m.Length).TrimStart();
+                if (m.Success)
+                {
+                    string spoken = Speech.SpriteName(m.Groups["name"].Value);
+                    string rest = AnyTag.Replace(line.Substring(m.Length), "");
+                    if (spoken.Length > 0 && rest.IndexOf(spoken, StringComparison.OrdinalIgnoreCase) >= 0)
+                        line = line.Substring(m.Length).TrimStart();
+                }
                 lines.Add(line);
             }
         }

@@ -61,7 +61,7 @@ namespace GuildrunAccess.Module.GameRun
             // The relic row only when the offer bundles relics (the tutorial run has none).
             bool anyRelic = false;
             foreach (var v in choices) if (HasRelic(v)) { anyRelic = true; break; }
-            var rows = new List<HeroCardNodes.GridRow> { HeroCardNodes.StatsRow, HeroCardNodes.AbilitiesRow };
+            var rows = new List<HeroCardNodes.GridRow>();
             if (anyRelic)
                 rows.Add(new HeroCardNodes.GridRow("relic", () => Strings.HeroRelic,
                     card => RelicLine(ChoiceOf(choices, card)), card => RelicTooltip(ChoiceOf(choices, card))));
