@@ -263,8 +263,6 @@ namespace GuildrunAccess.Core.Strings
             // {0} = the rank tab's number when it has no caption.
             D("compendium.rank_n", "rank {0}"),
             D("compendium.upgrades", "rank upgrades"),
-            D("mod.narrate", "Narrate deaths and ability uses"),
-            D("mod.narrate_numbers", "Speak damage, healing and status numbers"),
             D("hero.items", "items"),
             D("hero.no_items", "no items"),
             // Item and hero actions from the keyboard (the game's drag and drop).
@@ -557,8 +555,6 @@ namespace GuildrunAccess.Core.Strings
         public static string CompendiumRanks => Get("compendium.ranks");
         public static string CompendiumRank(int n) => F("compendium.rank_n", n);
         public static string CompendiumUpgrades => Get("compendium.upgrades");
-        public static string ModNarrate => Get("mod.narrate");
-        public static string ModNarrateNumbers => Get("mod.narrate_numbers");
         public static string HeroItems => Get("hero.items");
         public static string HeroNoItems => Get("hero.no_items");
         public static string RunEquipTo(string item) => F("run.equip_to", item);

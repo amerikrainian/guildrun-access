@@ -71,10 +71,6 @@ namespace GuildrunAccess.Module.Screens
                 () => settings.SpeakPositions, v => settings.SpeakPositions = v));
             b.AddItem(ControlId.Structural("modsettings:focus"), Toggle(() => Strings.ModFocusOnLaunch,
                 () => settings.FocusModeOnLaunch, v => settings.FocusModeOnLaunch = v));
-            b.AddItem(ControlId.Structural("modsettings:narrate"), Toggle(() => Strings.ModNarrate,
-                () => BattleEvents.NarrateKeyEvents, BattleEvents.SetNarrateKeyEvents));
-            b.AddItem(ControlId.Structural("modsettings:numbers"), Toggle(() => Strings.ModNarrateNumbers,
-                () => BattleEvents.NarrateNumbers, BattleEvents.SetNarrateNumbers));
             b.PopContext();
         }
 

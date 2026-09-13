@@ -188,10 +188,12 @@ action, Escape backs out, Home/End jump, Space reads a description (silent when 
    `LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `GameRun/RunData`.
 6. **(done)** End screen, progression, the sidebar (inspect cards, damage tracker), battle events
    (`GameRun/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties
-   bars, cast animations: a run-HUD stop plus narration; only what the game draws is reported: the
-   simulation's own `BattleLogger` is developer debug text and is NOT used), the compendium, the
-   mod menu (Ctrl+Shift+M: settings, key help), comics. Open: the shop's "sold" filter is a
-   canvas-group heuristic; Escape on the run HUD only cancels a pending move.
+   bars, cast animations: the battle events log, a run-HUD stop, and NOTHING spoken as it happens;
+   only what the game draws is reported: the simulation's own `BattleLogger` is developer debug text
+   and is NOT used), the compendium, the mod menu (Ctrl+Shift+M: settings, key help), comics. The run
+   HUD is active only while placing or fighting (`GameRunScreen.IsActive`), so no landing is spoken
+   at a battle's end or between panels; a unit falling under focus moves focus silently
+   (`NodeVtable.QuietVanish`). Open: Escape on the run HUD only cancels a pending move.
 
 ## The game's own hotkeys
 The game's Input System action maps bind Tab, Space, Enter, Escape, arrows and letters (Navigation:

@@ -17,9 +17,10 @@ namespace GuildrunAccess.Module.GameRun
     /// What the battle HUD shows as it happens, taken at the moment the game draws it (Harmony postfixes
     /// on the HUD views): a health bar's floating damage or heal number, a status icon's stack count,
     /// an enemy's ability icon, a unit's death animation, a hero's cast animation. Each becomes a line
-    /// for the run HUD's events stop; deaths and casts are spoken as they happen, the numbers too when
-    /// the player asks for them. Nothing the game does not display is reported. Lines are queued from
-    /// the hooks and drained on the module tick, so speech and the graph stay on the main thread.
+    /// for the run HUD's events stop, the battle events log, and NOTHING is spoken as it happens: a
+    /// fight throws off several events a second, and the log is where the player reads them at their
+    /// own pace. Nothing the game does not display is reported. Lines are queued from the hooks and
+    /// drained on the module tick, so the graph stays on the main thread.
     /// </summary>
     internal static class BattleEvents
     {
@@ -28,7 +29,6 @@ namespace GuildrunAccess.Module.GameRun
         {
             public int Sequence;
             public string Text;
-            public bool Key; // a death or a cast: spoken by default
         }
 
         private const int Capacity = 80;
@@ -42,31 +42,13 @@ namespace GuildrunAccess.Module.GameRun
         /// <summary>Forget the lines (a new fight is being set up).</summary>
         public static void Clear() => _lines.Clear();
 
-        // The settings that decide what is spoken; read through the host store each time (edits apply live).
-        public static bool NarrateKeyEvents => Setting("narrate_battle", true);
-        public static bool NarrateNumbers => Setting("narrate_battle_numbers", false);
-        public static void SetNarrateKeyEvents(bool value) => SetSetting("narrate_battle", value);
-        public static void SetNarrateNumbers(bool value) => SetSetting("narrate_battle_numbers", value);
-
-        private static bool Setting(string key, bool fallback)
-        {
-            var store = ModuleMain.Host != null ? ModuleMain.Host.Settings.Store : null;
-            return store != null ? store.GetBool(key, fallback) : fallback;
-        }
-
-        private static void SetSetting(string key, bool value)
-        {
-            var store = ModuleMain.Host != null ? ModuleMain.Host.Settings.Store : null;
-            if (store != null) store.SetBool(key, value);
-        }
-
-        internal static void Add(string text, bool key)
+        internal static void Add(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
-            _pending.Enqueue(new Line { Text = text, Key = key });
+            _pending.Enqueue(new Line { Text = text });
         }
 
-        /// <summary>Drain the queue on the main thread: keep the lines, speak the chosen ones.</summary>
+        /// <summary>Drain the queue on the main thread into the kept lines.</summary>
         public static void Tick()
         {
             while (_pending.TryDequeue(out var line))
@@ -74,8 +56,6 @@ namespace GuildrunAccess.Module.GameRun
                 line.Sequence = ++_sequence;
                 _lines.Add(line);
                 if (_lines.Count > Capacity) _lines.RemoveAt(0);
-                bool speak = line.Key ? NarrateKeyEvents : NarrateNumbers;
-                if (speak) Speech.Say(line.Text, interrupt: false);
             }
         }
 
@@ -130,14 +110,14 @@ namespace GuildrunAccess.Module.GameRun
                 if (changeState.Heal)
                 {
                     int healed = Math.Max(changeState.TotalDamage, changeState.HealthDamage);
-                    if (healed > 0) BattleEvents.Add(Strings.BattleHealed(unit, healed), key: false);
+                    if (healed > 0) BattleEvents.Add(Strings.BattleHealed(unit, healed));
                     return;
                 }
                 if (changeState.HasDamage && changeState.TotalDamage > 0)
-                    BattleEvents.Add(changeState.IsCrit ? Strings.BattleCrit(unit, changeState.TotalDamage) : Strings.BattleDamage(unit, changeState.TotalDamage), key: false);
+                    BattleEvents.Add(changeState.IsCrit ? Strings.BattleCrit(unit, changeState.TotalDamage) : Strings.BattleDamage(unit, changeState.TotalDamage));
                 // The bar emptying is how the HUD shows a unit falling.
                 if (changeState.CurrentHealth <= 0 && changeState.CurrentShield <= 0 && changeState.HasDamage)
-                    BattleEvents.Add(Strings.BattleDefeated(unit), key: true);
+                    BattleEvents.Add(Strings.BattleDefeated(unit));
             }
             catch (Exception e) { CoreLog.Warning("BattleEvents: health hook failed: " + e.Message); }
         }
@@ -154,7 +134,7 @@ namespace GuildrunAccess.Module.GameRun
                 string unit = BattleEvents.UnitName(__instance);
                 if (unit == null) return; // not a fighting unit: no named bar
                 string status = Strings.Status(type.ToString());
-                BattleEvents.Add(stackCount > 0 ? Strings.BattleStatus(unit, status, stackCount) : Strings.BattleStatusGone(unit, status), key: false);
+                BattleEvents.Add(stackCount > 0 ? Strings.BattleStatus(unit, status, stackCount) : Strings.BattleStatusGone(unit, status));
             }
             catch (Exception e) { CoreLog.Warning("BattleEvents: status hook failed: " + e.Message); }
         }
@@ -170,7 +150,7 @@ namespace GuildrunAccess.Module.GameRun
             {
                 string unit = BattleEvents.UnitName(__instance);
                 if (unit == null) return; // not a fighting unit: no named bar
-                BattleEvents.Add(Strings.BattleCast(unit, string.IsNullOrWhiteSpace(tooltipTitle) ? Strings.BattleAbility : tooltipTitle), key: true);
+                BattleEvents.Add(Strings.BattleCast(unit, string.IsNullOrWhiteSpace(tooltipTitle) ? Strings.BattleAbility : tooltipTitle));
             }
             catch (Exception e) { CoreLog.Warning("BattleEvents: ability icon hook failed: " + e.Message); }
         }
@@ -188,7 +168,7 @@ namespace GuildrunAccess.Module.GameRun
                 string unit = BattleEvents.UnitName(__instance);
                 if (unit == null) return; // not a fighting unit: no named bar
                 string ability = RunData.ActiveAbilityName(__instance);
-                BattleEvents.Add(Strings.BattleCast(unit, ability ?? Strings.BattleAbility), key: true);
+                BattleEvents.Add(Strings.BattleCast(unit, ability ?? Strings.BattleAbility));
             }
             catch (Exception e) { CoreLog.Warning("BattleEvents: animation hook failed: " + e.Message); }
         }
