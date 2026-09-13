@@ -255,7 +255,6 @@ namespace GuildrunAccess.Module.GameRun
         {
             var lb = panel.GetComponentInChildren<LeaderboardController>(false);
             if (lb == null || !lb.gameObject.activeInHierarchy) return;
-            b.BeginStop("leaderboard");
             LeaderboardNodes.Add(b, lb, "result:lb");
         }
 

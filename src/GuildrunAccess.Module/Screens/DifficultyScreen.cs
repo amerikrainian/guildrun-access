@@ -94,8 +94,7 @@ namespace GuildrunAccess.Module.Screens
             var lb = panel.GetComponentInChildren<LeaderboardController>(false);
             if (lb != null && lb.gameObject.activeInHierarchy)
             {
-                b.BeginStop("leaderboard");
-                LeaderboardNodes.Add(b, lb, "difficulty:lb");
+                    LeaderboardNodes.Add(b, lb, "difficulty:lb");
             }
 
             b.BeginStop("actions");
