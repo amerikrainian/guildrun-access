@@ -246,8 +246,20 @@ namespace GuildrunAccess.Core.UI
         private ControlId _liveKey;
         private readonly List<string> _liveValues = new List<string>();
 
+        // A LiveReadout node: its whole readout, re-spoken (interrupting) when it changes, at most once
+        // per window; a burst of changes (every hit of a fight) ends in one re-read of the latest state.
+        private const float LiveReadoutWindow = 0.35f;
+        private string _liveReadout;
+        private bool _liveReadoutDirty;
+        private float _liveReadoutDue;
+
         private void WatchLive(GraphNode node)
         {
+            if (node.Vtable != null && node.Vtable.LiveReadout)
+            {
+                WatchLiveReadout(node);
+                return;
+            }
             var anns = GraphAnnouncer.EffectiveAnnouncements(node); // type-merged + settings-filtered
             if (anns.Count == 0) return;
             bool baseline = _liveKey == null || !_liveKey.Equals(node.Id) || _liveValues.Count != anns.Count;
@@ -268,6 +280,36 @@ namespace GuildrunAccess.Core.UI
                     _liveValues[i] = v;
                     if (!string.IsNullOrEmpty(v) && Navigation.FocusActive()) Speak(v, interrupt: false);
                 }
+            }
+        }
+
+        private void WatchLiveReadout(GraphNode node)
+        {
+            string text;
+            try { text = GraphAnnouncer.LeafText(node); }
+            catch (Exception e) { CoreLog.Warning("live readout: " + e.Message); return; }
+            float now = NavInput.Current.UnscaledTime;
+            bool baseline = _liveKey == null || !_liveKey.Equals(node.Id);
+            if (baseline)
+            {
+                // A new landing: the focus announcement spoke this state already.
+                _liveKey = node.Id;
+                _liveValues.Clear();
+                _liveReadout = text;
+                _liveReadoutDirty = false;
+                _liveReadoutDue = now;
+                return;
+            }
+            if (!string.Equals(_liveReadout, text))
+            {
+                _liveReadout = text;
+                _liveReadoutDirty = true;
+            }
+            if (_liveReadoutDirty && now >= _liveReadoutDue)
+            {
+                _liveReadoutDirty = false;
+                _liveReadoutDue = now + LiveReadoutWindow;
+                if (!string.IsNullOrEmpty(_liveReadout) && Navigation.FocusActive()) Speak(_liveReadout, interrupt: true);
             }
         }
 

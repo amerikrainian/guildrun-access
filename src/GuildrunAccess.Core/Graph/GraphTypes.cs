@@ -108,6 +108,13 @@ namespace GuildrunAccess.Core.Graph
         /// at every death is noise, not information.</summary>
         public bool QuietVanish;
 
+        /// <summary>Optional. While this node is focused, its whole readout is spoken again whenever
+        /// any part's text changes (the parts read live game state at speak time), interrupting so the
+        /// latest value wins; changes within a short window coalesce into one re-read. For a unit in a
+        /// fight: its health, shield and mana follow the fight while the player rests on it. Independent
+        /// of <see cref="NodeAnnouncement.Live"/>, which speaks single parts and queues.</summary>
+        public bool LiveReadout;
+
         /// <summary>Optional. Primary activation, the left-click equivalent (Enter).</summary>
         public Action OnActivate;
 

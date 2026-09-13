@@ -162,12 +162,13 @@ namespace GuildrunAccess.Module.GameRun
                     // Units fall all through a fight: when the focused one does, focus slides to a
                     // neighbour without reading it out (the death is in the battle events log).
                     QuietVanish = true,
+                    // Resting on a unit follows its fight: the line is re-read as its health, shield or
+                    // mana change (coalesced, interrupting, so the latest state is what is heard).
+                    LiveReadout = true,
                     Announcements = new List<NodeAnnouncement>
                     {
                         // "Pimenta, wearing Freezing Tome, hero, 650 health": the hero named as on the board.
                         new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Health(u.Bar)), kind: AnnouncementKinds.Label),
-                        // Not live: shield, mana and health change every tick of a fight; every part is
-                        // read at speak time, so a landing or a re-read speaks the moment's values.
                         new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
                     },

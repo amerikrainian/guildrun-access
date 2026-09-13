@@ -162,5 +162,70 @@ namespace GuildrunAccess.Tests
                 GraphAnnouncer.PositionText = null;
             }
         }
+
+        // One unit whose line reads a value that the "game" changes under focus.
+        private sealed class UnitScreen : Screen
+        {
+            public int Health = 950;
+            public override string Key => "test.unit";
+            public override bool IsActive() => true;
+            public override void Build(GraphBuilder b)
+            {
+                b.AddItem(ControlId.Structural("unit"), new NodeVtable
+                {
+                    LiveReadout = true,
+                    Announcements = new[] { new NodeAnnouncement(() => "Skorn, " + Health + " health", kind: AnnouncementKinds.Label) },
+                });
+            }
+        }
+
+        [Fact]
+        public void ALiveReadoutNodeRereadsItselfWhenItsStateChangesOncePerWindow()
+        {
+            var spoken = new List<string>();
+            var interrupts = new List<bool>();
+            var input = new FakeNavInput { FrameCount = 1 }; // UnscaledTime = frames / 60
+            Speech.Speak = (t, i) => { spoken.Add(t); interrupts.Add(i); };
+            NavInput.Current = input;
+            try
+            {
+                var nav = new GraphNavigator();
+                var screen = new UnitScreen();
+                nav.Attach(screen);
+                nav.EnsureFocus();
+                Assert.Single(spoken); // the landing
+                Assert.EndsWith("Skorn, 950 health", spoken[0]);
+
+                input.FrameCount += 2;
+                nav.EnsureFocus(); // nothing changed: silence
+                Assert.Single(spoken);
+
+                screen.Health = 900;
+                input.FrameCount += 2;
+                nav.EnsureFocus();
+                Assert.Equal(2, spoken.Count); // a change: the whole line again, interrupting
+                Assert.Equal("Skorn, 900 health", spoken[1]);
+                Assert.True(interrupts[1]);
+
+                screen.Health = 850;
+                input.FrameCount += 2; // 33 ms later: inside the window, held back
+                nav.EnsureFocus();
+                Assert.Equal(2, spoken.Count);
+
+                screen.Health = 800;
+                input.FrameCount += 30; // half a second on: one re-read, the latest state only
+                nav.EnsureFocus();
+                Assert.Equal(3, spoken.Count);
+                Assert.Equal("Skorn, 800 health", spoken[2]);
+
+                input.FrameCount += 30;
+                nav.EnsureFocus(); // steady: silence
+                Assert.Equal(3, spoken.Count);
+            }
+            finally
+            {
+                Speech.Speak = (t, i) => { };
+            }
+        }
     }
 }
