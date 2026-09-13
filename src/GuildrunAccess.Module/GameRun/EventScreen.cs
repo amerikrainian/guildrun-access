@@ -14,7 +14,7 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// A random event (<see cref="EventUIController"/>): the event's name as the context, its story
     /// text as a line (the whole text at once, not the typewriter's trickle), the choices as buttons
-    /// (an item or relic on offer named on its button, Space for its tooltip), then the outcome text and
+    /// (an item or relic on offer named on its button, its tooltip in the control buffer), then the outcome text and
     /// the Proceed button once a choice was made, all one Tab-stop read top to bottom with the arrows.
     /// Escape presses Proceed when it is up.
     /// </summary>
@@ -130,7 +130,7 @@ namespace GuildrunAccess.Module.GameRun
             return list;
         }
 
-        // A choice: its caption, the offered item or relic (named, Space for its tooltip), disabled state.
+        // A choice: its caption, the offered item or relic (named, its tooltip a buffer line), disabled state.
         private static NodeVtable Choice(ChoiceButtonView view)
         {
             var artifact = view.TryCast<ArtifactChoiceButtonView>();
@@ -148,12 +148,8 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => view._buttonText != null ? view._buttonText.text : null,
                 OnActivate = () => { if (button != null && button.interactable) button.onClick.Invoke(); },
-                OnTooltip = () =>
-                {
-                    string text = item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
-                        : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null;
-                    GameNodes.SayTooltip(text);
-                },
+                Details = () => GameNodes.Lines(item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
+                    : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null),
             };
         }
 
@@ -170,12 +166,8 @@ namespace GuildrunAccess.Module.GameRun
                     new NodeAnnouncement(() => item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null, kind: AnnouncementKinds.Value),
                 },
                 SearchText = () => summary._text != null ? summary._text.text : null,
-                OnTooltip = () =>
-                {
-                    string text = item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
-                        : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null;
-                    GameNodes.SayTooltip(text);
-                },
+                Details = () => GameNodes.Lines(item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
+                    : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null),
             };
         }
 

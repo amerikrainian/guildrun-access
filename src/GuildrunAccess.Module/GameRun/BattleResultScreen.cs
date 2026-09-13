@@ -132,7 +132,8 @@ namespace GuildrunAccess.Module.GameRun
                     {
                         Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => MiniCardLine(c)) },
                         SearchText = () => c._name != null ? c._name.text : null,
-                        OnTooltip = () => GameNodes.SayTooltip(MiniCardTooltips(c)),
+                        Details = () => MiniCardTooltips(c),
+                        SideLines = HeroLines.Side(() => new[] { MiniCardLine(c) }, () => MiniCardTooltips(c)),
                     });
                 }
                 if (shown > 0) b.PopContext();
@@ -153,7 +154,7 @@ namespace GuildrunAccess.Module.GameRun
                         Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => TrackerLine(h)) },
                         SearchText = () => HeroName(h),
                         // Each tracker's hover breakdown by source, then the status descriptions.
-                        OnTooltip = () => GameNodes.SayTooltip(TrackerTooltips(tip, h, StatusTooltips(h))),
+                        Details = () => TrackerTooltips(tip, h, StatusTooltips(h)),
                     });
                 }
                 b.PopContext();
@@ -161,9 +162,9 @@ namespace GuildrunAccess.Module.GameRun
             b.PopContext();
         }
 
-        // "damage dealt: Kai: Basic attack 2,000, Shuriken 906. damage taken: Kai: ...", then the
-        // statuses' descriptions; null when nothing has a tooltip.
-        private static string TrackerTooltips(Ember.Scopes.Battle.UI.Tracking.Views.TrackerTooltipView tip, HeroBattleStatsView hero, string statuses)
+        // "damage dealt: Kai: Basic attack 2,000, Shuriken 906", "damage taken: Kai: ...", then one line
+        // per status description: the row's buffer lines.
+        private static List<string> TrackerTooltips(Ember.Scopes.Battle.UI.Tracking.Views.TrackerTooltipView tip, HeroBattleStatsView hero, List<string> statuses)
         {
             var parts = new List<string>();
             var trackers = hero.Trackers;
@@ -174,8 +175,8 @@ namespace GuildrunAccess.Module.GameRun
                     string breakdown = SidebarNodes.TrackerTooltip(tip, tracker.CurrentMode, tracker);
                     if (breakdown != null) parts.Add(Strings.ResultTrackerMode((int)tracker.CurrentMode) + ": " + breakdown);
                 }
-            if (!string.IsNullOrWhiteSpace(statuses)) parts.Add(statuses);
-            return parts.Count == 0 ? null : string.Join(". ", parts);
+            parts.AddRange(statuses);
+            return parts;
         }
 
         // "Kai: damage dealt 2,906, damage taken 1,589, healing done 1,820, Poison applied 40".
@@ -201,17 +202,15 @@ namespace GuildrunAccess.Module.GameRun
             return parts.Count == 0 ? heroName : heroName + ": " + string.Join(", ", parts);
         }
 
-        private static string StatusTooltips(HeroBattleStatsView hero)
+        private static List<string> StatusTooltips(HeroBattleStatsView hero)
         {
-            var sb = new StringBuilder();
+            var lines = new List<string>();
             foreach (var stat in hero.GetComponentsInChildren<StatView>(false))
             {
                 var text = stat != null ? TooltipReader.Describe(stat._tooltipRaycastTarget) : null;
-                if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(text);
+                if (!string.IsNullOrEmpty(text)) lines.Add(text);
             }
-            return sb.Length > 0 ? sb.ToString() : null;
+            return lines;
         }
 
         // "Kai: health 875, mana 105, Attack 25, ...; Hammer".
@@ -227,11 +226,7 @@ namespace GuildrunAccess.Module.GameRun
             return sb.ToString();
         }
 
-        private static string MiniCardTooltips(MiniHeroCard card)
-        {
-            string items = ItemNodes.ItemTooltips(EquipmentSlots(card));
-            return items;
-        }
+        private static List<string> MiniCardTooltips(MiniHeroCard card) => ItemNodes.ItemTooltips(EquipmentSlots(card));
 
         private static List<PlaceholderSlotView> EquipmentSlots(MiniHeroCard card)
         {

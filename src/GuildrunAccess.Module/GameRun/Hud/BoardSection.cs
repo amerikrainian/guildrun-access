@@ -86,11 +86,14 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => Occupant(cell),
                 OnActivate = () => ActivateCell(cell),
-                OnTooltip = () =>
+                Details = () =>
                 {
                     var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null;
-                    GameNodes.SayTooltip(view != null ? RunLabels.SlotTooltips(view) : null);
+                    return view != null ? RunLabels.SlotTooltips(view) : null;
                 },
+                SideLines = HeroLines.Side(
+                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? HeroLines.ForSlot(view) : null; },
+                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? ItemNodes.ItemTooltips(view._itemSlotViews) : null; }),
             };
         }
 
@@ -174,7 +177,8 @@ namespace GuildrunAccess.Module.GameRun
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value) { LiveReadoutIgnore = true },
                     },
                     SearchText = () => u.Name,
-                    OnTooltip = () => GameNodes.SayTooltip(ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
+                    Details = () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews),
+                    SideLines = HeroLines.Side(() => new[] { UnitLine(u) }, () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
                 });
             }
             b.PopContext();
@@ -230,6 +234,26 @@ namespace GuildrunAccess.Module.GameRun
         // The bar's own label is an inactive text set once at spawn (the starting health, "<b>520</b>"),
         // never the value of the moment; the bar keeps the live current health and shield as fields,
         // updated with every hit and heal it draws.
+        // "Karsu, hero, 650 health, shield 40, mana 45 of 85": the unit's whole line, for the party
+        // and enemies buffers (one line per unit, read live on every buffer key).
+        private static string UnitLine(Unit u)
+        {
+            var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Health(u.Bar)) };
+            string shield = Shield(u.Bar);
+            if (shield != null) parts.Add(shield);
+            string mana = Mana(u.Bar);
+            if (mana != null) parts.Add(mana);
+            return string.Join(", ", parts);
+        }
+
+        /// <summary>One line per unit of a side, heroes or enemies, in the battlefield's order; empty
+        /// outside a fight.</summary>
+        internal static IEnumerable<string> UnitLines(bool heroes)
+        {
+            foreach (var u in Units())
+                if (u.IsHero == heroes) yield return UnitLine(u);
+        }
+
         private static string Health(HealthBarView bar) => Number(bar._currentHealth);
 
         private static string Shield(HealthBarView bar)

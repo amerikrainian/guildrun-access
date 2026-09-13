@@ -106,5 +106,8 @@ namespace GuildrunAccess.Core.UI
         public static void FocusStop(object stopKey) => Active?.FocusStop(stopKey);
 
         public static object FocusedStopKey => Active?.FocusedStopKey;
+
+        /// <summary>The focused node of the graph navigator, or null (no focus, or another navigator).</summary>
+        public static Graph.GraphNode FocusedNode => (Active as GraphNavigator)?.FocusedNode;
     }
 }

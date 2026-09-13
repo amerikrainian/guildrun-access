@@ -251,7 +251,6 @@ namespace GuildrunAccess.Tests
             Assert.True(g.TryAdjust(+1, false));
             Assert.True(adjusted);
             Assert.False(g.Secondary());
-            Assert.False(g.Tooltip());
         }
 
         private static NodeVtable Radio(string label, bool selected) => new NodeVtable

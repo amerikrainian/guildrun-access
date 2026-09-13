@@ -66,7 +66,7 @@ namespace GuildrunAccess.Module.GameRun
                         GameNodes.LabelPart(() => TooltipReader.Title(t) ?? t.gameObject.name),
                         new NodeAnnouncement(() => c.text, live: true, kind: AnnouncementKinds.Value),
                     },
-                    OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(t)),
+                    Details = () => GameNodes.Lines(TooltipReader.Describe(t)),
                 });
             }
             b.PopContext();

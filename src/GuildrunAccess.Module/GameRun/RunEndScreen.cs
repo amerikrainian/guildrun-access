@@ -18,8 +18,8 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The run's end screen (<see cref="EndScreenController"/>, after the final result and the comic):
     /// the outcome as the context, the run info (difficulty, floor, leaderboard standing), each hero of
-    /// the final team as a grid column (name and title, the stat highlights, abilities, items; Space for
-    /// tooltips), the backup team, the relics held, then the buttons (Quit to Menu, Summary, Continue).
+    /// the final team as a grid column (name and title, the stat highlights, abilities, items; their
+    /// tooltips buffer lines), the backup team, the relics held, then the buttons (Quit to Menu, Summary, Continue).
     /// Sits above the result panel that stays behind it. Escape presses Continue.
     /// </summary>
     public sealed class RunEndScreen : Screen
@@ -110,7 +110,7 @@ namespace GuildrunAccess.Module.GameRun
 
             // One row per detail, every card a column (the loop variable is copied per cell: the
             // cell closures read the card at speak time).
-            var rows = new (string Key, string Caption, System.Func<EndScreenHeroCardView, string> Text, System.Func<EndScreenHeroCardView, string> Tooltip)[]
+            var rows = new (string Key, string Caption, System.Func<EndScreenHeroCardView, string> Text, System.Func<EndScreenHeroCardView, IEnumerable<string>> Tooltip)[]
             {
                 ("name", null, NameAndTitle, c => HeroCardNodes.AbilitiesTooltips(c._abilitiesView)),
                 ("stats", Strings.HeroStats, c => Highlights(c) ?? Strings.EndNoHighlights, null),
@@ -132,7 +132,7 @@ namespace GuildrunAccess.Module.GameRun
             b.PopContext();
         }
 
-        private static NodeVtable Cell(EndScreenHeroCardView card, System.Func<string> text, string caption, System.Func<EndScreenHeroCardView, string> tooltip)
+        private static NodeVtable Cell(EndScreenHeroCardView card, System.Func<string> text, string caption, System.Func<EndScreenHeroCardView, IEnumerable<string>> tooltip)
         {
             var parts = new List<NodeAnnouncement>();
             if (caption != null) parts.Add(new NodeAnnouncement(() => caption));
@@ -141,11 +141,10 @@ namespace GuildrunAccess.Module.GameRun
             {
                 Announcements = parts,
                 SearchText = () => card._heroNameText != null ? card._heroNameText.text : null,
-                OnTooltip = () =>
-                {
-                    string t = tooltip != null ? tooltip(card) : null;
-                    GameNodes.SayTooltip(t);
-                },
+                Details = () => tooltip != null ? tooltip(card) : null,
+                SideLines = HeroLines.Side(
+                    () => GameNodes.Lines(NameAndTitle(card), Highlights(card), HeroCardNodes.AbilitiesLine(card._abilitiesView)),
+                    () => ItemTooltips(card)),
             };
         }
 
@@ -177,7 +176,7 @@ namespace GuildrunAccess.Module.GameRun
 
         private static string Items(EndScreenHeroCardView card) => ItemNodes.ItemNames(Slots(card));
 
-        private static string ItemTooltips(EndScreenHeroCardView card) => ItemNodes.ItemTooltips(Slots(card));
+        private static List<string> ItemTooltips(EndScreenHeroCardView card) => ItemNodes.ItemTooltips(Slots(card));
 
         // The card's equipment slots (an IL2CPP list) as a .NET list.
         private static List<Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView> Slots(EndScreenHeroCardView card)
@@ -212,7 +211,7 @@ namespace GuildrunAccess.Module.GameRun
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => BackupName(v)) },
                     SearchText = () => BackupName(v),
-                    OnTooltip = () => GameNodes.SayTooltip((hero != null ? HeroCardNodes.AbilitiesTooltips(hero._abilitiesView) : null)),
+                    Details = () => hero != null ? HeroCardNodes.AbilitiesTooltips(hero._abilitiesView) : null,
                 });
             }
             if (n > 0) b.PopContext();

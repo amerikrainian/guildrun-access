@@ -635,16 +635,6 @@ namespace GuildrunAccess.Core.Graph
             return true;
         }
 
-        /// <summary>Run the focused control's tooltip behavior. False = it has none.</summary>
-        public bool Tooltip()
-        {
-            if (!Rerender()) return false;
-            var node = CurrentNode;
-            if (node?.Vtable.OnTooltip == null) return false;
-            node.Vtable.OnTooltip();
-            return true;
-        }
-
         /// <summary>Run the focused control's delete behavior. False = it has none.</summary>
         public bool Delete()
         {

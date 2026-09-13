@@ -106,9 +106,14 @@ namespace GuildrunAccess.Module
             InputManager.Register(UiActions.Back, "Back", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Escape));
             InputManager.Register(UiActions.Home, "Jump to first", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Home));
             InputManager.Register(UiActions.End, "Jump to last", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.End));
-            InputManager.Register(UiActions.Tooltip, "Read description", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Space));
-            InputManager.Register(UiActions.RegionPrev, "Previous section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, ctrl: true));
-            InputManager.Register(UiActions.RegionNext, "Next section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, ctrl: true));
+            InputManager.Register(UiActions.RegionPrev, "Previous section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, alt: true));
+            InputManager.Register(UiActions.RegionNext, "Next section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, alt: true));
+            // Buffer review, the Harkest Dungeon keys: Ctrl+Left/Right switch buffers, Ctrl+Up/Down step lines.
+            Buffers.Init();
+            InputManager.Register("buffer.next", "Next buffer", InputCategory.UI, Buffers.Controls.NextBuffer).AddBinding(new KeyboardBinding(KeyCode.RightArrow, ctrl: true));
+            InputManager.Register("buffer.prev", "Previous buffer", InputCategory.UI, Buffers.Controls.PreviousBuffer).AddBinding(new KeyboardBinding(KeyCode.LeftArrow, ctrl: true));
+            InputManager.Register("buffer.line.next", "Next buffer line", InputCategory.UI, Buffers.Controls.NextLine).AddBinding(new KeyboardBinding(KeyCode.UpArrow, ctrl: true)).Repeating();
+            InputManager.Register("buffer.line.prev", "Previous buffer line", InputCategory.UI, Buffers.Controls.PreviousLine).AddBinding(new KeyboardBinding(KeyCode.DownArrow, ctrl: true)).Repeating();
 
             // Global: always live, so the player can hand the keyboard back to the game and reclaim it.
             InputManager.Register("mod.focus", "Toggle navigation", InputCategory.Global, ToggleFocus)
@@ -163,6 +168,7 @@ namespace GuildrunAccess.Module
             Safe(_tutorials.Tick, "tutorials");
             Safe(BattleEvents.Tick, "battle events");
             Safe(SyntheticMouse.Tick, "synthetic mouse");
+            Safe(Buffers.Tick, "buffers");
         }
 
         // A reader that throws must not take the whole tick (and every other reader) down with it.

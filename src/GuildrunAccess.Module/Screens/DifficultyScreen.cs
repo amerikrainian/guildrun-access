@@ -110,7 +110,7 @@ namespace GuildrunAccess.Module.Screens
         }
 
         // A tier: its caption, radio-button role, selected state, and "disabled" while locked. Landing
-        // on an unlocked tier selects it, as Enter does. Space reads what an UNLOCKED tier means from the
+        // on an unlocked tier selects it, as Enter does. The control buffer reads what an UNLOCKED tier means from the
         // game's difficulty data (the screen itself describes only the selected one); a locked tier's
         // description is something the game keeps hidden, so it stays hidden here too.
         private static NodeVtable Tier(Toggle toggle, DifficultyOptionItemView option, int index)
@@ -128,7 +128,7 @@ namespace GuildrunAccess.Module.Screens
                 SearchText = () => Caption(option),
                 OnActivate = select,
                 OnFocus = select,
-                OnTooltip = () => { if (!option._isLocked) GameNodes.SayTooltip(TierInfo(index)); },
+                Details = () => option._isLocked ? null : GameNodes.Lines(TierInfo(index)),
             };
         }
 

@@ -64,7 +64,7 @@ namespace GuildrunAccess.Module.GameRun
             var rows = new List<HeroCardNodes.GridRow> { HeroCardNodes.StatsRow, HeroCardNodes.AbilitiesRow };
             if (anyRelic)
                 rows.Add(new HeroCardNodes.GridRow("relic", () => Strings.HeroRelic,
-                    card => RelicLine(ChoiceOf(choices, card)), card => RelicTooltip(ChoiceOf(choices, card))));
+                    card => RelicLine(ChoiceOf(choices, card)), card => GameNodes.Lines(RelicTooltip(ChoiceOf(choices, card)))));
 
             HeroCardNodes.AddGrid(b, "hero", cards, i => () => Select(choices[i]), null, rows.ToArray());
 

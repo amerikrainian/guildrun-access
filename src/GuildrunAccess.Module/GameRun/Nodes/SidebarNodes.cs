@@ -68,7 +68,7 @@ namespace GuildrunAccess.Module.GameRun
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => EnemyLine(enemy)) },
                     SearchText = () => enemy._nameText != null ? enemy._nameText.text : null,
-                    OnTooltip = () => GameNodes.SayTooltip(HeroCardNodes.AbilitiesTooltips(enemy)),
+                    Details = () => HeroCardNodes.AbilitiesTooltips(enemy),
                 });
                 b.AddItem(ControlId.Structural(keyPrefix + ":enemy:abilities"), new NodeVtable
                 {
@@ -77,7 +77,7 @@ namespace GuildrunAccess.Module.GameRun
                         new NodeAnnouncement(() => Strings.HeroAbilities),
                         GameNodes.LabelPart(() => HeroCardNodes.AbilitiesLine(enemy)),
                     },
-                    OnTooltip = () => GameNodes.SayTooltip(HeroCardNodes.AbilitiesTooltips(enemy)),
+                    Details = () => HeroCardNodes.AbilitiesTooltips(enemy),
                 });
                 b.AddItem(ControlId.Structural(keyPrefix + ":enemy:stats"), new NodeVtable
                 {
@@ -86,7 +86,7 @@ namespace GuildrunAccess.Module.GameRun
                         new NodeAnnouncement(() => Strings.HeroStats),
                         GameNodes.LabelPart(() => Stats(enemy)),
                     },
-                    OnTooltip = () => GameNodes.SayTooltip(StatTooltips(enemy)),
+                    Details = () => StatTooltips(enemy),
                 });
                 b.PopContext();
             }
@@ -142,17 +142,15 @@ namespace GuildrunAccess.Module.GameRun
             return sb.Length > 0 ? sb.ToString() : Strings.EndNoHighlights;
         }
 
-        private static string StatTooltips(EnemyCardView enemy)
+        private static List<string> StatTooltips(EnemyCardView enemy)
         {
-            var sb = new StringBuilder();
+            var lines = new List<string>();
             foreach (var stat in enemy.GetComponentsInChildren<StatView>(false))
             {
                 var text = stat != null ? TooltipReader.Describe(stat._tooltipRaycastTarget) : null;
-                if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(text);
+                if (!string.IsNullOrEmpty(text)) lines.Add(text);
             }
-            return sb.Length > 0 ? sb.ToString() : null;
+            return lines;
         }
 
         // The damage tracker's mode tabs (in the strip). The panel's title is the selected mode's name,
@@ -191,12 +189,12 @@ namespace GuildrunAccess.Module.GameRun
                         Announcements = new List<NodeAnnouncement>
                         {
                             GameNodes.LabelPart(() => TrackerName(v)),
-                            // Live numbers change every tick of a fight: read on demand (Ctrl+Space).
+                            // Live numbers change every tick of a fight: not re-read on their own.
                             new NodeAnnouncement(() => TrackerValue(v), kind: AnnouncementKinds.Value),
                         },
                         SearchText = () => TrackerName(v),
                         // The row's hover tooltip: the shown mode's total broken down by source.
-                        OnTooltip = () => GameNodes.SayTooltip(TrackerTooltip(tracker._tooltipView, tracker._currentMode, v.Tracker)),
+                        Details = () => GameNodes.Lines(TrackerTooltip(tracker._tooltipView, tracker._currentMode, v.Tracker)),
                     });
                 }
                 b.PopContext();

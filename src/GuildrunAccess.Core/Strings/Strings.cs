@@ -56,6 +56,18 @@ namespace GuildrunAccess.Core.Strings
             D("nav.position", "{0} of {1}"),
             D("nav.no_tooltip", "no description"),
             D("nav.no_details", "no details"),
+            // Buffer review (Ctrl plus arrows): the buffer names, the "name: line" readout on switching,
+            // and the words when every buffer is empty.
+            D("buffer.ui", "control"),
+            D("buffer.hero", "hero"),
+            D("buffer.item", "items"),
+            D("buffer.relic", "relics"),
+            D("buffer.party", "party"),
+            D("buffer.enemies", "enemies"),
+            D("buffer.combat", "combat"),
+            D("buffer.none", "no buffer lines"),
+            // {0} = the buffer's name, {1} = its current line.
+            D("buffer.line", "{0}: {1}"),
             D("drag.no_target", "nothing to drag"),
             D("delete.no_target", "nothing to remove"),
             D("nav.minimum", "minimum"),
@@ -412,6 +424,15 @@ namespace GuildrunAccess.Core.Strings
         public static string Position(int index, int count) => F("nav.position", index, count);
         public static string NoTooltip => Get("nav.no_tooltip");
         public static string NoDetails => Get("nav.no_details");
+        public static string BufferUi => Get("buffer.ui");
+        public static string BufferHero => Get("buffer.hero");
+        public static string BufferItem => Get("buffer.item");
+        public static string BufferRelic => Get("buffer.relic");
+        public static string BufferParty => Get("buffer.party");
+        public static string BufferEnemies => Get("buffer.enemies");
+        public static string BufferCombat => Get("buffer.combat");
+        public static string BufferNone => Get("buffer.none");
+        public static string BufferLine(string name, string line) => F("buffer.line", name, line);
         public static string NoDragTarget => Get("drag.no_target");
         public static string NoDeleteTarget => Get("delete.no_target");
         public static string Minimum => Get("nav.minimum");

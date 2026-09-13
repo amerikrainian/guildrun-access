@@ -137,7 +137,7 @@ namespace GuildrunAccess.Module.Screens
                     },
                     SearchText = () => IconName(i),
                     OnActivate = () => { if (i._button != null && i._button.interactable) i._button.onClick.Invoke(); },
-                    OnTooltip = () => GameNodes.SayTooltip(MasteryTooltip(i)),
+                    Details = () => GameNodes.Lines(MasteryTooltip(i)),
                 });
             }
             b.PopContext();
@@ -171,7 +171,7 @@ namespace GuildrunAccess.Module.Screens
             {
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => HeroTitle(hero)) },
                 SearchText = () => hero._nameText != null ? hero._nameText.text : null,
-                OnTooltip = () => GameNodes.SayTooltip((masteryTarget != null ? TooltipReader.Describe(masteryTarget) : null)),
+                Details = () => GameNodes.Lines((masteryTarget != null ? TooltipReader.Describe(masteryTarget) : null)),
             });
 
             // Abilities / Gameplay / Personality.
@@ -194,7 +194,7 @@ namespace GuildrunAccess.Module.Screens
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => AbilityText(a)) },
                     SearchText = () => AbilityText(a),
-                    OnTooltip = () => GameNodes.SayTooltip(AbilityTooltip(a) ?? AbilityText(a)),
+                    Details = () => GameNodes.Lines(AbilityTooltip(a) ?? AbilityText(a)),
                 });
             }
 

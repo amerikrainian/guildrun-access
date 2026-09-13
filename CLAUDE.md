@@ -185,7 +185,24 @@ runs; spoken text is still captured. The game already runs in the background whe
 
 ## Keys (focus mode on at launch; Ctrl+Shift+A toggles it)
 Arrows navigate, Tab/Shift+Tab cycle control groups, Enter activates, Backspace is the secondary
-action, Escape backs out, Home/End jump, Space reads a description (silent when there is none), Ctrl+Up/Down jump sections, typing letters searches the focused group.
+action, Escape backs out, Home/End jump, Alt+Up/Down jump sections, typing letters searches the
+focused group. Ctrl+arrows review the buffers (below). Space is unbound: nothing is read on demand
+by a key; everything a control carries beyond its focus line waits in a buffer.
+
+## Buffers (the Harkest Dungeon pattern: `Core/Buffers`, `Module/UI/Buffers`)
+Review lists for the information a focus announcement leaves out, read live on every keypress:
+Ctrl+Right/Left switch buffers (speaking "name: current line"), Ctrl+Up/Down step lines (the edges
+re-read). Empty buffers are skipped; a focus change re-homes review to the control's buffer. The
+roster, in cycling order: **control** (the focused node's head line: label, value, state, never the
+role word or the position, then one line per description part and per `NodeVtable.Details` tooltip,
+repeats folded: `Core/Buffers/NodeLines`), **hero** and **items** (`NodeVtable.SideLines`: the hero a
+slot, cell, unit or card concerns and the items it carries: `GameRun/Nodes/HeroLines`), **relics**
+(the run's, one line each), **party** and **enemies** (one line per unit, placement and fights),
+**combat** (the battle events log, following its latest line). Conventions: a tooltip is ONE line,
+never joined with others; helpers return `List<string>` (`ItemTooltips`, `AbilitiesTooltips`,
+`SlotTooltips`...); a node's details go in `Details = () => ...`, never spoken directly. The dev
+server drives them through the action keys: `POST /input` with `buffer.next`, `buffer.prev`,
+`buffer.line.next`, `buffer.line.prev`.
 
 ## Hard rules
 - **All speech through `Speech.Say`** (Core) -> the host `SpeechPipeline`; never call Prism directly.

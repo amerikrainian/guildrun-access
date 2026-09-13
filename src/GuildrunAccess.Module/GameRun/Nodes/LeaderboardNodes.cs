@@ -10,8 +10,8 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The endless-mode leaderboard (<see cref="LeaderboardController"/>), which the game shows on the
     /// difficulty screen and on the run's final result panel: its Global / Friend List tabs, the
-    /// streak and loading lines, every entry as "rank, name, floor", and the reset countdown (Space
-    /// for its tooltip). Two Tab-stops of its own: the tabs and lines, then the entries, so a
+    /// streak and loading lines, every entry as "rank, name, floor", and the reset countdown (its tooltip a
+    /// buffer line). Two Tab-stops of its own: the tabs and lines, then the entries, so a
     /// player can skip the list without arrowing through it.
     /// </summary>
     internal static class LeaderboardNodes
@@ -47,7 +47,7 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(ControlId.Structural(keyPrefix + ":reset"), new NodeVtable
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Strings.ResultReset + " " + reset.text) },
-                    OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(lb._resetTooltipRaycastTarget)),
+                    Details = () => GameNodes.Lines(TooltipReader.Describe(lb._resetTooltipRaycastTarget)),
                 });
             b.PopContext();
         }

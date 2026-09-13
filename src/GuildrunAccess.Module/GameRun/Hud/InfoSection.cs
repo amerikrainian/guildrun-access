@@ -13,7 +13,7 @@ using TMPro;
 namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>The "info" stop: gold, shards, difficulty and the battle timer, each a live value with
-    /// the game's tooltip on Space.</summary>
+    /// the game's tooltip as its buffer line.</summary>
     internal sealed class InfoSection : ScreenSection
     {
         public override void Build(GraphBuilder b)
@@ -49,8 +49,8 @@ namespace GuildrunAccess.Module.GameRun
                     new NodeAnnouncement(value, live: true, kind: AnnouncementKinds.Value),
                 },
                 SearchText = label,
-                OnTooltip = tooltip == null ? (Action)null
-                    : () => GameNodes.SayTooltip(TooltipReader.Describe(tooltip)),
+                Details = tooltip == null ? (Func<IEnumerable<string>>)null
+                    : () => GameNodes.Lines(TooltipReader.Describe(tooltip)),
             });
         }
     }

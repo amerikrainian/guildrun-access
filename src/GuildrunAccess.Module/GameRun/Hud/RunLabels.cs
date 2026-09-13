@@ -39,13 +39,12 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrEmpty(name) ? body : body.Length == 0 ? name : name + ": " + body;
         }
 
-        /// <summary>The tooltips of a slot's hero: its abilities', then its items'; null when neither has one.</summary>
-        public static string SlotTooltips(BottomHeroView view)
+        /// <summary>The tooltips of a slot's hero, one line each: its abilities', then its items'.</summary>
+        public static List<string> SlotTooltips(BottomHeroView view)
         {
-            string abilities = HeroCardNodes.AbilitiesTooltips(view._abilitiesView);
-            string items = ItemNodes.ItemTooltips(view._itemSlotViews);
-            if (abilities == null) return items;
-            return items == null ? abilities : abilities + ". " + items;
+            var lines = HeroCardNodes.AbilitiesTooltips(view._abilitiesView);
+            lines.AddRange(ItemNodes.ItemTooltips(view._itemSlotViews));
+            return lines;
         }
 
         /// <summary>The game's own grid, one-based: columns left to right, rows from the player's back

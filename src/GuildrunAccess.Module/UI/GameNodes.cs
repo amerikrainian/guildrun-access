@@ -37,10 +37,21 @@ namespace GuildrunAccess.Module.UI
         public static NodeAnnouncement TooltipPart(Func<string> description)
             => new NodeAnnouncement(description, kind: AnnouncementKinds.Tooltip);
 
-        /// <summary>Speak a control's description (Space); with none, say nothing.</summary>
-        public static void SayTooltip(string text)
+        /// <summary>Detail lines for the ui buffer from single texts: the non-blank ones, in order
+        /// (a null or empty text is simply no line).</summary>
+        public static IEnumerable<string> Lines(params string[] texts)
         {
-            if (!string.IsNullOrWhiteSpace(text)) Core.Speech.Say(text, interrupt: true);
+            if (texts == null) yield break;
+            foreach (var t in texts)
+                if (!string.IsNullOrWhiteSpace(t)) yield return t;
+        }
+
+        /// <summary>Detail lines from a list (one per tooltip), the blanks dropped.</summary>
+        public static IEnumerable<string> Lines(IEnumerable<string> lines)
+        {
+            if (lines == null) yield break;
+            foreach (var t in lines)
+                if (!string.IsNullOrWhiteSpace(t)) yield return t;
         }
 
         /// <summary>What a control shows on hover (its HoverFeedbackComponent's objects' text), or null:
@@ -113,7 +124,7 @@ namespace GuildrunAccess.Module.UI
         {
             var vt = Button(label ?? (() => LabelOf(button)), () => button.onClick.Invoke(),
                 () => button != null && button.interactable, type);
-            vt.OnTooltip = () => SayTooltip(HoverText(button)); // its hover popup, when it has one
+            vt.Details = () => Lines(HoverText(button)); // its hover popup, when it has one
             return vt;
         }
 
@@ -135,7 +146,7 @@ namespace GuildrunAccess.Module.UI
                 SearchText = lbl,
                 OnActivate = () => { if (toggle.interactable) toggle.isOn = !toggle.isOn; },
                 StateText = () => toggle.isOn ? Strings.StateOn : Strings.StateOff,
-                OnTooltip = () => SayTooltip(HoverText(toggle)),
+                Details = () => Lines(HoverText(toggle)),
             };
         }
 

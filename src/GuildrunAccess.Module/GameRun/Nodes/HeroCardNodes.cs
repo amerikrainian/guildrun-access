@@ -16,7 +16,7 @@ namespace GuildrunAccess.Module.GameRun
     /// game reuses wherever a hero is shown: the starting-hero picker, the shop, the heroes panel, the
     /// sidebar inspect card, the end screen. Every screen that shows cards builds the same grid through
     /// <see cref="AddGrid"/>: heroes across (left/right), detail rows down (up/down, column preserved),
-    /// Enter acting on the column's hero, Space reading the cell's tooltip text. Rows are composable:
+    /// Enter acting on the column's hero, the cell's tooltips its buffer lines. Rows are composable:
     /// the standard name / stats / abilities rows plus whatever a screen adds (a relic, a price).
     /// </summary>
     internal static class HeroCardNodes
@@ -97,19 +97,18 @@ namespace GuildrunAccess.Module.GameRun
             return us >= 0 && us < objectName.Length - 1 ? objectName.Substring(us + 1) : null;
         }
 
-        public static string StatsTooltips(HeroCardView card)
+        /// <summary>One line per stat tooltip on the card.</summary>
+        public static List<string> StatsTooltips(HeroCardView card)
         {
-            if (card == null) return null;
-            var sb = new StringBuilder();
+            var lines = new List<string>();
+            if (card == null) return lines;
             foreach (var stat in card.GetComponentsInChildren<StatView>(false))
             {
                 if (stat == null) continue;
                 var text = TooltipReader.Describe(stat._tooltipRaycastTarget);
-                if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(text);
+                if (!string.IsNullOrEmpty(text)) lines.Add(text);
             }
-            return sb.Length > 0 ? sb.ToString() : null;
+            return lines;
         }
 
         /// <summary>The card's ability views that carry a live tooltip (the ones actually shown).</summary>
@@ -137,31 +136,30 @@ namespace GuildrunAccess.Module.GameRun
             return sb.Length > 0 ? sb.ToString() : Strings.HeroNoAbilities;
         }
 
-        public static string AbilitiesTooltips(UnityEngine.Component root)
+        /// <summary>One line per ability tooltip under the root.</summary>
+        public static List<string> AbilitiesTooltips(UnityEngine.Component root)
         {
-            var sb = new StringBuilder();
+            var lines = new List<string>();
             foreach (var a in Abilities(root))
             {
                 var text = TooltipReader.Describe(a._tooltipRaycastTarget);
-                if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(text);
+                if (!string.IsNullOrEmpty(text)) lines.Add(text);
             }
-            return sb.Length > 0 ? sb.ToString() : null;
+            return lines;
         }
 
         // ---- the grid ----
 
         /// <summary>One detail row of the hero grid: a spoken caption, the cell text per card, and the
-        /// cell's Space readout per card.</summary>
+        /// cell's detail lines per card (the ui buffer, one per tooltip).</summary>
         public sealed class GridRow
         {
             public string Key;
             public Func<string> Caption;
             public Func<HeroCardView, string> Text;
-            public Func<HeroCardView, string> Tooltip;
+            public Func<HeroCardView, IEnumerable<string>> Tooltip;
 
-            public GridRow(string key, Func<string> caption, Func<HeroCardView, string> text, Func<HeroCardView, string> tooltip)
+            public GridRow(string key, Func<string> caption, Func<HeroCardView, string> text, Func<HeroCardView, IEnumerable<string>> tooltip)
             {
                 Key = key;
                 Caption = caption;
@@ -241,9 +239,10 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         // A grid cell: "caption, text" (untyped, so parts speak in declaration order) or a typed name
-        // cell; Enter runs the column's action; Space speaks the tooltip text.
+        // cell; Enter runs the column's action; the cell's tooltips are its ui-buffer details, and every
+        // cell of a card fills the hero and item buffers with that card.
         private static NodeVtable Cell(HeroCardView card, Func<string> text, ControlType type,
-            Func<string> tooltip, Func<string> caption, Action activate)
+            Func<IEnumerable<string>> tooltip, Func<string> caption, Action activate)
         {
             var parts = new List<NodeAnnouncement>();
             if (caption != null) parts.Add(new NodeAnnouncement(caption));
@@ -255,11 +254,8 @@ namespace GuildrunAccess.Module.GameRun
                 SearchText = () => NameAndClass(card),
                 OnActivate = activate,
                 OnSecondary = () => OpenCompendium(card),
-                OnTooltip = () =>
-                {
-                    string t = tooltip != null ? tooltip() : null;
-                    GameNodes.SayTooltip(t);
-                },
+                Details = () => tooltip != null ? tooltip() : null,
+                SideLines = HeroLines.Side(() => HeroLines.ForCard(card), () => ItemNodes.ItemTooltips(Slots(card))),
             };
         }
     }

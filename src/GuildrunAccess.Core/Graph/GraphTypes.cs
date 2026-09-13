@@ -131,9 +131,16 @@ namespace GuildrunAccess.Core.Graph
         /// <summary>Optional. Secondary activation, the right-click equivalent (Backspace).</summary>
         public Action OnSecondary;
 
-        /// <summary>Optional. Read / open the control's tooltip (Space, F1). The action owns the whole
-        /// behavior (speak, or open a drill-in reader), so the core stays game-agnostic.</summary>
-        public Action OnTooltip;
+        /// <summary>Optional. The control's detail lines for the ui buffer, read live: one line per
+        /// tooltip (an item's, an ability's, a stat's), each a separate line the player steps through
+        /// with the buffer keys. Nothing here is ever spoken on its own; the focus announcement stays
+        /// short and the detail waits in the buffer.</summary>
+        public Func<IEnumerable<string>> Details;
+
+        /// <summary>Optional. Lines for a side buffer (<c>BufferKeys.Hero</c>, <c>BufferKeys.Item</c>) about
+        /// what the control concerns: the hero whose slot, card or unit this is, the items it carries.
+        /// Null or empty for a key = that buffer has nothing here and the review keys skip it.</summary>
+        public Func<string, IEnumerable<string>> SideLines;
 
         /// <summary>Optional. Drag/drop participation (Backslash): pick up here, or place the held thing
         /// here. The action owns the whole pick-up/place state machine; the core only dispatches.</summary>

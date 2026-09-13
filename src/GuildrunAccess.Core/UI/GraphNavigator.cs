@@ -134,6 +134,7 @@ namespace GuildrunAccess.Core.UI
         /// <summary>The live render + focused node id (dev inspection).</summary>
         public GraphRender CurrentRender => _graph?.Current;
         public ControlId FocusedNodeId => _graph?.CurrentNode?.Id;
+        /// <summary>The focused node itself, for readers that compose from it (the buffers).</summary>
         public GraphNode FocusedNode => _graph?.CurrentNode;
 
         // Screens declare fresh from live game state on every render (immediate mode).
@@ -386,14 +387,6 @@ namespace GuildrunAccess.Core.UI
                 }
                 case UiActions.Back:
                     return Screen != null && Screen.InvokeAction(ActionIds.Back);
-                case UiActions.Tooltip:
-                {
-                    // The description when the control has one; nothing otherwise.
-                    var node = _graph?.CurrentNode;
-                    if (node == null) return false;
-                    if (node.Vtable.OnTooltip != null) _graph.Tooltip();
-                    return true;
-                }
                 case UiActions.Drag:
                 {
                     var node = _graph?.CurrentNode;
@@ -805,7 +798,6 @@ namespace GuildrunAccess.Core.UI
         public const string Activate = "ui.activate";
         public const string Secondary = "ui.secondary";
         public const string Back = "ui.back";
-        public const string Tooltip = "ui.tooltip";
         public const string Drag = "ui.drag";
         public const string Delete = "ui.delete";
         public const string ReadFocus = "ui.readFocus";

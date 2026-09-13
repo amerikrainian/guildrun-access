@@ -14,7 +14,7 @@ namespace GuildrunAccess.Module.GameRun
     /// section per Tab-stop in order: actions (Fight), the board (the placement grid, or the battlefield
     /// during a fight), the party (active and reserve slots), the item reserve, relics, info, the act
     /// map, the sidebar, battle events, battle speed, and the menu. Everything is read live from the
-    /// game's own views; Space reads a control's tooltip through the game's tooltip pipeline. What Enter
+    /// game's own views; a control's tooltips reach the buffers through the game's tooltip pipeline. What Enter
     /// does to heroes and items lives in <see cref="HeroActions"/>, shared by the sections that need it.
     /// </summary>
     public sealed class GameRunScreen : CompositeScreen

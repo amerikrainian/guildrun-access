@@ -21,8 +21,14 @@ Requires the Steam version of the game on Windows and a screen reader (NVDA, JAW
 
 Focus mode is on at launch (Ctrl+Shift+A toggles it). Arrows navigate, Tab and Shift+Tab cycle
 control groups, Enter activates, Backspace is the secondary action, Escape backs out, Home and End
-jump, Space reads a description, Ctrl+Up and Ctrl+Down jump sections, and typing letters searches
-the focused group. Ctrl+Shift+M opens the mod menu with its settings and key help.
+jump, Alt+Up and Alt+Down jump sections, and typing letters searches the focused group.
+Ctrl+Shift+M opens the mod menu with its settings and key help.
+
+Everything a control carries beyond its focus line waits in the buffers: Ctrl+Right and Ctrl+Left
+switch buffers, Ctrl+Up and Ctrl+Down step through the current one. The control buffer holds the
+focused control's own line and one line per tooltip; the hero and items buffers describe the hero a
+slot, card or unit concerns and what it wears; relics lists the run's relics; party and enemies
+list every unit on the board; combat is the battle events log, newest line first.
 
 ## Building from source
 

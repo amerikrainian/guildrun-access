@@ -54,7 +54,7 @@ namespace GuildrunAccess.Module.GameRun
                     },
                     SearchText = () => g._titleText != null ? g._titleText.text : null,
                     OnActivate = () => Select(c, g),
-                    OnTooltip = () => GameNodes.SayTooltip(g._descriptionText != null ? g._descriptionText.text : null),
+                    Details = () => GameNodes.Lines(g._descriptionText != null ? g._descriptionText.text : null),
                 });
             }
             b.PopContext();

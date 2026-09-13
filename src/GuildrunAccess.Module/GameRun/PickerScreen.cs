@@ -20,7 +20,7 @@ namespace GuildrunAccess.Module.GameRun
     /// A hero's rank-up choice (<see cref="BasePickerView"/>: the specialization picker and the rank
     /// modifier picker, which the run's navigation controller shows when a hero ranks up): the picker's
     /// title as the context, the hero's card as the shared hero grid, the choices as buttons carrying
-    /// name, kind and description (Space for the full tooltip), and Continue once it appears. Choosing
+    /// name, kind and description (the full tooltip in the control buffer), and Continue once it appears. Choosing
     /// goes through the choice view's own click handler.
     /// </summary>
     public sealed class PickerScreen : Screen
@@ -116,7 +116,7 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => choice._nameText != null ? choice._nameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(choice._tooltipRaycastTarget)
+                Details = () => GameNodes.Lines(TooltipReader.Describe(choice._tooltipRaycastTarget)
                     ?? (choice._descriptionText != null ? choice._descriptionText.text : null)),
             };
         }
@@ -135,7 +135,7 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => choice._itemNameText != null ? choice._itemNameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(choice._tooltipRaycastTarget)
+                Details = () => GameNodes.Lines(TooltipReader.Describe(choice._tooltipRaycastTarget)
                     ?? (choice._modifierDescriptionText != null ? choice._modifierDescriptionText.text : null)),
             };
         }

@@ -13,7 +13,7 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// Readers and node factories for the game's item and relic views, reused wherever they appear:
     /// the reserve column, a hero's equipment slots, the battlefield health bars, and the relic bar.
-    /// Names come from the view's own text or its tooltip title; Space reads the tooltip.
+    /// Names come from the view's own text or its tooltip title; the tooltip is the buffer line.
     /// </summary>
     internal static class ItemNodes
     {
@@ -63,24 +63,22 @@ namespace GuildrunAccess.Module.GameRun
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        /// <summary>The tooltip text of every item in a set of slots, period-joined; null when none.</summary>
-        public static string ItemTooltips(IEnumerable<PlaceholderSlotView> slots)
+        /// <summary>The tooltip text of every item in a set of slots, one line per item (a buffer's lines).</summary>
+        public static List<string> ItemTooltips(IEnumerable<PlaceholderSlotView> slots)
         {
-            if (slots == null) return null;
-            var sb = new System.Text.StringBuilder();
+            var lines = new List<string>();
+            if (slots == null) return lines;
             foreach (var slot in slots)
             {
                 if (!HasItem(slot)) continue;
                 var text = TooltipReader.Describe(slot._tooltipRaycastTarget);
-                if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(text);
+                if (!string.IsNullOrEmpty(text)) lines.Add(text);
             }
-            return sb.Length > 0 ? sb.ToString() : null;
+            return lines;
         }
 
         /// <summary>An item slot as a control: its name (no role word: the list's context already says
-        /// items); Space reads its tooltip; Enter runs <paramref name="activate"/> when given.</summary>
+        /// items); its tooltip is its buffer line; Enter runs <paramref name="activate"/> when given.</summary>
         public static NodeVtable Slot(PlaceholderSlotView slot, Action activate = null)
         {
             return new NodeVtable
@@ -88,7 +86,7 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => ItemName(slot) ?? Strings.RunItemSlotEmpty) },
                 SearchText = () => ItemName(slot),
                 OnActivate = activate,
-                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(slot._tooltipRaycastTarget)),
+                Details = () => GameNodes.Lines(TooltipReader.Describe(slot._tooltipRaycastTarget)),
             };
         }
 
@@ -101,7 +99,7 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(name) ? relic.gameObject.name : name;
         }
 
-        /// <summary>A relic as a control: its name; Space reads its tooltip.</summary>
+        /// <summary>A relic as a control: its name; its tooltip is its buffer line.</summary>
         public static NodeVtable Relic(RelicView relic, Action activate = null)
         {
             return new NodeVtable
@@ -109,7 +107,7 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => RelicName(relic)) },
                 SearchText = () => RelicName(relic),
                 OnActivate = activate,
-                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(relic._tooltipRaycastTarget)),
+                Details = () => GameNodes.Lines(TooltipReader.Describe(relic._tooltipRaycastTarget)),
             };
         }
     }

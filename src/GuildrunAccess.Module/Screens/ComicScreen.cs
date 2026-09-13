@@ -16,8 +16,8 @@ namespace GuildrunAccess.Module.Screens
     /// <summary>
     /// A comic while it plays (<see cref="ComicController"/>: the intro, the defeat): the game advances
     /// its panels on a mouse click anywhere, which no widget event reproduces, so Enter sends the game a
-    /// synthetic click. The bubbles themselves are spoken as they appear by the comic reader; Space
-    /// re-reads the panel's visible text. Owns the keys while the comic is up.
+    /// synthetic click. The bubbles themselves are spoken as they appear by the comic reader; the
+    /// control buffer holds the panel's visible text. Owns the keys while the comic is up.
     /// </summary>
     public sealed class ComicScreen : Screen
     {
@@ -51,24 +51,23 @@ namespace GuildrunAccess.Module.Screens
                 ControlType = ControlTypes.Button,
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Strings.ComicContinue) },
                 OnActivate = () => SyntheticMouse.ClickCenter(),
-                OnTooltip = () => GameNodes.SayTooltip(VisibleText(c)),
+                Details = () => VisibleText(c),
             });
             b.PopContext();
         }
 
-        // Every bubble currently showing, in order.
-        private static string VisibleText(ComicController c)
+        // Every bubble currently showing, in order, one line each.
+        private static List<string> VisibleText(ComicController c)
         {
-            var sb = new StringBuilder();
+            var lines = new List<string>();
             foreach (var tmp in c._panelContainer.GetComponentsInChildren<TMP_Text>(false))
             {
                 if (tmp == null || string.IsNullOrWhiteSpace(tmp.text)) continue;
                 var group = tmp.GetComponentInParent<CanvasGroup>();
                 if (group != null && group.alpha <= 0.05f) continue;
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(tmp.text.Trim());
+                lines.Add(tmp.text.Trim());
             }
-            return sb.Length > 0 ? sb.ToString() : null;
+            return lines;
         }
     }
 }

@@ -17,7 +17,7 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The shop between fights (<see cref="ShopUIController"/>): the hero offers as the shared hero grid
     /// with each card's price on its name, the items and relics for sale as controls carrying name,
-    /// cost and description (Space for the full tooltip), and the actions (reroll, freeze, the key
+    /// cost and description (the full tooltip in the control buffer), and the actions (reroll, freeze, the key
     /// fragment offer, proceed). Buying goes through the view's own click handler, so the game's
     /// purchase flow runs as for a mouse click. Escape presses Proceed.
     /// </summary>
@@ -91,7 +91,7 @@ namespace GuildrunAccess.Module.GameRun
                         GameNodes.DisabledPart(() => pay.interactable),
                     },
                     OnActivate = () => { if (pay.interactable) pay.onClick.Invoke(); },
-                    OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(key.TooltipRaycastTarget)),
+                    Details = () => GameNodes.Lines(TooltipReader.Describe(key.TooltipRaycastTarget)),
                 });
             }
             if (shop._threatLevelText != null && shop._threatLevelText.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(shop._threatLevelText.text))
@@ -145,7 +145,7 @@ namespace GuildrunAccess.Module.GameRun
 
         private static bool IsOffer(ShopItemView item) => item._shopItemEntry != null || item._relicEntry != null;
 
-        // An item or relic for sale: "name, cost X, description"; Enter buys, Space reads the tooltip.
+        // An item or relic for sale: "name, cost X, description"; Enter buys, the tooltip is its buffer line.
         private static NodeVtable Offer(ShopItemView item)
         {
             return new NodeVtable
@@ -161,7 +161,7 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => item._itemNameText != null ? item._itemNameText.text : null,
                 OnActivate = () => Click(item),
-                OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(item._tooltipRaycastTarget)),
+                Details = () => GameNodes.Lines(TooltipReader.Describe(item._tooltipRaycastTarget)),
             };
         }
 

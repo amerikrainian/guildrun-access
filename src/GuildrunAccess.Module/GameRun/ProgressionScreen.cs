@@ -16,7 +16,7 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The meta-progression panel after a run (<see cref="ProgressionUnlockUIController"/>): the
     /// player's XP and level, every milestone on the timeline with its state (locked, unlocked, new) and
-    /// the rewards it holds (named through their own tooltips; Space reads the milestone's tooltip and
+    /// the rewards it holds (named through their own tooltips; the buffer reads the milestone's tooltip and
     /// each reward's description), then New Run and Quit to Menu. Escape presses Quit to Menu.
     /// </summary>
     public sealed class ProgressionScreen : Screen
@@ -100,15 +100,7 @@ namespace GuildrunAccess.Module.GameRun
                     new NodeAnnouncement(() => Rewards(threshold, false), kind: AnnouncementKinds.Tooltip),
                 },
                 SearchText = () => TooltipReader.Title(threshold._tooltipRaycastTarget),
-                OnTooltip = () =>
-                {
-                    var sb = new StringBuilder();
-                    string own = TooltipReader.Describe(threshold._tooltipRaycastTarget);
-                    if (!string.IsNullOrEmpty(own)) sb.Append(own);
-                    string rewards = Rewards(threshold, true);
-                    if (!string.IsNullOrEmpty(rewards)) { if (sb.Length > 0) sb.Append(". "); sb.Append(rewards); }
-                    GameNodes.SayTooltip(sb.Length > 0 ? sb.ToString() : null);
-                },
+                Details = () => GameNodes.Lines(TooltipReader.Describe(threshold._tooltipRaycastTarget), Rewards(threshold, true)),
             };
         }
 

@@ -8,8 +8,8 @@ using GuildrunAccess.Module.UI;
 
 namespace GuildrunAccess.Module.GameRun
 {
-    /// <summary>The "map" stop: the act's stages in order, the current one marked; Space reads a
-    /// stage's tooltip.</summary>
+    /// <summary>The "map" stop: the act's stages in order, the current one marked; a stage's tooltip
+    /// is its buffer line.</summary>
     internal sealed class MapSection : ScreenSection
     {
         public override void Build(GraphBuilder b)
@@ -31,7 +31,7 @@ namespace GuildrunAccess.Module.GameRun
                         new NodeAnnouncement(() => IsCurrent(node) ? Strings.RunMapCurrent : null, live: true, kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => NodeTitle(node),
-                    OnTooltip = () => GameNodes.SayTooltip(TooltipReader.Describe(node.TooltipRaycastTarget)),
+                    Details = () => GameNodes.Lines(TooltipReader.Describe(node.TooltipRaycastTarget)),
                 });
             }
             b.PopContext();
