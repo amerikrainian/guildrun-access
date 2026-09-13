@@ -103,12 +103,16 @@ namespace GuildrunAccess.Module.GameRun
             b.PopContext();
         }
 
-        // A bought card stays in the row faded and unclickable (its canvas group), with no price.
+        // A bought card stays in the row with its card view hidden (HideHeroCard), so its price is
+        // gone too. Its canvas group is NOT a sold signal: the game fades every card in from alpha 0
+        // on the shop's first frames, priced and clickable all along.
         private static bool Sold(HeroCardShopItemView view)
         {
             var group = view._heroCardCanvasGroup;
-            if (group != null && (!group.interactable || group.alpha < 0.5f)) return true;
-            return HeroCardNodes.Price(view._heroCardView) == null;
+            if (group != null && !group.interactable) return true;
+            var card = view._heroCardView;
+            if (card == null || !card.gameObject.activeInHierarchy) return true;
+            return HeroCardNodes.Price(card) == null;
         }
 
         private static string Caption(Button button, string fallback)
@@ -117,7 +121,10 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(text) || text == button.gameObject.name ? fallback : text;
         }
 
-        // The offers in whichever of the given panels is showing.
+        // The offers in whichever of the given panels is showing. An offer is a row the game bound an
+        // item or relic entry to (SetShopItem / SetShopRelic): the panel prefab also ships template
+        // rows ("Very Long Item Name", cost 666) that stay active next to the real ones for the shop's
+        // first frames until ClearItems destroys them, and those carry no entry.
         private static void AddOffers(GraphBuilder b, string key, string label, params ItemShopChoicesPanelView[] panels)
         {
             var items = new List<ShopItemView>();
@@ -125,7 +132,7 @@ namespace GuildrunAccess.Module.GameRun
             {
                 if (panel == null || !panel.gameObject.activeInHierarchy) continue;
                 foreach (var item in panel.GetComponentsInChildren<ShopItemView>(false))
-                    if (item != null && item.gameObject.activeInHierarchy) items.Add(item);
+                    if (item != null && item.gameObject.activeInHierarchy && IsOffer(item)) items.Add(item);
             }
             b.BeginStop(key);
             b.PushContext(label, Strings.RoleList);
@@ -135,6 +142,8 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(ControlId.Structural("shop:" + key + ":" + item.GetInstanceID()), Offer(item));
             b.PopContext();
         }
+
+        private static bool IsOffer(ShopItemView item) => item._shopItemEntry != null || item._relicEntry != null;
 
         // An item or relic for sale: "name, cost X, description"; Enter buys, Space reads the tooltip.
         private static NodeVtable Offer(ShopItemView item)
