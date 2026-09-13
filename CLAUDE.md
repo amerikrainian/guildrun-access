@@ -207,8 +207,10 @@ it. Anything a game hotkey did must be offered through our screens instead (the 
 opens the game's settings, Heroes is in the menu).
 
 ## Click-only widgets
-Some game prompts poll the pointer through the game's own input service instead of listening to a
-widget event (the comics' click-anywhere, the run-over panel's Proceed): `onClick.Invoke()` does
-nothing there. `Input/SyntheticMouse` queues a mouse move/press/release into Unity's Input System
-(`InputSystem.QueueStateEvent<MouseState>`), which both uGUI and the game's service see as a real
-click, without moving the OS cursor. Use it only where the widget event is not what the game hears.
+The comics' click-anywhere polls the pointer through the game's own input service instead of
+listening to a widget event (there is no Button): `Input/SyntheticMouse` queues a mouse
+move/press/release into Unity's Input System (`InputSystem.QueueStateEvent<MouseState>`), one step
+per module tick, which both uGUI and the game's service see as a real click, without moving the OS
+cursor. Use it only where there is no widget event to invoke: every Button the game wires at
+runtime (`onClick.AddListener`, so `GetPersistentEventCount()` reads 0, the run-over result's
+Proceed included) still hears `onClick.Invoke()`, and a synthetic click on it is flaky.

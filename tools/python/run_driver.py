@@ -78,6 +78,12 @@ def main() -> int:
 
     for step in range(1, args.max + 1):
         s = screen()
+        if s == "(none)":
+            # Between two panels no screen is active (the run HUD is inactive outside placement and
+            # fights): wait for the next one rather than treat the gap as an unknown screen.
+            s = wait_change(s, seconds=20)
+            if s == "(none)":
+                print("  no screen active for 20 s"); return 5
         print(f"[{step}] {s}")
         if s == target and (target != "gamerun" or placing()):
             print(f"  at {args.until}")
@@ -92,7 +98,9 @@ def main() -> int:
             press("ui.activate"); wait_change(s)
         elif s == "gamerun.event":
             if nav_has(r"event:choice:"):
-                press("ui.next"); press("ui.activate"); time.sleep(4)
+                # One group: Down from the story text is the first choice. The choices are not
+                # interactable while the panel animates in, so give it a moment before Enter.
+                time.sleep(3); press("ui.down"); press("ui.activate"); time.sleep(4)
             if nav_has(r"event:proceed"):
                 press("ui.back"); wait_change(s)
             else:

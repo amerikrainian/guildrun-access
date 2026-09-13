@@ -162,6 +162,7 @@ namespace GuildrunAccess.Module
             Safe(_comics.Tick, "comics");
             Safe(_tutorials.Tick, "tutorials");
             Safe(BattleEvents.Tick, "battle events");
+            Safe(SyntheticMouse.Tick, "synthetic mouse");
         }
 
         // A reader that throws must not take the whole tick (and every other reader) down with it.
@@ -178,6 +179,7 @@ namespace GuildrunAccess.Module
             // On a reload the successor already owns the keyboard and the EventSystem: drop our hooks
             // only. On a shutdown, give everything back to the game.
             bool restore = _host == null || !_host.SuccessorLoaded;
+            try { SyntheticMouse.Reset(); } catch (Exception e) { _host?.LogError("[dispose] mouse: " + e); }
             try { FocusMode.Shutdown(restore); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
             try { ScreenManager.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] screens: " + e); }
             try { InputManager.Clear(); } catch (Exception e) { _host?.LogError("[dispose] input: " + e); }

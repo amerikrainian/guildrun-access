@@ -272,15 +272,15 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(ControlId.Structural("result:btn:" + button.GetInstanceID()), GameNodes.Button(button));
             }
             // The panel's other forms (the run's end) show their own captioned buttons in its button
-            // container; the stats and leaderboard buttons are declared in their own stops above.
+            // container (the flow controller's QuitButton reads "Proceed" there); the stats and
+            // leaderboard buttons are declared in their own stops above. Those buttons are wired by
+            // the game at runtime (no inspector listener, one AddListener), so the widget's own click
+            // event is what the game hears, as for any Button; a synthetic mouse click reached them
+            // only when the pointer happened to be over them in time.
             foreach (var button in OtherButtons(panel))
             {
                 if (added.Contains(button.GetInstanceID())) continue;
-                var btn = button;
-                // The run-over form's button listens to the game's own pointer polling, not to the
-                // widget's click event: send it the click a mouse would.
-                b.AddItem(ControlId.Structural("result:btn:" + button.GetInstanceID()),
-                    GameNodes.Button(() => GameNodes.LabelOf(btn), () => SyntheticMouse.Click(btn), () => btn.interactable));
+                b.AddItem(ControlId.Structural("result:btn:" + button.GetInstanceID()), GameNodes.Button(button));
             }
         }
 
@@ -322,9 +322,7 @@ namespace GuildrunAccess.Module.GameRun
             {
                 var panel = Panel();
                 var button = panel != null ? ProceedLike(panel) : null;
-                if (button == null) return;
-                if (button == panel._proceedButton) button.onClick.Invoke();
-                else SyntheticMouse.Click(button);
+                if (button != null) button.onClick.Invoke();
             });
         }
     }
