@@ -63,7 +63,7 @@ namespace GuildrunAccess.Module.GameRun
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        /// <summary>The tooltip text of every item in a set of slots, one line per item (a buffer's lines).</summary>
+        /// <summary>Every item in a set of slots as buffer lines: each its heading, summary and keyword lines.</summary>
         public static List<string> ItemTooltips(IEnumerable<PlaceholderSlotView> slots)
         {
             var lines = new List<string>();
@@ -71,8 +71,7 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var slot in slots)
             {
                 if (!HasItem(slot)) continue;
-                var text = TooltipReader.Describe(slot._tooltipRaycastTarget);
-                if (!string.IsNullOrEmpty(text)) lines.Add(text);
+                lines.AddRange(TooltipReader.Lines(slot._tooltipRaycastTarget));
             }
             return lines;
         }
@@ -86,7 +85,7 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => ItemName(slot) ?? Strings.RunItemSlotEmpty) },
                 SearchText = () => ItemName(slot),
                 OnActivate = activate,
-                Details = () => GameNodes.Lines(TooltipReader.Describe(slot._tooltipRaycastTarget)),
+                Details = () => TooltipReader.Lines(slot._tooltipRaycastTarget),
             };
         }
 
@@ -107,7 +106,7 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => RelicName(relic)) },
                 SearchText = () => RelicName(relic),
                 OnActivate = activate,
-                Details = () => GameNodes.Lines(TooltipReader.Describe(relic._tooltipRaycastTarget)),
+                Details = () => TooltipReader.Lines(relic._tooltipRaycastTarget),
             };
         }
     }

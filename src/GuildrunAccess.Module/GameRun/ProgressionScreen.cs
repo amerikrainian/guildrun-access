@@ -100,7 +100,7 @@ namespace GuildrunAccess.Module.GameRun
                     new NodeAnnouncement(() => Rewards(threshold, false), kind: AnnouncementKinds.Tooltip),
                 },
                 SearchText = () => TooltipReader.Title(threshold._tooltipRaycastTarget),
-                Details = () => GameNodes.Lines(TooltipReader.Describe(threshold._tooltipRaycastTarget), Rewards(threshold, true)),
+                Details = () => DetailLines(threshold),
             };
         }
 
@@ -130,19 +130,33 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
-        // The rewards under the milestone, named (or described in full) through their own tooltips.
+        // The rewards under the milestone, named through their own tooltips ("Tilly Bundle; The Golden Standard").
         private static string Rewards(ProgressionUnlockThresholdView threshold, bool full)
         {
             var sb = new StringBuilder();
-            foreach (var target in threshold.GetComponentsInChildren<TooltipRaycastTarget>(false))
+            foreach (var target in RewardTargets(threshold))
             {
-                if (target == null || target == threshold._tooltipRaycastTarget) continue;
-                string text = full ? TooltipReader.Describe(target) : TooltipReader.Heading(target);
+                string text = TooltipReader.Heading(target);
                 if (string.IsNullOrEmpty(text)) continue;
-                if (sb.Length > 0) sb.Append(full ? ". " : "; ");
+                if (sb.Length > 0) sb.Append("; ");
                 sb.Append(text);
             }
             return sb.Length > 0 ? sb.ToString() : null;
+        }
+
+        // The buffer lines: the milestone's own tooltip, then every reward's, each its heading, summary
+        // and keyword lines.
+        private static IEnumerable<string> DetailLines(ProgressionUnlockThresholdView threshold)
+        {
+            var lines = TooltipReader.Lines(threshold._tooltipRaycastTarget);
+            foreach (var target in RewardTargets(threshold)) lines.AddRange(TooltipReader.Lines(target));
+            return lines;
+        }
+
+        private static IEnumerable<TooltipRaycastTarget> RewardTargets(ProgressionUnlockThresholdView threshold)
+        {
+            foreach (var target in threshold.GetComponentsInChildren<TooltipRaycastTarget>(false))
+                if (target != null && target != threshold._tooltipRaycastTarget) yield return target;
         }
 
         public override object InitialFocusStop => "actions";

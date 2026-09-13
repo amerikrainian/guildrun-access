@@ -64,7 +64,7 @@ namespace GuildrunAccess.Module.GameRun
             var rows = new List<HeroCardNodes.GridRow> { HeroCardNodes.StatsRow, HeroCardNodes.AbilitiesRow };
             if (anyRelic)
                 rows.Add(new HeroCardNodes.GridRow("relic", () => Strings.HeroRelic,
-                    card => RelicLine(ChoiceOf(choices, card)), card => GameNodes.Lines(RelicTooltip(ChoiceOf(choices, card)))));
+                    card => RelicLine(ChoiceOf(choices, card)), card => RelicTooltip(ChoiceOf(choices, card))));
 
             HeroCardNodes.AddGrid(b, "hero", cards, i => () => Select(choices[i]), null, rows.ToArray());
 
@@ -119,11 +119,11 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(desc) ? name : name + ", " + desc;
         }
 
-        private static string RelicTooltip(InitialHeroChoiceView v)
+        private static List<string> RelicTooltip(InitialHeroChoiceView v)
         {
             if (!HasRelic(v)) return null;
             var relic = v._relicView;
-            return relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null;
+            return relic != null ? TooltipReader.Lines(relic._tooltipRaycastTarget) : null;
         }
     }
 }

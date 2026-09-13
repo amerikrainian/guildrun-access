@@ -91,7 +91,7 @@ namespace GuildrunAccess.Module.GameRun
                         GameNodes.DisabledPart(() => pay.interactable),
                     },
                     OnActivate = () => { if (pay.interactable) pay.onClick.Invoke(); },
-                    Details = () => GameNodes.Lines(TooltipReader.Describe(key.TooltipRaycastTarget)),
+                    Details = () => TooltipReader.Lines(key.TooltipRaycastTarget),
                 });
             }
             if (shop._threatLevelText != null && shop._threatLevelText.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(shop._threatLevelText.text))
@@ -161,7 +161,7 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => item._itemNameText != null ? item._itemNameText.text : null,
                 OnActivate = () => Click(item),
-                Details = () => GameNodes.Lines(TooltipReader.Describe(item._tooltipRaycastTarget)),
+                Details = () => TooltipReader.Lines(item._tooltipRaycastTarget),
             };
         }
 

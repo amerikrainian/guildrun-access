@@ -63,7 +63,7 @@ namespace GuildrunAccess.Module.UI
             Manager.SetCurrent(BufferKeys.Ui);
         }
 
-        // The run's relics, one line each (the relic's tooltip, or its name when it has none).
+        // The run's relics: each its tooltip lines (heading, summary, keywords), or its name alone.
         private static IEnumerable<string> RelicLines()
         {
             var relics = GameScopes.Controller<RelicUIController>();
@@ -71,8 +71,9 @@ namespace GuildrunAccess.Module.UI
             foreach (var relic in relics.GetComponentsInChildren<RelicView>(false))
             {
                 if (relic == null || !relic.gameObject.activeInHierarchy) continue;
-                string text = TooltipReader.Describe(relic._tooltipRaycastTarget);
-                yield return string.IsNullOrWhiteSpace(text) ? ItemNodes.RelicName(relic) : text;
+                var lines = TooltipReader.Lines(relic._tooltipRaycastTarget);
+                if (lines.Count == 0) { yield return ItemNodes.RelicName(relic); continue; }
+                foreach (var line in lines) yield return line;
             }
         }
 

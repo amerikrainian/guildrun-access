@@ -97,7 +97,7 @@ namespace GuildrunAccess.Module.GameRun
             return us >= 0 && us < objectName.Length - 1 ? objectName.Substring(us + 1) : null;
         }
 
-        /// <summary>One line per stat tooltip on the card.</summary>
+        /// <summary>The stat tooltips on the card as buffer lines.</summary>
         public static List<string> StatsTooltips(HeroCardView card)
         {
             var lines = new List<string>();
@@ -105,8 +105,7 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var stat in card.GetComponentsInChildren<StatView>(false))
             {
                 if (stat == null) continue;
-                var text = TooltipReader.Describe(stat._tooltipRaycastTarget);
-                if (!string.IsNullOrEmpty(text)) lines.Add(text);
+                lines.AddRange(TooltipReader.Lines(stat._tooltipRaycastTarget));
             }
             return lines;
         }
@@ -136,14 +135,13 @@ namespace GuildrunAccess.Module.GameRun
             return sb.Length > 0 ? sb.ToString() : Strings.HeroNoAbilities;
         }
 
-        /// <summary>One line per ability tooltip under the root.</summary>
+        /// <summary>The ability tooltips under the root as buffer lines: each its heading, summary and keyword lines.</summary>
         public static List<string> AbilitiesTooltips(UnityEngine.Component root)
         {
             var lines = new List<string>();
             foreach (var a in Abilities(root))
             {
-                var text = TooltipReader.Describe(a._tooltipRaycastTarget);
-                if (!string.IsNullOrEmpty(text)) lines.Add(text);
+                lines.AddRange(TooltipReader.Lines(a._tooltipRaycastTarget));
             }
             return lines;
         }

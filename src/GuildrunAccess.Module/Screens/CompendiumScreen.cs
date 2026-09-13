@@ -152,10 +152,10 @@ namespace GuildrunAccess.Module.Screens
             return string.IsNullOrWhiteSpace(name) ? icon.gameObject.name : name;
         }
 
-        private static string MasteryTooltip(IconCompendiumView icon)
+        private static List<string> MasteryTooltip(IconCompendiumView icon)
         {
             var target = icon.GetComponentInChildren<TooltipRaycastTarget>(false);
-            return target != null ? TooltipReader.Describe(target) : null;
+            return target != null ? TooltipReader.Lines(target) : null;
         }
 
         // ---- a hero's detail ----
@@ -171,7 +171,7 @@ namespace GuildrunAccess.Module.Screens
             {
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => HeroTitle(hero)) },
                 SearchText = () => hero._nameText != null ? hero._nameText.text : null,
-                Details = () => GameNodes.Lines((masteryTarget != null ? TooltipReader.Describe(masteryTarget) : null)),
+                Details = () => masteryTarget != null ? TooltipReader.Lines(masteryTarget) : null,
             });
 
             // Abilities / Gameplay / Personality.
@@ -194,7 +194,7 @@ namespace GuildrunAccess.Module.Screens
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => AbilityText(a)) },
                     SearchText = () => AbilityText(a),
-                    Details = () => GameNodes.Lines(AbilityTooltip(a) ?? AbilityText(a)),
+                    Details = () => AbilityTooltip(a),
                 });
             }
 
@@ -244,10 +244,12 @@ namespace GuildrunAccess.Module.Screens
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        private static string AbilityTooltip(HeroAbilityCompendiumView ability)
+        // The ability as buffer lines: its tooltip, else its shown text as the one line.
+        private static IEnumerable<string> AbilityTooltip(HeroAbilityCompendiumView ability)
         {
             var target = ability.GetComponentInChildren<TooltipRaycastTarget>(false);
-            return target != null ? TooltipReader.Describe(target) : null;
+            var lines = target != null ? TooltipReader.Lines(target) : null;
+            return lines != null && lines.Count > 0 ? lines : GameNodes.Lines(AbilityText(ability));
         }
 
         // ---- a class's detail: its rank upgrades ----

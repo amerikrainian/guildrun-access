@@ -47,7 +47,7 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(ControlId.Structural(keyPrefix + ":reset"), new NodeVtable
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Strings.ResultReset + " " + reset.text) },
-                    Details = () => GameNodes.Lines(TooltipReader.Describe(lb._resetTooltipRaycastTarget)),
+                    Details = () => TooltipReader.Lines(lb._resetTooltipRaycastTarget),
                 });
             b.PopContext();
         }

@@ -148,8 +148,8 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => view._buttonText != null ? view._buttonText.text : null,
                 OnActivate = () => { if (button != null && button.interactable) button.onClick.Invoke(); },
-                Details = () => GameNodes.Lines(item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
-                    : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null),
+                Details = () => item != null ? TooltipReader.Lines(item.TooltipRaycastTarget)
+                    : relic != null ? TooltipReader.Lines(relic._tooltipRaycastTarget) : null,
             };
         }
 
@@ -166,8 +166,8 @@ namespace GuildrunAccess.Module.GameRun
                     new NodeAnnouncement(() => item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null, kind: AnnouncementKinds.Value),
                 },
                 SearchText = () => summary._text != null ? summary._text.text : null,
-                Details = () => GameNodes.Lines(item != null ? TooltipReader.Describe(item.TooltipRaycastTarget)
-                    : relic != null ? TooltipReader.Describe(relic._tooltipRaycastTarget) : null),
+                Details = () => item != null ? TooltipReader.Lines(item.TooltipRaycastTarget)
+                    : relic != null ? TooltipReader.Lines(relic._tooltipRaycastTarget) : null,
             };
         }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.Text;
 using Ember.Scopes.Application.UI.Tooltips;
@@ -45,17 +46,20 @@ namespace GuildrunAccess.Module.UI
             return string.IsNullOrWhiteSpace(sub) ? title : title + ", " + sub;
         }
 
-        /// <summary>The full readout: heading, then every section the details mode shows (what the game
-        /// shows while Shift is held: the summary plus the definitions of the keywords it uses, without
-        /// the hint to hold Shift), in the game's own order; the summary alone when
-        /// <paramref name="details"/> is false. Null when the control has no tooltip.</summary>
-        public static string Describe(TooltipRaycastTarget target, bool details = true)
+        /// <summary>The tooltip as buffer lines: the heading ("Vault Spark. Active Ability"), then every
+        /// text of every section the details mode shows as a line of its own (the summary, then each
+        /// keyword definition it uses: what the game shows while Shift is held, without the hint to hold
+        /// Shift), in the game's own order; the summary alone when <paramref name="details"/> is false.
+        /// Empty when the control has no tooltip.</summary>
+        public static List<string> Lines(TooltipRaycastTarget target, bool details = true)
         {
+            var lines = new List<string>();
             var view = Populate(target);
-            if (view == null) return null;
-            var sb = new StringBuilder();
-            Append(sb, view._titleText != null ? view._titleText.text : null);
-            Append(sb, view._subtitleText != null ? view._subtitleText.text : null);
+            if (view == null) return lines;
+            var head = new StringBuilder();
+            Append(head, view._titleText != null ? view._titleText.text : null);
+            Append(head, view._subtitleText != null ? view._subtitleText.text : null);
+            if (head.Length > 0) lines.Add(head.ToString());
 
             // The view itself activates the sections its mode shows (summary or details) and leaves the
             // others inactive; that flag is the filter. (The section tuple's mode field does not read
@@ -69,10 +73,19 @@ namespace GuildrunAccess.Module.UI
                     var go = sections[i].Item1;
                     if (go == null || !go.activeSelf) continue;
                     foreach (var tmp in go.GetComponentsInChildren<TMP_Text>(true))
-                        if (tmp != null) Append(sb, tmp.text);
+                        if (tmp != null && !string.IsNullOrWhiteSpace(tmp.text)) lines.Add(tmp.text.Trim());
                 }
             }
             view.Clear();
+            return lines;
+        }
+
+        /// <summary>The full readout as one text, the lines of <see cref="Lines"/> period-joined; null
+        /// when the control has no tooltip. For the places that speak a tooltip whole.</summary>
+        public static string Describe(TooltipRaycastTarget target, bool details = true)
+        {
+            var sb = new StringBuilder();
+            foreach (var line in Lines(target, details)) Append(sb, line);
             return sb.Length > 0 ? sb.ToString() : null;
         }
 

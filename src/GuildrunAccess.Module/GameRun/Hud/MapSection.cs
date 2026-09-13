@@ -31,7 +31,7 @@ namespace GuildrunAccess.Module.GameRun
                         new NodeAnnouncement(() => IsCurrent(node) ? Strings.RunMapCurrent : null, live: true, kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => NodeTitle(node),
-                    Details = () => GameNodes.Lines(TooltipReader.Describe(node.TooltipRaycastTarget)),
+                    Details = () => TooltipReader.Lines(node.TooltipRaycastTarget),
                 });
             }
             b.PopContext();

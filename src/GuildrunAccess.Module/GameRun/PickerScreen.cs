@@ -1,3 +1,4 @@
+using Ember.Scopes.Application.UI.Tooltips;
 using System.Collections.Generic;
 using Ember.Scopes.GameRun.UI.Common;
 using Ember.Scopes.GameRun.UI.HeroCard;
@@ -116,9 +117,15 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => choice._nameText != null ? choice._nameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                Details = () => GameNodes.Lines(TooltipReader.Describe(choice._tooltipRaycastTarget)
-                    ?? (choice._descriptionText != null ? choice._descriptionText.text : null)),
+                Details = () => DetailsOf(choice._tooltipRaycastTarget, choice._descriptionText),
             };
+        }
+
+        // The tooltip as lines, else the shown description as the one line.
+        private static IEnumerable<string> DetailsOf(TooltipRaycastTarget target, TMPro.TMP_Text description)
+        {
+            var lines = TooltipReader.Lines(target);
+            return lines.Count > 0 ? lines : GameNodes.Lines(description != null ? description.text : null);
         }
 
         // A rank modifier: "<name>, <description>", Enter picks it.
@@ -135,8 +142,7 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => choice._itemNameText != null ? choice._itemNameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                Details = () => GameNodes.Lines(TooltipReader.Describe(choice._tooltipRaycastTarget)
-                    ?? (choice._modifierDescriptionText != null ? choice._modifierDescriptionText.text : null)),
+                Details = () => DetailsOf(choice._tooltipRaycastTarget, choice._modifierDescriptionText),
             };
         }
 

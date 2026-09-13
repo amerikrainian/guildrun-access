@@ -50,7 +50,7 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = label,
                 Details = tooltip == null ? (Func<IEnumerable<string>>)null
-                    : () => GameNodes.Lines(TooltipReader.Describe(tooltip)),
+                    : () => TooltipReader.Lines(tooltip),
             });
         }
     }

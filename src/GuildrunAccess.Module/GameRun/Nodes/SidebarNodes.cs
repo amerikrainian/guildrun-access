@@ -147,8 +147,7 @@ namespace GuildrunAccess.Module.GameRun
             var lines = new List<string>();
             foreach (var stat in enemy.GetComponentsInChildren<StatView>(false))
             {
-                var text = stat != null ? TooltipReader.Describe(stat._tooltipRaycastTarget) : null;
-                if (!string.IsNullOrEmpty(text)) lines.Add(text);
+                if (stat != null) lines.AddRange(TooltipReader.Lines(stat._tooltipRaycastTarget));
             }
             return lines;
         }
