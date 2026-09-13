@@ -75,6 +75,16 @@ namespace GuildrunAccess.Core.Buffers
             Position = saved < _lines.Count ? saved : 0;
         }
 
+        /// <summary>Every line the source reads now (a re-read; the cursor stays).</summary>
+        public IReadOnlyList<string> Lines
+        {
+            get
+            {
+                Refresh();
+                return _lines;
+            }
+        }
+
         public string CurrentLine
         {
             get

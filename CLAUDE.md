@@ -180,6 +180,13 @@ runs; spoken text is still captured. The game already runs in the background whe
   the first eval after boot fails once on a cold assembly resolve, absorbed at warmup); `POST
   /wait?timeout=MS` a per-frame bool expression; `GET /typeinfo?name=X`; `GET /screenshot`.
 - `POST /reload`, `GET /module` (generation, DLL write times, Harmony patch table), `GET /health`.
+- `POST /input` with body `dev.audit` (not a key: `Module/Dev/ScreenAudit`) is the coverage report of
+  the screen on show: every node of the render with its control/hero/items buffer lines and the
+  global buffers, then the visible texts, tooltips and interactable widgets none of that covers.
+  Substring matching over tag-stripped text, so it over-reports: a listed text is a lead, not a
+  verdict (a widget with no caption, such as a portrait button, always lists). It scans the scene,
+  so it is for the dev driver only. Before a `confirm` through the driver, read the readout the
+  previous input returned: a guessed focus has bought a relic on a live run.
 - Re-show a dismissed panel for testing: find its scene instance with `Resources.FindObjectsOfTypeAll`
   in `/eval` and `SetActive(true)`; `SetActive(false)` afterwards. Never press a consent button for the player.
 
