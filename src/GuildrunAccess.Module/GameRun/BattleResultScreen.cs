@@ -108,18 +108,23 @@ namespace GuildrunAccess.Module.GameRun
             if (GameNodes.IsShown(stats._nextBattleButton))
                 b.AddItem(ControlId.Structural("result:nextbattle"), GameNodes.Button(stats._nextBattleButton, () => Strings.ResultNextCombat));
 
-            // The Tracker / Hero Stats switch.
+            // The Tracker / Hero Stats switch, a stop of its own between the stat lines and what the
+            // selected tab shows.
             var tabs = stats.GetComponentInChildren<TabView>(false);
             if (tabs != null)
+            {
+                int shown = 0;
                 foreach (var toggle in tabs.GetComponentsInChildren<Toggle>(false))
                 {
                     if (!GameNodes.IsShown(toggle)) continue;
+                    if (shown++ == 0) b.BeginStop("stats:tabs");
                     var t = toggle;
                     b.AddItem(ControlId.Structural("result:tab:" + t.GetInstanceID()), GameNodes.Tab(t));
                 }
+            }
 
-            // What the selected tab shows, a stop of its own: the durations and the tabs stay behind,
-            // and a Tab reaches the rows (the hero cards, or the tracker) without arrowing past them.
+            // What the selected tab shows, a stop of its own: a Tab reaches the rows (the hero cards,
+            // or the tracker) without arrowing past the lines and the tabs.
             b.BeginStop("stats:entries");
 
             // Hero Stats: one card per hero (name, stats, items).
