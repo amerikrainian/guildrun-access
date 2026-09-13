@@ -111,8 +111,9 @@ namespace GuildrunAccess.Module.Screens
         }
 
         // A tier: its caption, radio-button role, selected state, and "disabled" while locked. Landing
-        // on an unlocked tier selects it, as Enter does. Space reads what the tier means from the
-        // game's difficulty data, locked or not (the screen itself describes only the selected tier).
+        // on an unlocked tier selects it, as Enter does. Space reads what an UNLOCKED tier means from the
+        // game's difficulty data (the screen itself describes only the selected one); a locked tier's
+        // description is something the game keeps hidden, so it stays hidden here too.
         private static NodeVtable Tier(Toggle toggle, DifficultyOptionItemView option, int index)
         {
             Action select = () => { if (toggle.interactable && !option._isLocked && !toggle.isOn) toggle.isOn = true; };
@@ -128,14 +129,13 @@ namespace GuildrunAccess.Module.Screens
                 SearchText = () => Caption(option),
                 OnActivate = select,
                 OnFocus = select,
-                OnTooltip = () => GameNodes.SayTooltip(TierInfo(index)),
+                OnTooltip = () => { if (!option._isLocked) GameNodes.SayTooltip(TierInfo(index)); },
             };
         }
 
         // The tier's own name and description from the balancing ("Difficulty: C. Heroes take 10% Max
         // HP damage at the start of each combat."): the configs run parallel to the controller's tier
-        // items (Base, then C to SSS); The Red Rift has no config and stays silent. The lock hover
-        // panel is one shared object the game fills only on hover, so it is no source.
+        // items (Base, then C to SSS); The Red Rift has no config and stays silent.
         private static string TierInfo(int index)
         {
             var panel = Difficulty;
