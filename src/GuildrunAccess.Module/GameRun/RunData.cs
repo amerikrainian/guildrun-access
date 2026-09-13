@@ -34,6 +34,25 @@ namespace GuildrunAccess.Module.GameRun
         /// <summary>The battle board's controller (its character registries), or null outside a battle scene.</summary>
         public static BoardController BoardController => GameScopes.Controller<BoardController>();
 
+        /// <summary>The battle flow's state as the game's own session data has it (InitialSelection, Intro,
+        /// Placement, Resolution, Result, Shop, Crossroads, ...), or null outside a run or when the
+        /// reader is not reachable.</summary>
+        public static Ember.Scopes.GameRun.RunSession.Data.BattleFlowState? FlowState()
+        {
+            try
+            {
+                var flow = GameScopes.Controller<BattleFlowUIStateController>();
+                var reader = flow != null ? flow._runSessionReader : null;
+                var state = reader != null ? reader.BattleFlowState : null;
+                return state != null ? state.CurrentValue : (Ember.Scopes.GameRun.RunSession.Data.BattleFlowState?)null;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("FlowState: unreadable: " + e.Message);
+                return null;
+            }
+        }
+
         /// <summary>Whether the run is in the placement phase (the board editable): the battle flow shows
         /// its placement UI and a board exists.</summary>
         public static bool Placing()
