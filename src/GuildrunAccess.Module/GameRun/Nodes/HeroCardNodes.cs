@@ -66,6 +66,21 @@ namespace GuildrunAccess.Module.GameRun
         public static string StatsLine(HeroCardView card)
             => card == null ? null : StatsLine(card, card._healthText, card._manaText);
 
+        /// <summary>"health 650, mana 85": the card's health and mana alone, for the focus line of a
+        /// control that stands for the hero.</summary>
+        public static string Vitals(HeroCardView card)
+            => card == null ? null : Vitals(card._healthText, card._manaText);
+
+        public static string Vitals(TMPro.TMP_Text health, TMPro.TMP_Text mana)
+        {
+            var parts = new List<string>();
+            if (health != null && health.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(health.text))
+                parts.Add(Strings.HeroStat(Strings.HeroHealth, health.text));
+            if (mana != null && mana.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(mana.text))
+                parts.Add(Strings.HeroStat(Strings.HeroMana, mana.text));
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
+        }
+
         /// <summary>The same line over any view carrying health/mana captions and stat panels (a mini card's stats view).</summary>
         public static string StatsLine(UnityEngine.Component root, TMPro.TMP_Text health, TMPro.TMP_Text mana)
         {
@@ -203,9 +218,14 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(ControlId.Structural(keyPrefix + ":" + i + ":name"), Cell(card,
                     () =>
                     {
-                        string name = NameAndClass(card);
+                        // "Karsu, Duelist, Frost, health 650, mana 85, cost Shard 15": the same shape as
+                        // every other control that stands for a hero.
+                        var parts = new List<string> { NameAndClass(card) };
+                        string vitals = Vitals(card);
+                        if (!string.IsNullOrEmpty(vitals)) parts.Add(vitals);
                         string suffix = nameSuffix != null ? nameSuffix(index) : null;
-                        return string.IsNullOrEmpty(suffix) ? name : name + ", " + suffix;
+                        if (!string.IsNullOrEmpty(suffix)) parts.Add(suffix);
+                        return string.Join(", ", parts);
                     },
                     action != null ? ControlTypes.Button : null, () => AbilitiesTooltips(card), null, action));
             }

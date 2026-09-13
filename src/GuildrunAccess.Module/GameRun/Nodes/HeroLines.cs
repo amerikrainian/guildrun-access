@@ -28,23 +28,25 @@ namespace GuildrunAccess.Module.GameRun
             };
         }
 
-        /// <summary>A hero card: "Karsu, Duelist, Frost", its stats line, then one line per ability tooltip.</summary>
+        /// <summary>A hero card, the rows of the hero buffer everywhere: "Karsu, Duelist, Frost", its
+        /// stats line, then its abilities line ("Killshot, Active Ability; ..."). The tooltips behind
+        /// them are the control buffer's.</summary>
         public static IEnumerable<string> ForCard(HeroCardView card)
         {
             if (card == null) yield break;
             yield return HeroCardNodes.NameAndClass(card);
             yield return HeroCardNodes.StatsLine(card);
-            foreach (var line in HeroCardNodes.AbilitiesTooltips(card)) yield return line;
+            yield return HeroCardNodes.AbilitiesLine(card);
         }
 
-        /// <summary>A party or reserve slot's hero: its name, its vitals when it stands on the board
-        /// ("health 675, mana 40 of 75"), then one line per ability tooltip (the slot shows no other stats).</summary>
+        /// <summary>A party or reserve slot's hero in the same rows: its name, its vitals when it stands
+        /// on the board ("health 675, mana 40 of 75"; the slot shows no other stats), its abilities line.</summary>
         public static IEnumerable<string> ForSlot(BottomHeroView view, string vitals = null)
         {
             if (view == null || view.IsEmpty) yield break;
             yield return RunData.HeroName(view);
             if (!string.IsNullOrEmpty(vitals)) yield return vitals;
-            foreach (var line in HeroCardNodes.AbilitiesTooltips(view._abilitiesView)) yield return line;
+            yield return HeroCardNodes.AbilitiesLine(view._abilitiesView);
         }
     }
 }

@@ -106,6 +106,47 @@ namespace GuildrunAccess.Module.GameRun
             else if (RunData.TryEnemyAt(cell, out var enemy)) HeroActions.PeekEnemy(enemy);
         }
 
+        private static void Peek(CharacterViewController view)
+        {
+            if (view == null) return;
+            if (Nullables.TryGet(() => view.HeroId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId hero)) HeroActions.PeekHero(hero);
+            else if (Nullables.TryGet(() => view.EnemyId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId enemy)) HeroActions.PeekEnemy(enemy);
+        }
+
+        // A fighting unit's rows and tooltips come from its card when the sidebar shows it, else its
+        // own line and items.
+        private static IEnumerable<string> UnitHeroLines(Unit u)
+        {
+            if (u.IsHero)
+            {
+                var card = HeroActions.ShownHeroCard(u.Name);
+                if (card != null) return HeroLines.ForCard(card);
+            }
+            else
+            {
+                var card = HeroActions.ShownEnemyCard(u.Name);
+                if (card != null) return SidebarNodes.EnemyRows(card);
+            }
+            return new[] { UnitLine(u) };
+        }
+
+        private static IEnumerable<string> UnitDetails(Unit u)
+        {
+            var lines = new List<string>();
+            if (u.IsHero)
+            {
+                var card = HeroActions.ShownHeroCard(u.Name);
+                if (card != null) { lines.AddRange(HeroCardNodes.AbilitiesTooltips(card)); lines.AddRange(HeroCardNodes.StatsTooltips(card)); }
+            }
+            else
+            {
+                var card = HeroActions.ShownEnemyCard(u.Name);
+                if (card != null) lines.AddRange(SidebarNodes.EnemyDetails(card));
+            }
+            lines.AddRange(ItemNodes.ItemTooltips(u.Bar._itemSlotViews));
+            return lines;
+        }
+
         // The control buffer: a hero's abilities and items (its slot), plus its card's stat tooltips
         // when the sidebar shows it; an enemy's abilities and stats from its card.
         private static IEnumerable<string> CellDetails(Vector2Int cell)
@@ -185,7 +226,7 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- the battlefield ----
 
-        private struct Unit { public string Name; public HealthBarView Bar; public bool IsHero; }
+        private struct Unit { public string Name; public HealthBarView Bar; public bool IsHero; public CharacterViewController View; }
 
         /// <summary>Whether any unit stands on the battlefield: a character view with a live health bar,
         /// which is the fight itself. The run screen's activity hangs on it (see
@@ -232,15 +273,18 @@ namespace GuildrunAccess.Module.GameRun
                     LiveReadout = true,
                     Announcements = new List<NodeAnnouncement>
                     {
-                        // "Pimenta, wearing Freezing Tome, hero, 650 health": the hero named as on the board.
-                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Health(u.Bar)), kind: AnnouncementKinds.Label),
+                        // "Pimenta, wearing Freezing Tome, hero, health 650": the hero named as on the board.
+                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))), kind: AnnouncementKinds.Label),
                         new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
                         // Mana regenerates all fight long: it rides along in a re-read but never causes one.
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value) { LiveReadoutIgnore = true },
                     },
                     SearchText = () => u.Name,
-                    Details = () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews),
-                    SideLines = HeroLines.Side(() => new[] { UnitLine(u) }, () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
+                    // Landing shows the unit's card in the sidebar, as hovering it does; the buffers read
+                    // it: the hero buffer as name, stats, abilities, the control buffer as the tooltips.
+                    OnFocus = () => Peek(u.View),
+                    Details = () => UnitDetails(u),
+                    SideLines = HeroLines.Side(() => UnitHeroLines(u), () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
                 });
             }
             b.PopContext();
@@ -289,18 +333,18 @@ namespace GuildrunAccess.Module.GameRun
                 if (!bars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) continue;
                 string name = bar._characterNameText != null ? bar._characterNameText.text : null;
                 if (string.IsNullOrWhiteSpace(name)) name = c.gameObject.name.Replace("(Clone)", "");
-                units.Add(new Unit { Name = name, Bar = bar, IsHero = isHero });
+                units.Add(new Unit { Name = name, Bar = bar, IsHero = isHero, View = c });
             }
         }
 
         // The bar's own label is an inactive text set once at spawn (the starting health, "<b>520</b>"),
         // never the value of the moment; the bar keeps the live current health and shield as fields,
         // updated with every hit and heal it draws.
-        // "Karsu, hero, 650 health, shield 40, mana 45 of 85": the unit's whole line, for the party
+        // "Karsu, hero, health 650, shield 40, mana 45 of 85": the unit's whole line, for the party
         // and enemies buffers (one line per unit, read live on every buffer key).
         private static string UnitLine(Unit u)
         {
-            var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Health(u.Bar)) };
+            var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))) };
             string shield = Shield(u.Bar);
             if (shield != null) parts.Add(shield);
             string mana = Mana(u.Bar);

@@ -65,20 +65,14 @@ namespace GuildrunAccess.Module.GameRun
             if (enemy != null && enemy.gameObject.activeInHierarchy)
             {
                 b.PushContext(Strings.RunInspect, null, positions: false);
+                // Name, stats, abilities: the order every hero and enemy reads in, here and in the buffers.
+                var enemySide = HeroLines.Side(() => EnemyRows(enemy), null);
                 b.AddItem(ControlId.Structural(keyPrefix + ":enemy:name"), new NodeVtable
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => EnemyLine(enemy)) },
                     SearchText = () => enemy._nameText != null ? enemy._nameText.text : null,
-                    Details = () => HeroCardNodes.AbilitiesTooltips(enemy),
-                });
-                b.AddItem(ControlId.Structural(keyPrefix + ":enemy:abilities"), new NodeVtable
-                {
-                    Announcements = new List<NodeAnnouncement>
-                    {
-                        new NodeAnnouncement(() => Strings.HeroAbilities),
-                        GameNodes.LabelPart(() => HeroCardNodes.AbilitiesLine(enemy)),
-                    },
-                    Details = () => HeroCardNodes.AbilitiesTooltips(enemy),
+                    Details = () => EnemyDetails(enemy),
+                    SideLines = enemySide,
                 });
                 b.AddItem(ControlId.Structural(keyPrefix + ":enemy:stats"), new NodeVtable
                 {
@@ -88,6 +82,17 @@ namespace GuildrunAccess.Module.GameRun
                         GameNodes.LabelPart(() => Stats(enemy)),
                     },
                     Details = () => StatTooltips(enemy),
+                    SideLines = enemySide,
+                });
+                b.AddItem(ControlId.Structural(keyPrefix + ":enemy:abilities"), new NodeVtable
+                {
+                    Announcements = new List<NodeAnnouncement>
+                    {
+                        new NodeAnnouncement(() => Strings.HeroAbilities),
+                        GameNodes.LabelPart(() => HeroCardNodes.AbilitiesLine(enemy)),
+                    },
+                    Details = () => HeroCardNodes.AbilitiesTooltips(enemy),
+                    SideLines = enemySide,
                 });
                 b.PopContext();
             }
@@ -118,6 +123,19 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         // "Turtle, 200 health, mana 0 of 60".
+        /// <summary>The enemy card as the hero buffer's rows: name with health and mana, the stats, the
+        /// abilities line.</summary>
+        internal static IEnumerable<string> EnemyRows(EnemyCardView enemy)
+            => GameNodes.Lines(EnemyLine(enemy), Stats(enemy), HeroCardNodes.AbilitiesLine(enemy));
+
+        /// <summary>The enemy card's tooltips as control-buffer lines: every ability, then every stat.</summary>
+        internal static List<string> EnemyDetails(EnemyCardView enemy)
+        {
+            var lines = HeroCardNodes.AbilitiesTooltips(enemy);
+            lines.AddRange(StatTooltips(enemy));
+            return lines;
+        }
+
         internal static string EnemyLine(EnemyCardView enemy)
         {
             var sb = new StringBuilder();

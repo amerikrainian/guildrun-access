@@ -26,17 +26,21 @@ namespace GuildrunAccess.Module.GameRun
             return items == null ? null : Strings.RunWearing(items);
         }
 
-        /// <summary>A slot's hero: "Irini: Limitless, Passive Ability, wearing Freezing Tome".</summary>
+        /// <summary>A slot's hero: "Irini, health 650, mana 45 of 85, Limitless, Passive Ability, wearing
+        /// Freezing Tome": name, then its vitals while it stands on the board, then its abilities and items,
+        /// the shape every control standing for a hero has.</summary>
         public static string SlotSummary(BottomHeroView view)
         {
-            string abilities = HeroCardNodes.AbilitiesLine(view._abilitiesView);
-            string items = ItemNodes.ItemNames(view._itemSlotViews);
             var parts = new List<string>();
-            if (!string.IsNullOrEmpty(abilities)) parts.Add(abilities);
-            if (items != null) parts.Add(Strings.RunWearing(items));
-            string body = string.Join(", ", parts);
             string name = RunData.HeroName(view);
-            return string.IsNullOrEmpty(name) ? body : body.Length == 0 ? name : name + ": " + body;
+            if (!string.IsNullOrEmpty(name)) parts.Add(name);
+            string vitals = BoardSection.VitalsOf(view);
+            if (!string.IsNullOrEmpty(vitals)) parts.Add(vitals);
+            string abilities = HeroCardNodes.AbilitiesLine(view._abilitiesView);
+            if (!string.IsNullOrEmpty(abilities)) parts.Add(abilities);
+            string items = ItemNodes.ItemNames(view._itemSlotViews);
+            if (items != null) parts.Add(Strings.RunWearing(items));
+            return string.Join(", ", parts);
         }
 
         /// <summary>The tooltips of a slot's hero, one line each: its abilities', then its items'.</summary>

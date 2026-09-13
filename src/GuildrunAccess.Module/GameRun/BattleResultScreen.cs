@@ -164,7 +164,7 @@ namespace GuildrunAccess.Module.GameRun
                         Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => MiniCardLine(c)) },
                         SearchText = () => c._name != null ? c._name.text : null,
                         Details = () => MiniCardTooltips(c),
-                        SideLines = HeroLines.Side(() => new[] { MiniCardLine(c) }, () => MiniCardTooltips(c)),
+                        SideLines = HeroLines.Side(() => MiniCardRows(c), () => MiniCardTooltips(c)),
                     });
                 }
                 if (shown > 0) b.PopContext();
@@ -243,18 +243,31 @@ namespace GuildrunAccess.Module.GameRun
             return lines;
         }
 
-        // "Kai: health 875, mana 105, Attack 25, ...; Hammer".
+        // "Kai, health 875, mana 105, Attack 25, ..., wearing Hammer": name, stats, items.
         private static string MiniCardLine(MiniHeroCard card)
         {
-            string name = card._name != null ? card._name.text : null;
-            var statsView = card._heroStatsView;
-            string stats = statsView != null ? HeroCardNodes.StatsLine(statsView, statsView._healthText, statsView._manaText) : null;
+            var parts = new List<string> { MiniCardName(card) };
+            string stats = MiniCardStats(card);
+            if (!string.IsNullOrEmpty(stats)) parts.Add(stats);
             string items = ItemNodes.ItemNames(EquipmentSlots(card));
-            var sb = new StringBuilder(string.IsNullOrEmpty(name) ? Strings.RunParty : name);
-            if (!string.IsNullOrEmpty(stats)) sb.Append(": ").Append(stats);
-            if (!string.IsNullOrEmpty(items)) sb.Append("; ").Append(items);
-            return sb.ToString();
+            if (!string.IsNullOrEmpty(items)) parts.Add(Strings.RunWearing(items));
+            return string.Join(", ", parts);
         }
+
+        private static string MiniCardName(MiniHeroCard card)
+        {
+            string name = card._name != null ? card._name.text : null;
+            return string.IsNullOrEmpty(name) ? Strings.RunParty : name;
+        }
+
+        private static string MiniCardStats(MiniHeroCard card)
+        {
+            var statsView = card._heroStatsView;
+            return statsView != null ? HeroCardNodes.StatsLine(statsView, statsView._healthText, statsView._manaText) : null;
+        }
+
+        // The hero buffer's rows: name, stats (the mini card shows no abilities).
+        private static IEnumerable<string> MiniCardRows(MiniHeroCard card) => GameNodes.Lines(MiniCardName(card), MiniCardStats(card));
 
         private static List<string> MiniCardTooltips(MiniHeroCard card) => ItemNodes.ItemTooltips(EquipmentSlots(card));
 

@@ -135,8 +135,9 @@ namespace GuildrunAccess.Core.Strings
             D("run.speed", "battle speed"),
             D("run.menu", "menu"),
             // {0} = unit name, {1} = health text, spoken for a unit on the board.
-            D("run.unit_hero", "{0}, hero, {1} health"),
-            D("run.unit_enemy", "{0}, enemy, {1} health"),
+            // {0} = the unit's name (with its items), {1} = its health phrase ("health 650").
+            D("run.unit_hero", "{0}, hero, {1}"),
+            D("run.unit_enemy", "{0}, enemy, {1}"),
             // {0} = current mana, {1} = max mana.
             D("run.mana", "mana {0} of {1}"),
             // {0} = shield points, spoken only while a shield is up.
