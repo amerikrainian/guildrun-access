@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using Ember.Scopes.Application.UI.Tooltips;
 using Ember.Scopes.GameRun.Utilities.Tooltips;
 using Ember.Scopes.GameRun.Utilities.Tooltips.Sources;
@@ -73,11 +74,33 @@ namespace GuildrunAccess.Module.UI
                     var go = sections[i].Item1;
                     if (go == null || !go.activeSelf) continue;
                     foreach (var tmp in go.GetComponentsInChildren<TMP_Text>(true))
-                        if (tmp != null && !string.IsNullOrWhiteSpace(tmp.text)) lines.Add(tmp.text.Trim());
+                        if (tmp != null) AddLines(lines, tmp.text);
                 }
             }
             view.Clear();
             return lines;
+        }
+
+        // A section text holds one paragraph per line break (the keyword definitions come as one text,
+        // "Rank: ...\nCrit: ..."): each is a line of its own. A line opening with an icon sprite that
+        // names the very word after it ("<sprite name=Rank> Rank:") drops the sprite, or speech would
+        // say the word twice; the sprite names carry a size suffix ("Shard_S") the word does not.
+        private static readonly Regex LeadingIcon = new Regex(
+            @"^\s*<sprite\s+name=""?(?<name>[A-Za-z]+)(?:_[A-Za-z0-9]+)?""?\s*/?>\s*(?=(?:<[^>]+>\s*)*(?<word>[A-Za-z]+))",
+            RegexOptions.Compiled);
+
+        private static void AddLines(List<string> lines, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return;
+            foreach (var raw in text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string line = raw.Trim();
+                if (line.Length == 0) continue;
+                var m = LeadingIcon.Match(line);
+                if (m.Success && string.Equals(m.Groups["name"].Value, m.Groups["word"].Value, StringComparison.OrdinalIgnoreCase))
+                    line = line.Substring(m.Length).TrimStart();
+                lines.Add(line);
+            }
         }
 
         private static void Append(StringBuilder sb, string text)

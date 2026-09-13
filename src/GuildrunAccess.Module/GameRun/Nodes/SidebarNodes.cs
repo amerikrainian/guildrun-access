@@ -35,6 +35,7 @@ namespace GuildrunAccess.Module.GameRun
         /// <summary>The first node of an inspected hero's card (its name row), where focus lands after
         /// an inspect; <paramref name="keyPrefix"/> as passed to <see cref="Add"/>.</summary>
         public static ControlId HeroCardId(string keyPrefix) => ControlId.Structural(keyPrefix + ":hero:0:name");
+        public static ControlId EnemyCardId(string keyPrefix) => ControlId.Structural(keyPrefix + ":enemy:name");
 
         public static void Add(GraphBuilder b, InformationSidebarController sidebar, string keyPrefix)
         {

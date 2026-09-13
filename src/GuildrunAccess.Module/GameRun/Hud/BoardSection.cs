@@ -92,7 +92,13 @@ namespace GuildrunAccess.Module.GameRun
                     return view != null ? RunLabels.SlotTooltips(view) : null;
                 },
                 SideLines = HeroLines.Side(
-                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? HeroLines.ForSlot(view) : null; },
+                    () =>
+                    {
+                        // A hero: its name and abilities; an enemy: its unit line (name, health, mana).
+                        if (RunData.TryHeroAt(cell, out var id)) { var view = RunData.ViewOf(id); return view != null ? HeroLines.ForSlot(view) : null; }
+                        if (RunData.TryEnemyAt(cell, out var enemy)) { string line = UnitLineFor(enemy); return line != null ? new[] { line } : null; }
+                        return null;
+                    },
                     () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? ItemNodes.ItemTooltips(view._itemSlotViews) : null; }),
             };
         }
@@ -109,13 +115,19 @@ namespace GuildrunAccess.Module.GameRun
             return null;
         }
 
-        // Enter on a cell: drop a picked-up hero here, else open the hero's menu, else nothing to do.
+        // Enter on a cell: drop a picked-up hero here, else open the hero's menu, else inspect the enemy
+        // there (its card in the sidebar), else nothing to do.
         private void ActivateCell(Vector2Int cell)
         {
             if (_actions.Moves.Pending) { _actions.Moves.Drop(cell); return; }
             if (RunData.TryHeroAt(cell, out var id))
             {
                 _actions.OpenHeroMenu(RunData.ViewOf(id), id, cell, reserve: false);
+                return;
+            }
+            if (RunData.TryEnemyAt(cell, out var enemy))
+            {
+                _actions.InspectEnemy(enemy);
                 return;
             }
             Speech.Say(Strings.RunCellEmpty, interrupt: true);
@@ -244,6 +256,22 @@ namespace GuildrunAccess.Module.GameRun
             string mana = Mana(u.Bar);
             if (mana != null) parts.Add(mana);
             return string.Join(", ", parts);
+        }
+
+        // The line of one enemy on the board, by its id; null when it has no live bar.
+        private static string UnitLineFor(Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId enemy)
+        {
+            var battle = GameScopes.Controller<BattleUIController>();
+            var board = RunData.BoardController;
+            var views = board != null ? board._enemyViewControllers : null;
+            if (battle == null || views == null || battle._healthBars == null) return null;
+            CharacterViewController c;
+            HealthBarView bar;
+            if (!views.TryGetValue(enemy, out c) || c == null || !c.gameObject.activeInHierarchy) return null;
+            if (!battle._healthBars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) return null;
+            string name = bar._characterNameText != null ? bar._characterNameText.text : null;
+            if (string.IsNullOrWhiteSpace(name)) name = c.gameObject.name.Replace("(Clone)", "");
+            return UnitLine(new Unit { Name = name, Bar = bar, IsHero = false });
         }
 
         /// <summary>One line per unit of a side, heroes or enemies, in the battlefield's order; empty

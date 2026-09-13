@@ -147,23 +147,50 @@ namespace GuildrunAccess.Module.GameRun
                 return;
             }
             _inspectPending = true;
+            _inspectEnemy = false;
+            _inspectDeadline = NavInput.Current.FrameCount + InspectLandingFrames;
+        }
+
+        /// <summary>The same for an enemy on the board: the sidebar shows its card (abilities, stats),
+        /// and focus lands on it.</summary>
+        public void InspectEnemy(EnemyId enemyId)
+        {
+            var sidebar = Sidebar;
+            if (sidebar == null || !sidebar.gameObject.activeInHierarchy)
+            {
+                CoreLog.Warning("Inspect: no information sidebar in the scene");
+                Speech.Say(Strings.RunInspectFailed, interrupt: true);
+                return;
+            }
+            try { sidebar.ShowEnemyCard(enemyId); }
+            catch (Exception e)
+            {
+                CoreLog.Warning("Inspect: ShowEnemyCard threw: " + e.Message);
+                Speech.Say(Strings.RunInspectFailed, interrupt: true);
+                return;
+            }
+            _inspectPending = true;
+            _inspectEnemy = true;
             _inspectDeadline = NavInput.Current.FrameCount + InspectLandingFrames;
         }
 
         // The card's name row is the landing; the card may take a frame or two to show.
         private const int InspectLandingFrames = 60;
         private bool _inspectPending;
+        private bool _inspectEnemy;
         private int _inspectDeadline;
 
         public override void OnUpdate()
         {
             if (!_inspectPending) return;
             var sidebar = Sidebar;
-            var card = sidebar != null ? sidebar._heroCardView : null;
+            UnityEngine.Component card = sidebar == null ? null
+                : _inspectEnemy ? (UnityEngine.Component)sidebar._enemyCardView : sidebar._heroCardView;
             if (card != null && card.gameObject.activeInHierarchy)
             {
                 _inspectPending = false;
-                Navigation.FocusNode(SidebarNodes.HeroCardId(SidebarSection.KeyPrefix));
+                Navigation.FocusNode(_inspectEnemy ? SidebarNodes.EnemyCardId(SidebarSection.KeyPrefix)
+                    : SidebarNodes.HeroCardId(SidebarSection.KeyPrefix));
             }
             else if (NavInput.Current.FrameCount >= _inspectDeadline)
             {
