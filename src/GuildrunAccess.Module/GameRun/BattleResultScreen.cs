@@ -56,6 +56,8 @@ namespace GuildrunAccess.Module.GameRun
                 ? panel._panelTitleText.text : Strings.ScreenBattleResult;
             b.PushContext(title, null, positions: false);
 
+            // One stop for the numbers: the rewards and the stat lines; then the tabs, then their content.
+            b.BeginStop("stats");
             BuildRewards(b, panel);
             BuildStats(b, panel);
             BuildLeaderboard(b, panel);
@@ -64,31 +66,52 @@ namespace GuildrunAccess.Module.GameRun
             b.PopContext();
         }
 
-        // ---- rewards: the shard total and every reward line ----
+        // ---- rewards: every reward line as the game draws it, the total when there are several ----
 
         private static void BuildRewards(GraphBuilder b, BattleResultPanelView panel)
         {
-            var shards = panel._totalShardsText;
             var rewards = panel._rewardParent;
-            bool shardsShown = shards != null && shards.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(shards.text);
-            bool rewardsShown = rewards != null && rewards.gameObject.activeInHierarchy;
-            if (!shardsShown && !rewardsShown) return;
+            var views = new List<ResultTextRewardView>();
+            if (rewards != null && rewards.gameObject.activeInHierarchy)
+                foreach (var view in rewards.GetComponentsInChildren<ResultTextRewardView>(false))
+                    if (view != null && view.gameObject.activeInHierarchy) views.Add(view);
 
-            b.BeginStop("rewards");
-            if (shardsShown)
-                b.AddItem(ControlId.Structural("result:shards"), GameNodes.Text(() => Strings.RunShards + " " + shards.text));
-            if (rewardsShown)
+            // "Battle Won, Shard 15": the reward line is one control, its title and value together.
+            if (views.Count > 0)
             {
                 b.PushContext(Strings.RunRewards, Strings.RoleList);
-                int i = 0;
-                foreach (var tmp in rewards.GetComponentsInChildren<TMP_Text>(false))
+                for (int i = 0; i < views.Count; i++)
                 {
-                    if (tmp == null || string.IsNullOrWhiteSpace(tmp.text)) continue;
-                    var t = tmp;
-                    b.AddItem(ControlId.Structural("result:reward" + i++), GameNodes.Text(() => t.text));
+                    var v = views[i];
+                    b.AddItem(ControlId.Structural("result:reward:" + v.GetInstanceID()), GameNodes.Text(() => RewardLine(v)));
                 }
                 b.PopContext();
             }
+
+            // The total only says something new when it sums several lines (with one reward it is
+            // that reward over again); captioned as the game captions it ("Total Earned").
+            var total = panel._totalShardsText;
+            if (views.Count != 1 && total != null && total.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(total.text))
+                b.AddItem(ControlId.Structural("result:shards"), GameNodes.Text(() => TotalLine(total)));
+        }
+
+        private static string RewardLine(ResultTextRewardView view)
+        {
+            string title = view._titleText != null ? view._titleText.text : null;
+            string value = view._valueText != null ? view._valueText.text : null;
+            if (string.IsNullOrWhiteSpace(title)) return value;
+            return string.IsNullOrWhiteSpace(value) ? title : title + ", " + value;
+        }
+
+        // The total row is the value text beside a title text under one parent.
+        private static string TotalLine(TMP_Text total)
+        {
+            string title = null;
+            var parent = total.transform.parent;
+            if (parent != null)
+                foreach (var tmp in parent.GetComponentsInChildren<TMP_Text>(false))
+                    if (tmp != null && tmp != total && !string.IsNullOrWhiteSpace(tmp.text)) { title = tmp.text; break; }
+            return (string.IsNullOrWhiteSpace(title) ? Strings.RunShards : title) + ", " + total.text;
         }
 
         // ---- stats: durations, the combat being shown, each hero's tracker ----
@@ -98,7 +121,6 @@ namespace GuildrunAccess.Module.GameRun
             var stats = panel.GetComponentInChildren<BattleStatsPanel>(false);
             if (stats == null || !stats.gameObject.activeInHierarchy) return;
 
-            b.BeginStop("stats");
             b.PushContext(Strings.ResultStats, null, positions: false);
             AddLine(b, "result:duration", stats._totalDurationText);
             AddLine(b, "result:combat", stats._battleIndexText);
