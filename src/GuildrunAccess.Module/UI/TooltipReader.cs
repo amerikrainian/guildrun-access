@@ -80,15 +80,6 @@ namespace GuildrunAccess.Module.UI
             return lines;
         }
 
-        /// <summary>The full readout as one text, the lines of <see cref="Lines"/> period-joined; null
-        /// when the control has no tooltip. For the places that speak a tooltip whole.</summary>
-        public static string Describe(TooltipRaycastTarget target, bool details = true)
-        {
-            var sb = new StringBuilder();
-            foreach (var line in Lines(target, details)) Append(sb, line);
-            return sb.Length > 0 ? sb.ToString() : null;
-        }
-
         private static void Append(StringBuilder sb, string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
