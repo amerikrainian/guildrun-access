@@ -160,13 +160,15 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(ControlId.Structural("run:unit:" + u.Bar.GetInstanceID()), new NodeVtable
                 {
                     // Units fall all through a fight: when the focused one does, focus slides to a
-                    // neighbour without reading it out (the death itself is narrated).
+                    // neighbour without reading it out (the death is in the battle events log).
                     QuietVanish = true,
                     Announcements = new List<NodeAnnouncement>
                     {
                         // "Pimenta, wearing Freezing Tome, hero, 650 health": the hero named as on the board.
                         new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Health(u.Bar)), kind: AnnouncementKinds.Label),
-                        // Not live: mana and health change every tick of a fight; re-read on demand (Ctrl+Space).
+                        // Not live: shield, mana and health change every tick of a fight; every part is
+                        // read at speak time, so a landing or a re-read speaks the moment's values.
+                        new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => u.Name,
@@ -223,8 +225,15 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
-        private static string Health(HealthBarView bar)
-            => bar._healthText != null ? bar._healthText.text : "";
+        // The bar's own label is an inactive text set once at spawn (the starting health, "<b>520</b>"),
+        // never the value of the moment; the bar keeps the live current health and shield as fields,
+        // updated with every hit and heal it draws.
+        private static string Health(HealthBarView bar) => Number(bar._currentHealth);
+
+        private static string Shield(HealthBarView bar)
+            => bar._currentShield > 0 ? Strings.RunShield(Number(bar._currentShield)) : null;
+
+        private static string Number(int value) => value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
 
         private static string Mana(HealthBarView bar)
         {
