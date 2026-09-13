@@ -285,8 +285,10 @@ namespace GuildrunAccess.Core.UI
 
         private void WatchLiveReadout(GraphNode node)
         {
-            string text;
-            try { text = GraphAnnouncer.LeafText(node); }
+            // What triggers a re-read: the parts not marked LiveReadoutIgnore, joined; what is spoken:
+            // the whole readout at the moment of speaking.
+            string key;
+            try { key = LiveReadoutKey(node); }
             catch (Exception e) { CoreLog.Warning("live readout: " + e.Message); return; }
             float now = NavInput.Current.UnscaledTime;
             bool baseline = _liveKey == null || !_liveKey.Equals(node.Id);
@@ -295,22 +297,37 @@ namespace GuildrunAccess.Core.UI
                 // A new landing: the focus announcement spoke this state already.
                 _liveKey = node.Id;
                 _liveValues.Clear();
-                _liveReadout = text;
+                _liveReadout = key;
                 _liveReadoutDirty = false;
                 _liveReadoutDue = now;
                 return;
             }
-            if (!string.Equals(_liveReadout, text))
+            if (!string.Equals(_liveReadout, key))
             {
-                _liveReadout = text;
+                _liveReadout = key;
                 _liveReadoutDirty = true;
             }
             if (_liveReadoutDirty && now >= _liveReadoutDue)
             {
                 _liveReadoutDirty = false;
                 _liveReadoutDue = now + LiveReadoutWindow;
-                if (!string.IsNullOrEmpty(_liveReadout) && Navigation.FocusActive()) Speak(_liveReadout, interrupt: true);
+                string text;
+                try { text = GraphAnnouncer.LeafText(node); }
+                catch (Exception e) { CoreLog.Warning("live readout: " + e.Message); return; }
+                if (!string.IsNullOrEmpty(text) && Navigation.FocusActive()) Speak(text, interrupt: true);
             }
+        }
+
+        private static string LiveReadoutKey(GraphNode node)
+        {
+            var anns = GraphAnnouncer.EffectiveAnnouncements(node);
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < anns.Count; i++)
+            {
+                if (anns[i] == null || anns[i].LiveReadoutIgnore) continue;
+                sb.Append(anns[i].Text?.Invoke()).Append('');
+            }
+            return sb.ToString();
         }
 
         public override void AnnounceCurrent()

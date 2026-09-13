@@ -170,7 +170,8 @@ namespace GuildrunAccess.Module.GameRun
                         // "Pimenta, wearing Freezing Tome, hero, 650 health": the hero named as on the board.
                         new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Health(u.Bar)), kind: AnnouncementKinds.Label),
                         new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
-                        new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
+                        // Mana regenerates all fight long: it rides along in a re-read but never causes one.
+                        new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value) { LiveReadoutIgnore = true },
                     },
                     SearchText = () => u.Name,
                     OnTooltip = () => GameNodes.SayTooltip(ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),

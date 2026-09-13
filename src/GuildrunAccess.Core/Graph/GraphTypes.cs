@@ -42,6 +42,11 @@ namespace GuildrunAccess.Core.Graph
         /// <summary>Watch this part while the node is focused and speak it when its value changes.</summary>
         public bool Live;
 
+        /// <summary>On a <see cref="NodeVtable.LiveReadout"/> node: this part's changes do NOT trigger the
+        /// re-read (it is still spoken, at its current value, whenever another part triggers one). For
+        /// values that never rest, like a unit's mana regenerating all through a fight.</summary>
+        public bool LiveReadoutIgnore;
+
         /// <summary>The part's kind (<see cref="AnnouncementKinds"/>), or null for a custom one-off part.
         /// Kinds drive the control type's speak order, let a node's part override the type's common part
         /// of the same kind, and key the user's per-kind announcement settings.</summary>

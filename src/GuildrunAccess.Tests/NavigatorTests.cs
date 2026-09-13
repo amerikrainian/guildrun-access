@@ -167,6 +167,7 @@ namespace GuildrunAccess.Tests
         private sealed class UnitScreen : Screen
         {
             public int Health = 950;
+            public int Mana = 40;
             public override string Key => "test.unit";
             public override bool IsActive() => true;
             public override void Build(GraphBuilder b)
@@ -174,7 +175,12 @@ namespace GuildrunAccess.Tests
                 b.AddItem(ControlId.Structural("unit"), new NodeVtable
                 {
                     LiveReadout = true,
-                    Announcements = new[] { new NodeAnnouncement(() => "Skorn, " + Health + " health", kind: AnnouncementKinds.Label) },
+                    Announcements = new[]
+                    {
+                        new NodeAnnouncement(() => "Skorn, " + Health + " health", kind: AnnouncementKinds.Label),
+                        // Spoken with the line, never a trigger on its own.
+                        new NodeAnnouncement(() => "mana " + Mana, kind: AnnouncementKinds.Value) { LiveReadoutIgnore = true },
+                    },
                 });
             }
         }
@@ -194,17 +200,22 @@ namespace GuildrunAccess.Tests
                 nav.Attach(screen);
                 nav.EnsureFocus();
                 Assert.Single(spoken); // the landing
-                Assert.EndsWith("Skorn, 950 health", spoken[0]);
+                Assert.EndsWith("Skorn, 950 health, mana 40", spoken[0]);
 
                 input.FrameCount += 2;
                 nav.EnsureFocus(); // nothing changed: silence
                 Assert.Single(spoken);
 
+                screen.Mana = 45;
+                input.FrameCount += 30;
+                nav.EnsureFocus(); // an ignored part changed on its own: silence
+                Assert.Single(spoken);
+
                 screen.Health = 900;
                 input.FrameCount += 2;
                 nav.EnsureFocus();
-                Assert.Equal(2, spoken.Count); // a change: the whole line again, interrupting
-                Assert.Equal("Skorn, 900 health", spoken[1]);
+                Assert.Equal(2, spoken.Count); // a change: the whole line again, interrupting, mana as it is now
+                Assert.Equal("Skorn, 900 health, mana 45", spoken[1]);
                 Assert.True(interrupts[1]);
 
                 screen.Health = 850;
@@ -213,10 +224,11 @@ namespace GuildrunAccess.Tests
                 Assert.Equal(2, spoken.Count);
 
                 screen.Health = 800;
+                screen.Mana = 50;
                 input.FrameCount += 30; // half a second on: one re-read, the latest state only
                 nav.EnsureFocus();
                 Assert.Equal(3, spoken.Count);
-                Assert.Equal("Skorn, 800 health", spoken[2]);
+                Assert.Equal("Skorn, 800 health, mana 50", spoken[2]);
 
                 input.FrameCount += 30;
                 nav.EnsureFocus(); // steady: silence
