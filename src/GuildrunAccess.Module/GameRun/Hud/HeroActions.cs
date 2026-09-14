@@ -232,13 +232,13 @@ namespace GuildrunAccess.Module.GameRun
             catch (Exception e) { CoreLog.Warning("Peek: ShowEnemyCard threw: " + e.Message); }
         }
 
-        /// <summary>The sidebar's enemy card when it is showing the named enemy, else null.</summary>
-        public static EnemyCardView ShownEnemyCard(string enemyName)
+        /// <summary>The sidebar's enemy card when it is showing this enemy, else null.</summary>
+        public static EnemyCardView ShownEnemyCard(EnemyId enemyId)
         {
             var sidebar = Sidebar;
             var card = sidebar != null ? sidebar._enemyCardView : null;
-            if (card == null || !card.gameObject.activeInHierarchy || card._nameText == null) return null;
-            return string.Equals(card._nameText.text, enemyName, StringComparison.Ordinal) ? card : null;
+            if (card == null || !card.gameObject.activeInHierarchy) return null;
+            return Nullables.TryGet(() => card.EnemyId, out EnemyId shown) && shown.Guid == enemyId.Guid ? card : null;
         }
 
         /// <summary>The sidebar's hero card when it is showing the named hero, else null.</summary>

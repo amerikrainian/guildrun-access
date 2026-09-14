@@ -73,7 +73,7 @@ namespace GuildrunAccess.Module.GameRun
                         GameNodes.LabelPart(() => EnemyLine(enemy)),
                         new NodeAnnouncement(() => StatsBrief(enemy), kind: AnnouncementKinds.Value),
                     },
-                    SearchText = () => enemy._nameText != null ? enemy._nameText.text : null,
+                    SearchText = () => EnemyName(enemy),
                     Details = () => EnemyDetails(enemy),
                     SideLines = HeroLines.Side(() => EnemyRows(enemy), null),
                 });
@@ -126,10 +126,20 @@ namespace GuildrunAccess.Module.GameRun
         /// <summary>The enemy card's non-zero stats, for a focus line.</summary>
         internal static string StatsBrief(EnemyCardView enemy) => HeroCardNodes.StatsBrief(enemy, null, null);
 
+        /// <summary>The card's name text; an enemy the game draws nameless is named through the registry
+        /// (<see cref="RunData.EnemyName"/>).</summary>
+        internal static string EnemyName(EnemyCardView enemy)
+        {
+            string name = enemy._nameText != null ? enemy._nameText.text : null;
+            if (!string.IsNullOrWhiteSpace(name)) return name;
+            return Interop.Nullables.TryGet(() => enemy.EnemyId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId id)
+                ? RunData.EnemyName(id) : null;
+        }
+
         internal static string EnemyLine(EnemyCardView enemy)
         {
             var sb = new StringBuilder();
-            if (enemy._nameText != null) sb.Append(enemy._nameText.text);
+            sb.Append(EnemyName(enemy));
             if (enemy._healthText != null && !string.IsNullOrWhiteSpace(enemy._healthText.text))
                 sb.Append(", ").Append(Strings.HeroStat(Strings.HeroHealth, enemy._healthText.text));
             if (enemy._manaText != null && enemy._manaText.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(enemy._manaText.text))

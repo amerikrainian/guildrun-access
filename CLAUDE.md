@@ -260,6 +260,13 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    campfire is an event (Train, Study, Recharge, Rest), not a screen: the game's Campfire scope has
    no scene in the demo. Open: Escape on the run HUD only cancels a pending move; a milestone's
    hero and token-slot rewards are icons without tooltips (its title names them).
+7. **(done)** Nameless enemies: 295 of the 644 enemy entries have no name key (the scaled variants),
+   and the game draws them blank on the bar, the sidebar card and the result's portraits.
+   `GameRun/EnemyNames` names one after a named sibling (same id family "Enemy_1018xx", else the
+   same visual config's majority name), read localized at speak time, through
+   `RunData.CharacterName` / `EnemyName` / `UnitName`; the battle-event hooks resolve a blank bar's
+   unit while the flow state is Resolution (`BoardSection.UnitOf`), and the sidebar's shown enemy
+   card is matched by `EnemyId`, never by name.
 
 ## The game's own hotkeys
 The game's Input System action maps bind Tab, Space, Enter, Escape, arrows and letters (Navigation:

@@ -83,8 +83,7 @@ namespace GuildrunAccess.Module.GameRun
                 var row = portrait.transform.parent;
                 var holder = row != null ? row.parent : null;
                 if (holder == null || holder.name != "VersusPortraits") continue;
-                var entry = portrait._characterEntry;
-                string name = entry != null ? RunData.LocalizedName(entry.TryCast<INamedBalancingEntry>()) : null;
+                string name = RunData.CharacterName(portrait._characterEntry);
                 if (string.IsNullOrEmpty(name)) continue;
                 (row.name.IndexOf("Enem", System.StringComparison.OrdinalIgnoreCase) >= 0 ? enemies : heroes).Add(name);
             }

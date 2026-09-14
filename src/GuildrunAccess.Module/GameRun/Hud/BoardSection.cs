@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Ember.Scopes.Battle.Characters;
 using Ember.Scopes.Battle.UI;
 using Ember.Scopes.Battle.UI.Hud;
+using Ember.Scopes.GameRun.UI.EnemyCard;
 using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
 using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
@@ -126,7 +127,7 @@ namespace GuildrunAccess.Module.GameRun
             }
             else
             {
-                var card = HeroActions.ShownEnemyCard(u.Name);
+                var card = ShownEnemyCard(u);
                 if (card != null) return SidebarNodes.EnemyRows(card);
             }
             return new[] { UnitLine(u) };
@@ -142,11 +143,20 @@ namespace GuildrunAccess.Module.GameRun
             }
             else
             {
-                var card = HeroActions.ShownEnemyCard(u.Name);
+                var card = ShownEnemyCard(u);
                 if (card != null) lines.AddRange(SidebarNodes.EnemyDetails(card));
             }
             lines.AddRange(ItemNodes.ItemTooltips(u.Bar._itemSlotViews));
             return lines;
+        }
+
+        // The sidebar's enemy card when it shows this unit (matched by enemy id: a nameless enemy has no
+        // name to match by).
+        private static EnemyCardView ShownEnemyCard(Unit u)
+        {
+            if (u.View == null) return null;
+            return Nullables.TryGet(() => u.View.EnemyId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId id)
+                ? HeroActions.ShownEnemyCard(id) : null;
         }
 
         // The control buffer: the full stats line from the card the landing showed, then a hero's
@@ -166,7 +176,7 @@ namespace GuildrunAccess.Module.GameRun
             }
             if (RunData.TryEnemyAt(cell, out var enemy))
             {
-                var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
+                var card = HeroActions.ShownEnemyCard(enemy);
                 if (card != null) return SidebarNodes.EnemyDetails(card);
                 string line = VitalsOf(enemy);
                 return line != null ? new[] { line } : null;
@@ -185,7 +195,7 @@ namespace GuildrunAccess.Module.GameRun
             }
             if (RunData.TryEnemyAt(cell, out var enemy))
             {
-                var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
+                var card = HeroActions.ShownEnemyCard(enemy);
                 return card != null ? SidebarNodes.StatsBrief(card) : null;
             }
             return null;
@@ -206,7 +216,7 @@ namespace GuildrunAccess.Module.GameRun
             }
             if (RunData.TryEnemyAt(cell, out var enemy))
             {
-                var card = HeroActions.ShownEnemyCard(RunData.EnemyName(enemy));
+                var card = HeroActions.ShownEnemyCard(enemy);
                 if (card != null)
                     return GameNodes.Lines(SidebarNodes.EnemyLine(card), SidebarNodes.Stats(card), HeroCardNodes.AbilitiesLine(card));
                 string line = UnitLineFor(enemy);
@@ -352,10 +362,38 @@ namespace GuildrunAccess.Module.GameRun
                 if (c == null || !c.gameObject.activeInHierarchy) continue;
                 HealthBarView bar;
                 if (!bars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) continue;
-                string name = bar._characterNameText != null ? bar._characterNameText.text : null;
-                if (string.IsNullOrWhiteSpace(name)) name = c.gameObject.name.Replace("(Clone)", "");
-                units.Add(new Unit { Name = name, Bar = bar, IsHero = isHero, View = c });
+                units.Add(new Unit { Name = UnitName(bar, c), Bar = bar, IsHero = isHero, View = c });
             }
+        }
+
+        // A unit's name as its bar shows it; a bar the game leaves blank (an enemy entry without a name)
+        // names the unit through the registry instead.
+        internal static string UnitName(HealthBarView bar, CharacterViewController unit)
+        {
+            string name = bar._characterNameText != null ? bar._characterNameText.text : null;
+            return string.IsNullOrWhiteSpace(name) ? RunData.UnitName(unit) : name;
+        }
+
+        /// <summary>The unit whose bar this is (the board registries' views, matched by entity id), or
+        /// null when no unit on the board owns it.</summary>
+        internal static CharacterViewController UnitOf(HealthBarView bar)
+        {
+            var battle = GameScopes.Controller<BattleUIController>();
+            var board = RunData.BoardController;
+            if (bar == null || battle == null || board == null || battle._healthBars == null) return null;
+            return OwnerOf(bar, battle, ViewsOf(board.CharacterViewControllers)) ?? OwnerOf(bar, battle, ViewsOf(board._enemyViewControllers));
+        }
+
+        private static CharacterViewController OwnerOf(HealthBarView bar, BattleUIController battle, Il2CppReferenceArray<CharacterViewController> views)
+        {
+            if (views == null) return null;
+            foreach (var c in views)
+            {
+                if (c == null) continue;
+                HealthBarView owned;
+                if (battle._healthBars.TryGetValue(c.EntityId, out owned) && owned != null && owned.Pointer == bar.Pointer) return c;
+            }
+            return null;
         }
 
         // The bar's own label is an inactive text set once at spawn (the starting health, "<b>520</b>"),
@@ -440,9 +478,7 @@ namespace GuildrunAccess.Module.GameRun
             if (views == null || !views.TryGetValue(enemy, out c) || c == null) return null;
             var bar = BarOf(c);
             if (bar == null) return null;
-            string name = bar._characterNameText != null ? bar._characterNameText.text : null;
-            if (string.IsNullOrWhiteSpace(name)) name = c.gameObject.name.Replace("(Clone)", "");
-            return UnitLine(new Unit { Name = name, Bar = bar, IsHero = false });
+            return UnitLine(new Unit { Name = UnitName(bar, c), Bar = bar, IsHero = false, View = c });
         }
 
         /// <summary>One line per unit of a side, heroes or enemies, in the battlefield's order; empty

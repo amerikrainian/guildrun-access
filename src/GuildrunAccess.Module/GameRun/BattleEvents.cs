@@ -61,15 +61,21 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- the hooks' readers ----
 
-        // The unit a bar belongs to, by the name the bar shows; null when the bar carries none. The
-        // game drives the same bar views while it sets a board up (an ability icon shown on a bar
-        // whose name is not filled in yet, as placement opens), and those are not fight events: a
-        // hook drops its line rather than narrate "battlefield casts ...".
-        internal static string UnitName(HealthBarView bar)
+        // The unit a bar belongs to, by the name the bar shows. The game drives the same bar views
+        // while it sets a board up (an ability icon shown on a bar whose name is not filled in yet, as
+        // placement opens), and those are not fight events: a hook drops its line rather than narrate
+        // "battlefield casts ...". An enemy the game's data leaves nameless keeps a blank bar all fight
+        // long, so a blank bar is named through the registry instead, while the fight itself runs.
+        internal static string UnitName(HealthBarView bar) => UnitName(bar, null);
+
+        internal static string UnitName(HealthBarView bar, CharacterViewController unit)
         {
             var text = bar != null ? bar._characterNameText : null;
             string name = text != null ? text.text : null;
-            return string.IsNullOrWhiteSpace(name) ? null : name;
+            if (!string.IsNullOrWhiteSpace(name)) return name;
+            if (bar == null || RunData.FlowState() != Ember.Scopes.GameRun.RunSession.Data.BattleFlowState.Resolution) return null;
+            if (unit == null) unit = BoardSection.UnitOf(bar);
+            return unit != null ? RunData.UnitName(unit) : null;
         }
 
         // A unit is fighting when it has a named bar; a character view animating without one (placement,
@@ -78,7 +84,7 @@ namespace GuildrunAccess.Module.GameRun
         {
             if (unit == null) return null;
             var bar = HealthBar(unit);
-            return bar != null && bar.gameObject.activeInHierarchy ? UnitName(bar) : null;
+            return bar != null && bar.gameObject.activeInHierarchy ? UnitName(bar, unit) : null;
         }
 
         private static HealthBarView HealthBar(CharacterViewController unit)

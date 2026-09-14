@@ -328,20 +328,54 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
-        /// <summary>The enemy's localized name, or null.</summary>
+        /// <summary>The enemy's localized name; an enemy the game's data leaves nameless is named after
+        /// its named sibling (<see cref="EnemyNames"/>); null when nothing names it.</summary>
         public static string EnemyName(EnemyId id)
         {
             try
             {
                 var enemy = Enemy(id);
-                var named = enemy != null && enemy.CharacterEntry != null ? enemy.CharacterEntry.TryCast<INamedBalancingEntry>() : null;
-                return LocalizedName(named);
+                return CharacterName(enemy != null ? enemy.CharacterEntry : null);
             }
             catch (Exception e)
             {
                 CoreLog.Warning("RunData: enemy name failed: " + e.Message);
                 return null;
             }
+        }
+
+        /// <summary>A character entry's (a hero's or an enemy's) localized name, an enemy entry without
+        /// one named after its named sibling; null when nothing names it.</summary>
+        public static string CharacterName(Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase entry)
+        {
+            if (entry == null) return null;
+            string name = NameOf(entry);
+            return !string.IsNullOrWhiteSpace(name) ? name : EnemyNames.Fallback(entry);
+        }
+
+        /// <summary>The name of the unit a character view stands for, through the registry (a hero's
+        /// name, an enemy's with the nameless fallback), else its object's name; null for no view.</summary>
+        public static string UnitName(Ember.Scopes.Battle.Characters.CharacterViewController unit)
+        {
+            if (unit == null) return null;
+            try
+            {
+                if (Nullables.TryGet(() => unit.HeroId, out HeroId hero))
+                {
+                    string name = HeroName(hero);
+                    if (!string.IsNullOrWhiteSpace(name)) return name;
+                }
+                if (Nullables.TryGet(() => unit.EnemyId, out EnemyId enemy))
+                {
+                    string name = EnemyName(enemy);
+                    if (!string.IsNullOrWhiteSpace(name)) return name;
+                }
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: unit name failed: " + e.Message);
+            }
+            return unit.gameObject.name.Replace("(Clone)", "");
         }
 
         /// <summary>Swap two board cells (a hero moves to an empty cell, or two heroes trade places).</summary>
