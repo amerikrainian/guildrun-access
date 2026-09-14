@@ -280,6 +280,7 @@ namespace GuildrunAccess.Core.Strings
             D("compendium.class_filter", "class"),
             D("compendium.clear_filter", "Clear class filter"),
             D("compendium.heroes", "heroes"),
+            D("compendium.trophies", "{0} of {1} trophies"),
             D("compendium.classes", "classes"),
             D("compendium.ranks", "rank"),
             // {0} = the rank tab's number when it has no caption.
@@ -592,6 +593,7 @@ namespace GuildrunAccess.Core.Strings
         public static string CompendiumClassFilter => Get("compendium.class_filter");
         public static string CompendiumClearFilter => Get("compendium.clear_filter");
         public static string CompendiumHeroes => Get("compendium.heroes");
+        public static string CompendiumTrophies(int earned, int total) => F("compendium.trophies", earned, total);
         public static string CompendiumClasses => Get("compendium.classes");
         public static string CompendiumRanks => Get("compendium.ranks");
         public static string CompendiumRank(int n) => F("compendium.rank_n", n);

@@ -59,9 +59,17 @@ namespace GuildrunAccess.Module.UI
         /// Increases how often a character auto attacks."), the game's own stat text, which its item
         /// tooltip leaves out. Empty when the control has no tooltip.</summary>
         public static List<string> Lines(TooltipRaycastTarget target, bool details = true)
+            => Lines(target != null ? target.TooltipSource : null, target, details);
+
+        /// <summary>The same lines from a tooltip source alone: what the game would show for it, had
+        /// it a target on screen (the compendium builds ability and class-upgrade sources itself).</summary>
+        public static List<string> Lines(ITooltipSource source, bool details = true)
+            => Lines(source, null, details);
+
+        private static List<string> Lines(ITooltipSource source, TooltipRaycastTarget target, bool details)
         {
             var lines = new List<string>();
-            var view = Populate(target);
+            var view = Populate(source);
             if (view == null) return lines;
             var head = new StringBuilder();
             Append(head, view._titleText != null ? view._titleText.text : null);
@@ -86,6 +94,45 @@ namespace GuildrunAccess.Module.UI
             view.Clear();
             if (details) AddStatDefinitions(lines, target);
             return lines;
+        }
+
+        /// <summary>The definitions of the keywords a raw game text uses ("Omnivamp: Restores Health...",
+        /// one per line), through the game's own keyword parser: what a tooltip's keyword section would
+        /// hold for it. The text must be the raw localized string with its keyword tags
+        /// ("[Omnivamp]&lt;omnivamp&gt;"); a formatted text yields nothing. Empty when there are none.</summary>
+        public static List<string> KeywordDefinitions(string raw)
+        {
+            var lines = new List<string>();
+            if (string.IsNullOrWhiteSpace(raw)) return lines;
+            try
+            {
+                var parser = ApplicationKeywordParser.Instance;
+                if (parser == null) return lines;
+                var result = parser.Parse(raw, null);
+                AddLines(lines, result.ExtraInfo);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("TooltipReader: keyword definitions: " + e.Message);
+            }
+            return lines;
+        }
+
+        /// <summary>The raw localized description of a balancing entry (with its keyword tags), or null.</summary>
+        public static string RawDescription(Il2CppObjectBase entry)
+        {
+            try
+            {
+                var named = entry != null ? entry.TryCast<gg.leyline.balancing.Data.INamedDescriptionBalancingEntry>() : null;
+                var key = named != null ? named.DescriptionLocaKey : null;
+                var localized = key != null ? key.LocalizedString : null;
+                return localized != null ? localized.GetLocalizedString() : null;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("TooltipReader: raw description: " + e.Message);
+                return null;
+            }
         }
 
         // An item's stat lines ("+10 Attack Speed") define nothing: the game keeps a stat's definition
@@ -161,11 +208,12 @@ namespace GuildrunAccess.Module.UI
 
         // Fill the shared view from the target's source; null when there is no source or no controller.
         private static TooltipView Populate(TooltipRaycastTarget target)
+            => Populate(target != null ? target.TooltipSource : null);
+
+        private static TooltipView Populate(ITooltipSource source)
         {
             try
             {
-                if (target == null) return null;
-                var source = target.TooltipSource;
                 if (source == null) return null;
                 var controller = Controller();
                 if (controller == null) return null;

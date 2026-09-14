@@ -1,7 +1,16 @@
 using System.Collections.Generic;
 using System.Text;
+using Ember.Balancing.Sheets.Abilities.ActiveAbilities;
+using Ember.Balancing.Sheets.Abilities.PassiveAbilities;
+using Ember.Balancing.Sheets.Characters;
+using Ember.Balancing.Sheets.Characters.Specializations;
+using Ember.Balancing.Sheets.RankModifiers;
 using Ember.Scopes.Application.Compendium;
+using Ember.Scopes.Application.Mastery.UI;
 using Ember.Scopes.Application.UI.Tooltips;
+using Ember.Scopes.Application.UI.Tooltips.Sources;
+using gg.leyline.balancing;
+using gg.leyline.balancing.Data;
 using Ember.Utilities.UI;
 using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
@@ -182,6 +191,7 @@ namespace GuildrunAccess.Module.Screens
                     Announcements = new List<NodeAnnouncement>
                     {
                         GameNodes.LabelPart(() => IconName(i)),
+                        new NodeAnnouncement(() => Trophies(i._masteryView), live: true, kind: AnnouncementKinds.Value),
                         GameNodes.SelectedPart(() => i._selectedImage != null && i._selectedImage.activeInHierarchy),
                         GameNodes.DisabledPart(() => i._button == null || i._button.interactable),
                     },
@@ -200,6 +210,24 @@ namespace GuildrunAccess.Module.Screens
             string name = text != null && text.gameObject.activeInHierarchy ? text.text : null;
             if (string.IsNullOrWhiteSpace(name)) name = RunData.NameOf(icon._heroEntry) ?? RunData.NameOf(icon._classEntry);
             return string.IsNullOrWhiteSpace(name) ? icon.gameObject.name : name;
+        }
+
+        // "1 of 3 trophies": the mastery stars an icon shows (a star per specialization; the locked
+        // sprite is the empty one). The stars' own tooltip is empty in this build, so the stars decide.
+        private static string Trophies(HeroMasteryView mastery)
+        {
+            if (mastery == null || !mastery.gameObject.activeInHierarchy) return null;
+            var images = mastery._specializationMasteryImages;
+            if (images == null || images.Length == 0) return null;
+            var locked = mastery._lockedSprite;
+            int total = 0, earned = 0;
+            foreach (var image in images)
+            {
+                if (image == null || !image.gameObject.activeInHierarchy) continue;
+                total++;
+                if (image.sprite != null && (locked == null || image.sprite.Pointer != locked.Pointer)) earned++;
+            }
+            return total > 0 ? Strings.CompendiumTrophies(earned, total) : null;
         }
 
         private static List<string> MasteryTooltip(IconCompendiumView icon)
@@ -234,17 +262,27 @@ namespace GuildrunAccess.Module.Screens
                     b.AddItem(ControlId.Structural("compendium:detail:" + hero.GetInstanceID() + ":tab:" + t.GetInstanceID()), GameNodes.Tab(t, () => TabCaption(t)));
                 }
 
-            // The abilities shown (the signature ability and the specializations).
+            // The abilities shown (the signature ability and the specializations), each with the
+            // tooltip the game composes for its entry: the compendium's blocks carry no tooltip target,
+            // so the entries come from the hero and the controller's specialization table.
             int n = 0;
-            foreach (var ability in hero.GetComponentsInChildren<HeroAbilityCompendiumView>(false))
+            var controller = GameScopes.Controller<CompendiumUIController>();
+            var specializations = Specializations(controller, hero);
+            var abilities = new List<HeroAbilityCompendiumView>();
+            if (hero._signatureAbilityView != null) abilities.Add(hero._signatureAbilityView);
+            if (hero._specializationViews != null) abilities.AddRange(hero._specializationViews);
+            int specIndex = 0;
+            foreach (var ability in abilities)
             {
                 if (ability == null || !ability.gameObject.activeInHierarchy) continue;
                 var a = ability;
+                bool signature = ReferenceEquals(a, hero._signatureAbilityView) || a.Pointer == (hero._signatureAbilityView != null ? hero._signatureAbilityView.Pointer : System.IntPtr.Zero);
+                var specialization = !signature && specializations != null && specIndex < specializations.Count ? specializations[specIndex++] : null;
                 b.AddItem(ControlId.Structural("compendium:detail:" + hero.GetInstanceID() + ":ability:" + n++), new NodeVtable
                 {
                     Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => AbilityText(a)) },
                     SearchText = () => AbilityText(a),
-                    Details = () => AbilityTooltip(a),
+                    Details = () => AbilityTooltip(a, controller, hero, signature ? null : specialization, signature),
                 });
             }
 
@@ -294,12 +332,106 @@ namespace GuildrunAccess.Module.Screens
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        // The ability as buffer lines: its tooltip, else its shown text as the one line.
-        private static IEnumerable<string> AbilityTooltip(HeroAbilityCompendiumView ability)
+        // The ability as buffer lines. A specialization: the game's tooltip for its entry (title, kind,
+        // text, keyword definitions). The signature ability: its shown text, then the definitions of
+        // the keywords its raw text uses (the game's active-ability tooltip source cannot populate
+        // without a specialization: it dereferences one). Else the shown text as the one line.
+        private static IEnumerable<string> AbilityTooltip(HeroAbilityCompendiumView ability, CompendiumUIController c,
+            HeroInfoCompendiumView hero, IHeroSpecializationEntry specialization, bool signature)
         {
-            var target = ability.GetComponentInChildren<TooltipRaycastTarget>(false);
-            var lines = target != null ? TooltipReader.Lines(target) : null;
+            List<string> lines = null;
+            try
+            {
+                if (signature)
+                {
+                    lines = new List<string>();
+                    string shown = AbilityText(ability);
+                    if (!string.IsNullOrEmpty(shown)) lines.Add(shown);
+                    lines.AddRange(TooltipReader.KeywordDefinitions(TooltipReader.RawDescription(SignatureEntry(c, hero))));
+                }
+                else
+                {
+                    var source = AbilitySource(c, hero, specialization, false);
+                    if (source != null) lines = TooltipReader.Lines(source.Cast<ITooltipSource>());
+                }
+            }
+            catch (System.Exception e) { CoreLog.Warning("Compendium: ability tooltip: " + e.Message); }
             return lines != null && lines.Count > 0 ? lines : GameNodes.Lines(AbilityText(ability));
+        }
+
+        // The hero's signature ability entry: the character's active ability, else its passive one.
+        private static Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase SignatureEntry(CompendiumUIController c, HeroInfoCompendiumView hero)
+        {
+            var balancing = Balancing(c);
+            var character = hero != null && hero.HeroEntry != null ? hero.HeroEntry.TryCast<ICharacterEntry>() : null;
+            if (balancing == null || character == null) return null;
+            var active = ResolveActive(balancing, character.ActiveAbilityRef);
+            if (active != null) return active;
+            return ResolvePassive(balancing, character.PassiveAbilityRef);
+        }
+
+        // The balancing the compendium reads through (its hero list adapter holds it).
+        private static IBalancing Balancing(CompendiumUIController c)
+            => c != null && c._heroInfoAdapter != null ? c._heroInfoAdapter.Balancing : null;
+
+        // The specializations the controller keeps for a hero, by the hero's sequential id.
+        private static List<IHeroSpecializationEntry> Specializations(CompendiumUIController c, HeroInfoCompendiumView hero)
+        {
+            try
+            {
+                var entry = hero != null && hero.HeroEntry != null ? hero.HeroEntry.TryCast<IBalancingEntry>() : null;
+                var table = c != null ? c._specializationsByHeroId : null;
+                if (entry == null || table == null) return null;
+                Il2CppSystem.Collections.Generic.List<IHeroSpecializationEntry> list;
+                if (!table.TryGetValue(entry.Id.SequentialId, out list) || list == null) return null;
+                var result = new List<IHeroSpecializationEntry>(list.Count);
+                for (int i = 0; i < list.Count; i++) result.Add(list[i]);
+                return result;
+            }
+            catch (System.Exception e)
+            {
+                CoreLog.Warning("Compendium: specializations: " + e.Message);
+                return null;
+            }
+        }
+
+        // A tooltip source for the hero's signature ability (the character entry's active or passive
+        // ability) or for one specialization (its active or passive ability), as the game builds them.
+        // A reference that is empty (a passive-only specialization has no active ability) throws in
+        // the balancing lookup: that miss is expected, so the lookups swallow it.
+        private static AbilityEntryTooltipSource AbilitySource(CompendiumUIController c, HeroInfoCompendiumView hero,
+            IHeroSpecializationEntry specialization, bool signature)
+        {
+            var balancing = Balancing(c);
+            var character = hero != null && hero.HeroEntry != null ? hero.HeroEntry.TryCast<ICharacterEntry>() : null;
+            if (balancing == null || character == null) return null;
+            if (!signature && specialization == null) return null;
+            var source = new AbilityEntryTooltipSource();
+            var active = ResolveActive(balancing, signature ? character.ActiveAbilityRef : specialization.ActiveAbilityRef);
+            if (active != null)
+            {
+                source.SetActiveAbility(character, signature ? null : specialization, active, false);
+                return source;
+            }
+            var passive = ResolvePassive(balancing, signature ? character.PassiveAbilityRef : specialization.PassiveAbilityRef);
+            if (passive != null)
+            {
+                source.SetPassiveAbility(character, signature ? null : specialization, passive, false);
+                return source;
+            }
+            return null;
+        }
+
+        private static IActiveAbilityEntry ResolveActive(IBalancing balancing, BalancingRef<IActiveAbilityEntry> reference)
+        {
+            try { return balancing.Get<IActiveAbilityEntry>(reference); }
+            catch (System.Exception) { return null; } // an empty reference: nothing there
+        }
+
+        private static IPassiveAbilityEntry ResolvePassive(IBalancing balancing, BalancingRef<IPassiveAbilityEntry> reference)
+        {
+            try { return balancing.Get<IPassiveAbilityEntry>(reference); }
+            catch (System.Exception) { return null; }
         }
 
         // ---- a class's detail: its rank upgrades ----
@@ -310,19 +442,57 @@ namespace GuildrunAccess.Module.Screens
             foreach (var m in cls.GetComponentsInChildren<RankModifierCompendiumView>(false))
                 if (m != null && m.gameObject.activeInHierarchy) modifiers.Add(m);
             if (modifiers.Count == 0) return;
+            // The entry behind each row, for its tooltip (the game's rank-modifier tooltip: the
+            // description, then the definitions of the keywords it uses).
+            var entries = new Dictionary<System.IntPtr, IRankModifierEntry>();
+            try
+            {
+                var pairs = cls._rankModifiers;
+                for (int i = 0; pairs != null && i < pairs.Count; i++)
+                {
+                    var pair = pairs[i];
+                    if (pair.Item2 != null && pair.Item1 != null) entries[pair.Item2.Pointer] = pair.Item1;
+                }
+            }
+            catch (System.Exception e) { CoreLog.Warning("Compendium: rank modifiers: " + e.Message); }
+
             b.BeginStop("class:" + cls.GetInstanceID());
             b.PushContext(Strings.CompendiumUpgrades, Strings.RoleList);
             foreach (var modifier in modifiers)
             {
                 var m = modifier;
-                b.AddItem(ControlId.Structural("compendium:upgrade:" + m.GetInstanceID()), GameNodes.Text(() =>
+                IRankModifierEntry entry;
+                entries.TryGetValue(m.Pointer, out entry);
+                var node = GameNodes.Text(() =>
                 {
                     string title = m._title != null ? m._title.text : null;
                     string desc = m._description != null ? m._description.text : null;
                     return string.IsNullOrEmpty(desc) ? title : title + ", " + desc;
-                }));
+                });
+                node.Details = () => UpgradeTooltip(m, entry);
+                b.AddItem(ControlId.Structural("compendium:upgrade:" + m.GetInstanceID()), node);
             }
             b.PopContext();
+        }
+
+        // A class upgrade as buffer lines: the game's tooltip for its entry, else its shown text.
+        private static IEnumerable<string> UpgradeTooltip(RankModifierCompendiumView view, IRankModifierEntry entry)
+        {
+            List<string> lines = null;
+            if (entry != null)
+            {
+                try
+                {
+                    var source = new AbilityEntryTooltipSource();
+                    source.SetRankModifier(null, entry, false);
+                    lines = TooltipReader.Lines(source.Cast<ITooltipSource>());
+                }
+                catch (System.Exception e) { CoreLog.Warning("Compendium: upgrade tooltip: " + e.Message); }
+            }
+            if (lines != null && lines.Count > 0) return lines;
+            string title = view._title != null ? view._title.text : null;
+            string desc = view._description != null ? view._description.text : null;
+            return GameNodes.Lines(title, desc);
         }
 
         // ---- helpers ----
