@@ -87,7 +87,7 @@ restart**: `dotnet build src/GuildrunAccess.Module/GuildrunAccess.Module.csproj`
 - Release: `dotnet build -c Release` compiles without deploying.
 
 ## Releases (the tooling is the dd2a11y / Non-Visual Calculus pattern)
-The version lives in `Directory.Build.props` alone (`<Version>`, now 0.0.1; the host's
+The version lives in `Directory.Build.props` alone (`<Version>`; the host's
 `BuildVersion` constant is generated from it). A release is: bump the version, add a `## Vx.y.z`
 section to `CHANGELOG.md` (the release notes are read from it, an empty section fails), commit, tag
 `vx.y.z` and push the tag, then:
