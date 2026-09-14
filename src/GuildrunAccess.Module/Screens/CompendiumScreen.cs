@@ -3,6 +3,7 @@ using System.Text;
 using Ember.Scopes.Application.Compendium;
 using Ember.Scopes.Application.UI.Tooltips;
 using Ember.Utilities.UI;
+using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -51,14 +52,11 @@ namespace GuildrunAccess.Module.Screens
             // The main tabs.
             b.BeginStop("tabs");
             b.PushContext(Strings.CompendiumSections, null, positions: true);
-            var tabs = c._tabView;
-            if (tabs != null)
-                foreach (var toggle in tabs.GetComponentsInChildren<Toggle>(false))
-                {
-                    if (!GameNodes.IsShown(toggle) || toggle.transform.parent != tabs.transform && toggle.GetComponentInParent<TabView>() != tabs) continue;
-                    var t = toggle;
-                    b.AddItem(ControlId.Structural("compendium:tab:" + t.GetInstanceID()), GameNodes.Tab(t, () => TabCaption(t) ?? Strings.CompendiumOverview));
-                }
+            foreach (var toggle in TabToggles(c._tabView))
+            {
+                var t = toggle;
+                b.AddItem(ControlId.Structural("compendium:tab:" + t.GetInstanceID()), GameNodes.Tab(t, () => TabCaption(t) ?? Strings.CompendiumOverview));
+            }
             b.PopContext();
 
             // The filters.
@@ -100,16 +98,68 @@ namespace GuildrunAccess.Module.Screens
                 }
                 b.PopContext();
             }
-            foreach (var hero in c.GetComponentsInChildren<HeroInfoCompendiumView>(false))
-                if (hero != null && hero.gameObject.activeInHierarchy) AddHeroDetail(b, hero);
-            foreach (var cls in c.GetComponentsInChildren<HeroClassInfoCompendiumView>(false))
-                if (cls != null && cls.gameObject.activeInHierarchy) AddClassDetail(b, cls);
+            var hero = CurrentHero(c);
+            if (hero != null) AddHeroDetail(b, hero);
+            var cls = CurrentClass(c);
+            if (cls != null) AddClassDetail(b, cls);
 
             b.BeginStop("actions");
             var back = BackButton(c);
             if (back != null) b.AddItem(ControlId.Structural("compendium:back"), GameNodes.Button(back));
 
             b.PopContext();
+        }
+
+        // The tab view's own tabs, in order, shown ones only: its entries name the toggles (other
+        // toggles live under the same transform: the mastery filters).
+        private static List<Toggle> TabToggles(TabView view)
+        {
+            var list = new List<Toggle>();
+            var entries = view != null ? view._toggleTabs : null;
+            if (entries != null)
+                foreach (var entry in entries)
+                {
+                    var toggle = entry != null ? entry.Toggle : null;
+                    if (GameNodes.IsShown(toggle)) list.Add(toggle);
+                }
+            return list;
+        }
+
+        // The hero detail panel the carousel is snapped to. The game pools the panels (OSA): the one
+        // just scrolled away stays active while it fades out, so the snapper's middle holder decides;
+        // without a snapper, the first active panel.
+        private static HeroInfoCompendiumView CurrentHero(CompendiumUIController c)
+        {
+            HeroInfoCompendiumView middle = null;
+            try
+            {
+                float distance;
+                var holder = c._heroSnapper8 != null ? c._heroSnapper8.GetMiddleVH(out distance) : null;
+                var typed = holder != null ? holder.TryCast<HeroInfoViewsHolder>() : null;
+                middle = typed != null ? typed.View : null;
+            }
+            catch (System.Exception e) { CoreLog.Warning("Compendium: middle hero: " + e.Message); }
+            if (middle != null && middle.gameObject.activeInHierarchy) return middle;
+            foreach (var view in c.GetComponentsInChildren<HeroInfoCompendiumView>(false))
+                if (view != null && view.gameObject.activeInHierarchy) return view;
+            return null;
+        }
+
+        private static HeroClassInfoCompendiumView CurrentClass(CompendiumUIController c)
+        {
+            HeroClassInfoCompendiumView middle = null;
+            try
+            {
+                float distance;
+                var holder = c._classSnapper8 != null ? c._classSnapper8.GetMiddleVH(out distance) : null;
+                var typed = holder != null ? holder.TryCast<ClassInfoViewsHolder>() : null;
+                middle = typed != null ? typed.View : null;
+            }
+            catch (System.Exception e) { CoreLog.Warning("Compendium: middle class: " + e.Message); }
+            if (middle != null && middle.gameObject.activeInHierarchy) return middle;
+            foreach (var view in c.GetComponentsInChildren<HeroClassInfoCompendiumView>(false))
+                if (view != null && view.gameObject.activeInHierarchy) return view;
+            return null;
         }
 
         // ---- icons ----
