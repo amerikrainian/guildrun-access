@@ -177,7 +177,7 @@ namespace GuildrunAccess.Module.GameRun
 
         // A balancing entry's name through its localization key (the game's own localized string;
         // the English text when the key has none).
-        private static string LocalizedName(INamedBalancingEntry named)
+        internal static string LocalizedName(INamedBalancingEntry named)
         {
             var key = named != null ? named.NameLocaKey : null;
             if (key == null) return null;

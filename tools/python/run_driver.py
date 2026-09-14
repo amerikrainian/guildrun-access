@@ -111,6 +111,9 @@ def main() -> int:
             time.sleep(1); press("ui.back"); wait_change(s)
         elif s == "gamerun.heroes":
             press("ui.back"); wait_change(s)
+        elif s == "app.comic":
+            # A comic strip (the intro, the defeat): Continue turns its pages.
+            press("ui.activate"); time.sleep(2)
         elif s == "gamerun":
             ok = False
             for _ in range(6):

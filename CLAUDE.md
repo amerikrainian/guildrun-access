@@ -62,7 +62,8 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   (an OS click at Unity screen coordinates, the fallback for prompts the mod does not cover yet).
 - `run_driver.py [--until placement|result|shop|crossroads|event|picker|heroes|end] [--buy]` — plays
   a run forward through the mod's own navigation and stops at the stage you want or at any screen it
-  does not know, so new game screens surface for inspection.
+  does not know, so new game screens surface for inspection. `dev.floor:N` / `dev.shop` through
+  `POST /input` skip to a floor's crossroads or the shop when a stage is all you need.
 
 Typical update loop: `dump_game.py --keep --check` -> fix what it lists (`show.py`, `holders.py`) ->
 `dev.py launch` (proxies regenerate) -> `dotnet build` -> `dev.py reload` -> `run_driver.py` through a run.
@@ -254,7 +255,11 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    and is NOT used), the compendium, the mod menu (Ctrl+Shift+M: settings, key help), comics. The run
    HUD is active only while placing or fighting (`GameRunScreen.IsActive`), so no landing is spoken
    at a battle's end or between panels; a unit falling under focus moves focus silently
-   (`NodeVtable.QuietVanish`). Open: Escape on the run HUD only cancels a pending move.
+   (`NodeVtable.QuietVanish`). Between fights the shop, crossroads and event panels carry the HUD
+   sections the game keeps interactable under them (`RunPanelScreen`), with Sell in the shop. The
+   campfire is an event (Train, Study, Recharge, Rest), not a screen: the game's Campfire scope has
+   no scene in the demo. Open: Escape on the run HUD only cancels a pending move; a milestone's
+   hero and token-slot rewards are icons without tooltips (its title names them).
 
 ## The game's own hotkeys
 The game's Input System action maps bind Tab, Space, Enter, Escape, arrows and letters (Navigation:

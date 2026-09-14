@@ -181,6 +181,7 @@ namespace GuildrunAccess.Core.Strings
             D("result.previous_combat", "Previous combat"),
             D("result.next_combat", "Next combat"),
             D("result.leaderboard", "leaderboard"),
+            D("result.versus", "{0} versus {1}"),
             D("result.entries", "entries"),
             // {0} = rank, {1} = player name, {2} = floor reached.
             D("result.entry", "{0}, {1}, floor {2}"),
@@ -524,6 +525,7 @@ namespace GuildrunAccess.Core.Strings
         public static string ResultPreviousCombat => Get("result.previous_combat");
         public static string ResultNextCombat => Get("result.next_combat");
         public static string ResultLeaderboard => Get("result.leaderboard");
+        public static string ResultVersus(string heroes, string enemies) => F("result.versus", heroes, enemies);
         public static string ResultEntries => Get("result.entries");
         public static string ResultEntry(string rank, string name, string floor) => F("result.entry", rank, name, floor);
         public static string ResultReset => Get("result.reset");

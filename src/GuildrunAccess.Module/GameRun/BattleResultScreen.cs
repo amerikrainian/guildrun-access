@@ -5,7 +5,9 @@ using Ember.Scopes.Battle.UI.BattleResult;
 using Ember.Scopes.Battle.UI.BattleStats;
 using Ember.Scopes.Battle.UI.Tracking.Views;
 using Ember.Scopes.GameRun.UI.HeroCard;
+using Ember.Scopes.GameRun.UI.HeroCard.Elements;
 using Ember.Scopes.GameRun.UI.Slots;
+using gg.leyline.balancing.Data;
 using Ember.Utilities.UI;
 using Ember.Scopes.MainMenu.UI;
 using GuildrunAccess.Core.Graph;
@@ -56,14 +58,38 @@ namespace GuildrunAccess.Module.GameRun
                 ? panel._panelTitleText.text : Strings.ScreenBattleResult;
             b.PushContext(title, null, positions: false);
 
-            // One stop for the numbers: the rewards and the stat lines; then the tabs, then their content.
+            // One stop for the numbers: who fought, the rewards and the stat lines; then the tabs,
+            // then their content.
             b.BeginStop("stats");
+            if (Versus(panel) != null)
+                b.AddItem(ControlId.Structural("result:versus"), GameNodes.Text(() => Versus(panel)));
             BuildRewards(b, panel);
             BuildStats(b, panel);
             BuildLeaderboard(b, panel);
             BuildActions(b, panel);
 
             b.PopContext();
+        }
+
+        // "Sal versus Mushroom Archer, Mushroom Tank": the title panel's portrait rows (the heroes'
+        // row, then the enemies'), each portrait named through its character entry; null without them.
+        private static string Versus(BattleResultPanelView panel)
+        {
+            var heroes = new List<string>();
+            var enemies = new List<string>();
+            foreach (var portrait in panel.GetComponentsInChildren<HeroPortraitView>(false))
+            {
+                if (portrait == null || portrait.IsEmpty) continue;
+                var row = portrait.transform.parent;
+                var holder = row != null ? row.parent : null;
+                if (holder == null || holder.name != "VersusPortraits") continue;
+                var entry = portrait._characterEntry;
+                string name = entry != null ? RunData.LocalizedName(entry.TryCast<INamedBalancingEntry>()) : null;
+                if (string.IsNullOrEmpty(name)) continue;
+                (row.name.IndexOf("Enem", System.StringComparison.OrdinalIgnoreCase) >= 0 ? enemies : heroes).Add(name);
+            }
+            if (heroes.Count == 0 && enemies.Count == 0) return null;
+            return Strings.ResultVersus(string.Join(", ", heroes), string.Join(", ", enemies));
         }
 
         // ---- rewards: every reward line as the game draws it, the total when there are several ----

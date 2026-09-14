@@ -16,8 +16,10 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The run's Heroes panel (<see cref="HeroPanelView"/>, opened from the HUD menu): the run's
     /// tracked counters (shards generated, rush, stall, rerolls; named through their tooltips), the
-    /// heroes shown (the board team or the reserve, as the shared hero grid with stats, abilities and
-    /// items), and the button that switches between the two. Escape closes the panel.
+    /// heroes shown (the board team or the reserve, as the shared hero list with stats, abilities and
+    /// items in the buffers), the panel's ability list (each ability's text with the hero's actual
+    /// numbers, where the card tooltip has the formula), and the button that switches between the
+    /// two. Escape closes the panel.
     /// </summary>
     public sealed class HeroesPanelScreen : Screen
     {
@@ -82,6 +84,22 @@ namespace GuildrunAccess.Module.GameRun
             else
                 HeroCardNodes.AddGrid(b, "heroes", cards, i => null, null);
             b.PopContext();
+
+            // The ability list beside the cards: the game's own text with the numbers worked out.
+            var abilities = new List<HeroPanelAbilityView>();
+            foreach (var a in panel.GetComponentsInChildren<HeroPanelAbilityView>(false))
+                if (a != null && a._text != null && !string.IsNullOrWhiteSpace(a._text.text)) abilities.Add(a);
+            if (abilities.Count > 0)
+            {
+                b.BeginStop("abilities");
+                b.PushContext(Strings.HeroAbilities, Strings.RoleList);
+                foreach (var ability in abilities)
+                {
+                    var a = ability;
+                    b.AddItem(ControlId.Structural("heroes:ability:" + a.GetInstanceID()), GameNodes.Text(() => a._text.text));
+                }
+                b.PopContext();
+            }
 
             b.BeginStop("actions");
             var toggle = panel._toggleReserveButton;

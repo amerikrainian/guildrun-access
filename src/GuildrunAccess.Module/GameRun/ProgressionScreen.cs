@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using Ember.Scopes.Application.UI.Tooltips;
 using Ember.Scopes.Application.Unlock;
+using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -130,7 +131,9 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
-        // The rewards under the milestone, named through their own tooltips ("Tilly Bundle; The Golden Standard").
+        // The rewards under the milestone, named through their own tooltips ("Tilly Bundle; The Golden
+        // Standard"). A hero or token-slot reward is an icon without a tooltip; the milestone's title
+        // and description name those ("Tilly Bundle", "2x Boss Tokens").
         private static string Rewards(ProgressionUnlockThresholdView threshold, bool full)
         {
             var sb = new StringBuilder();
