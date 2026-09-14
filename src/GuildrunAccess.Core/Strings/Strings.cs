@@ -25,6 +25,9 @@ namespace GuildrunAccess.Core.Strings
             D("app.loaded", "Guildrun Access {0} loaded"),
             // Spoken at launch instead when the feature module fails to load (the mod is then dead).
             D("app.module_failed", "Guildrun Access features failed to load"),
+            // Follows the loaded line when the newest release outranks the running build; {0} = that
+            // newer version. Up to date (or ahead, a dev build) stays silent.
+            D("app.update_available", "update {0} available"),
             // Spoken when the focus-mode toggle engages / releases our keyboard navigation.
             D("app.focus_on", "navigation on"),
             D("app.focus_off", "navigation off"),
@@ -418,6 +421,7 @@ namespace GuildrunAccess.Core.Strings
 
         public static string ModLoaded(string version) => F("app.loaded", version);
         public static string ModuleFailed => Get("app.module_failed");
+        public static string UpdateAvailable(string version) => F("app.update_available", version);
         public static string FocusOn => Get("app.focus_on");
         public static string FocusOff => Get("app.focus_off");
 

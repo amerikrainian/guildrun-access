@@ -35,6 +35,10 @@ namespace GuildrunAccess.Module
         // Owned per generation; they hold live references only and re-find them when destroyed.
         private readonly Readers.ComicReader _comics = new Readers.ComicReader();
         private readonly Readers.TutorialReader _tutorials = new Readers.TutorialReader();
+        // The launch update check: asked once the module is up, its line spoken from Tick when the
+        // request lands with a release newer than the running build.
+        private readonly UpdateChecker _updateCheck = new UpdateChecker();
+        private bool _updateAnnounced;
 
         public void Load(IModHost host)
         {
@@ -70,6 +74,7 @@ namespace GuildrunAccess.Module
             FocusMode.Set(host.Settings.FocusModeOnLaunch);
             host.LogInfo("Module loaded: " + ScreenManager.Registered.Count + " screens, "
                 + InputManager.Actions.Count + " input actions, focus " + (FocusMode.Active ? "on" : "off"));
+            _updateCheck.Start(host.ModVersion);
         }
 
         // The mod's authored strings follow lang/<language>.txt beside the plugin when one exists for the
@@ -161,6 +166,11 @@ namespace GuildrunAccess.Module
 
         public void Tick()
         {
+            if (!_updateAnnounced && _updateCheck.NewerVersion != null)
+            {
+                _updateAnnounced = true;
+                Speech.Say(Strings.UpdateAvailable(_updateCheck.NewerVersion));
+            }
             FocusMode.Tick();
             InputManager.Tick();
             ScreenManager.Tick();

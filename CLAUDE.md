@@ -267,7 +267,9 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    same visual config's majority name), read localized at speak time, through
    `RunData.CharacterName` / `EnemyName` / `UnitName`; the battle-event hooks resolve a blank bar's
    unit while the flow state is Resolution (`BoardSection.UnitOf`), and the sidebar's shown enemy
-   card is matched by `EnemyId`, never by name.
+   card is matched by `EnemyId`, never by name. The launch update check (`Module/UpdateChecker`,
+   `Core/UpdateCheck`) speaks "update X available" when the newest GitHub release outranks the
+   running build; anything else stays silent with a log line.
 
 ## The game's own hotkeys
 The game's Input System action maps bind Tab, Space, Enter, Escape, arrows and letters (Navigation:

@@ -15,6 +15,10 @@ alternative: extract the release zip over the game folder (the one holding `Guil
 The first launch after installing generates the loader's interop assemblies and can take a few
 minutes; the mod starts speaking at the main menu.
 
+At launch the mod checks the releases page and says "update X available" when a newer version
+exists. Up to date, or offline, it says nothing. To update, run the installer again and choose
+update, or extract the latest zip over the game folder.
+
 Requires the Steam version of the game on Windows and a screen reader (NVDA, JAWS, or SAPI).
 
 ## Keys

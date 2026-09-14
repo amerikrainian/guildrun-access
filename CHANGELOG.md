@@ -10,6 +10,8 @@
   creature) are named after their named sibling ("Forest Golem", "Mushroom Tank") on the board, in the
   enemies buffer, on the sidebar card, in the battle events and in the result's versus line, where
   before only their health and stats read.
+- The mod now checks for updates after loading and says "update X available" when a newer release
+  exists. Up to date, it keeps the news to itself.
 
 ## V0.0.1
 
