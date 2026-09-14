@@ -247,7 +247,11 @@ namespace GuildrunAccess.Module.Screens
             var masteryTarget = mastery != null ? mastery.GetComponent<TooltipRaycastTarget>() : null;
             b.AddItem(ControlId.Structural("compendium:detail:" + hero.GetInstanceID() + ":name"), new NodeVtable
             {
-                Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => HeroTitle(hero)) },
+                Announcements = new List<NodeAnnouncement>
+                {
+                    GameNodes.LabelPart(() => HeroTitle(hero)),
+                    new NodeAnnouncement(() => Trophies(hero._heroMasteryView), live: true, kind: AnnouncementKinds.Value),
+                },
                 SearchText = () => hero._nameText != null ? hero._nameText.text : null,
                 Details = () => masteryTarget != null ? TooltipReader.Lines(masteryTarget) : null,
             });
@@ -286,13 +290,25 @@ namespace GuildrunAccess.Module.Screens
                 });
             }
 
-            // The other tabs' text (gameplay notes, the personality blurb, guild).
+            // The other tabs' text (gameplay notes, the personality blurb, guild). The guild line
+            // carries the guild banner's tooltip (its motto); the role and motivation texts read under
+            // the headers the panel shows over them.
             AddText(b, "compendium:detail:" + hero.GetInstanceID() + ":gameplay", hero._gameplayText);
             AddText(b, "compendium:detail:" + hero.GetInstanceID() + ":alias", hero._aliasText);
             AddText(b, "compendium:detail:" + hero.GetInstanceID() + ":subtitle", hero._subtitleText);
-            AddText(b, "compendium:detail:" + hero.GetInstanceID() + ":guild", hero._guildNameText);
-            AddText(b, "compendium:detail:" + hero.GetInstanceID() + ":currentguild", hero._currentGuildText);
-            AddText(b, "compendium:detail:" + hero.GetInstanceID() + ":motivation", hero._motivationText);
+            var guild = hero._guildNameText;
+            if (guild != null && guild.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(guild.text))
+            {
+                var guildTip = hero._guildTooltipRaycastTarget;
+                b.AddItem(ControlId.Structural("compendium:detail:" + hero.GetInstanceID() + ":guild"), new NodeVtable
+                {
+                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => guild.text) },
+                    SearchText = () => guild.text,
+                    Details = () => guildTip != null ? TooltipReader.Lines(guildTip) : null,
+                });
+            }
+            AddCaptioned(b, "compendium:detail:" + hero.GetInstanceID() + ":currentguild", hero._currentGuildText, hero._guildTooltipRaycastTarget);
+            AddCaptioned(b, "compendium:detail:" + hero.GetInstanceID() + ":motivation", hero._motivationText);
 
             b.PopContext();
         }
@@ -501,6 +517,30 @@ namespace GuildrunAccess.Module.Screens
         {
             var tmp = toggle.GetComponentInChildren<TMP_Text>(true);
             return tmp != null && !string.IsNullOrWhiteSpace(tmp.text) ? tmp.text : null;
+        }
+
+        // A text under a header the panel draws over it ("Motivation to switch to your guild"): the
+        // header is the sibling named Header of the text's parent; the line reads "header: text".
+        private static void AddCaptioned(GraphBuilder b, string key, TMP_Text text, TooltipRaycastTarget tooltip = null)
+        {
+            if (text == null || !text.gameObject.activeInHierarchy || string.IsNullOrWhiteSpace(text.text)) return;
+            TMP_Text header = null;
+            var parent = text.transform.parent;
+            if (parent != null)
+            {
+                var head = parent.Find("Header");
+                header = head != null ? head.GetComponent<TMP_Text>() : null;
+            }
+            var h = header;
+            var node = GameNodes.Text(() =>
+            {
+                string caption = h != null && h.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(h.text) ? h.text.Trim() : null;
+                string body = text.text.Trim();
+                if (caption == null) return body;
+                return caption.EndsWith(":") ? caption + " " + body : caption + ": " + body;
+            });
+            if (tooltip != null) node.Details = () => TooltipReader.Lines(tooltip);
+            b.AddItem(ControlId.Structural(key), node);
         }
 
         private static void AddText(GraphBuilder b, string key, TMP_Text text)
