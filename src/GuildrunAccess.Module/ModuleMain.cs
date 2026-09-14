@@ -141,6 +141,7 @@ namespace GuildrunAccess.Module
             ScreenManager.Register(new CrossroadsScreen());
             ScreenManager.Register(new EventScreen());
             ScreenManager.Register(new PickerScreen());
+            ScreenManager.Register(new RelicPickerScreen());
             ScreenManager.Register(new HeroesPanelScreen());
             ScreenManager.Register(new RunSettingsScreen());
             ScreenManager.Register(new RunEndScreen());

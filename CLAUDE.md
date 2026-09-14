@@ -245,8 +245,9 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
 4. **(done)** Settings (tabs, sliders, toggles, dropdowns) and the run-start flow (difficulty).
 5. **(done)** The game run: hero picker, run HUD (placement grid with keyboard moves, party/reserve
    with equip/unequip menus, items, relics, info, speed, menu), battle result (all forms), shop,
-   crossroads, events (campfire included), rank-up pickers, the Heroes panel, tooltips through the
-   game's own tooltip pipeline. Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
+   crossroads, events (campfire included), rank-up pickers, the relic reward picker
+   (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes
+   panel, tooltips through the game's own tooltip pipeline. Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
    `LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `GameRun/RunData`.
 6. **(done)** End screen, progression, the sidebar (inspect cards, damage tracker), battle events
    (`GameRun/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties

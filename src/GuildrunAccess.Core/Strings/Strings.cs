@@ -351,6 +351,9 @@ namespace GuildrunAccess.Core.Strings
             D("picker.hero", "hero"),
             D("picker.choices", "choices"),
             D("picker.no_choices", "no choices yet"),
+
+            // The relic reward picker (after a challenge fight), when its own title text is missing.
+            D("screen.relic_picker", "Choose your reward"),
         };
 
         private static readonly Dictionary<string, string> _defaults = BuildDefaults();
@@ -645,5 +648,6 @@ namespace GuildrunAccess.Core.Strings
         public static string PickerHero => Get("picker.hero");
         public static string PickerChoices => Get("picker.choices");
         public static string PickerNoChoices => Get("picker.no_choices");
+        public static string ScreenRelicPicker => Get("screen.relic_picker");
     }
 }
