@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## V0.0.3
 
 - The main menu no longer reads as eight entries for a moment before the game hides the ones it does not offer.
 - The boss victory's end screen now offers its Continue (the game's click-anywhere), and Escape presses it; before, no key did anything there.

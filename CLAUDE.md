@@ -31,6 +31,14 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   P/Invoke in the host (`src/GuildrunAccess/Speech/`). Prism talks to NVDA/JAWS/SAPI itself.
 - **Anti-cheat**: CodeStage ACTk ships, but only `ObscuredCheatingDetectorService` uses it and it merely
   flags analytics on tamper. Never write to `Obscured*` fields.
+- **Saves**: `%LocalAppData%Low\Leyline\Guildrun\Saves\steam-<id>\{Profile,Run}` (Steam Cloud
+  synced). The game saves a run only while `GameRunPersistenceService.Data.IsSavingActive` is on,
+  which it turns on once the tutorial's save-point step (`Ftue_11_ThirdShop`, requiring the second
+  shop's rank-up prompt) completes; Quit to Menu saves through the same gate, so before that point
+  the run is dropped. That is the game's design and the mod leaves it alone (decided 2026-09-14): a
+  mod player can walk past the tutorial's blocking modal without ranking a hero up, and then no run
+  saves until they do. The main menu's `UpdateButtonStates` runs from its `OnStart`, a frame or
+  more after the scope is injected: until then every prefab button is active.
 
 ## Decompiled reference
 - `game/il2cppdump/dump.cs` — Il2CppDumper output (gitignored; regenerate with
