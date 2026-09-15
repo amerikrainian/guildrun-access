@@ -306,10 +306,12 @@ namespace GuildrunAccess.Module.GameRun
             return list;
         }
 
+        // The row's portrait knows the hero's entry only: the owned hero of that entry gives its classes
+        // and rank, an entry no owned hero matches its name and starting classes.
         private static string HeroName(HeroBattleStatsView hero)
         {
             var portrait = hero != null ? hero._heroPortrait : null;
-            return portrait != null ? RunData.EntryName(portrait._characterEntry) : null;
+            return portrait != null ? RunData.HeroLabel(portrait._characterEntry) : null;
         }
 
         // ---- the leaderboard (the run's end) ----

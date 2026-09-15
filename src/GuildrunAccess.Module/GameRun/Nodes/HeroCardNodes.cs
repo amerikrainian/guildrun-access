@@ -23,7 +23,8 @@ namespace GuildrunAccess.Module.GameRun
     {
         // ---- live readers over a card ----
 
-        /// <summary>"Kai, Warrior, Shield": the name and the rendered class/archetype tags.</summary>
+        /// <summary>"Kai, Warrior, Shield, rank C": the name, the rendered class/archetype tags, and the
+        /// rank the card's badge shows.</summary>
         public static string NameAndClass(HeroCardView card)
         {
             if (card == null) return null;
@@ -36,7 +37,25 @@ namespace GuildrunAccess.Module.GameRun
                 if (sb.Length > 0) sb.Append(", ");
                 sb.Append(name);
             }
+            string rank = Rank(card);
+            if (rank != null)
+            {
+                if (sb.Length > 0) sb.Append(", ");
+                sb.Append(Strings.HeroRank(rank));
+            }
             return sb.ToString();
+        }
+
+        private const string RankSpritePrefix = "Rank_";
+
+        /// <summary>The rank letter the card's badge shows ("C", from its Rank_C sprite), or null when
+        /// the card shows none.</summary>
+        public static string Rank(HeroCardView card)
+        {
+            var image = card != null ? card._rankImage : null;
+            if (image == null || !image.gameObject.activeInHierarchy || image.sprite == null) return null;
+            string name = image.sprite.name;
+            return name != null && name.StartsWith(RankSpritePrefix, StringComparison.Ordinal) ? name.Substring(RankSpritePrefix.Length) : null;
         }
 
         // A class tag carries its localized caption; an archetype tag (under the card's HeroArchetypes

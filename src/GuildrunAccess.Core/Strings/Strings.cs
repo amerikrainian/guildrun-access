@@ -140,6 +140,8 @@ namespace GuildrunAccess.Core.Strings
             D("hero.stat", "{1} {0}"),
             D("hero.health", "health"),
             D("hero.mana", "mana"),
+            // {0} = the rank letter the game's hero card shows (C, B, A, S).
+            D("hero.rank", "rank {0}"),
             D("hero.no_relic", "no relic"),
             D("hero.no_abilities", "no abilities"),
             D("hero.reroll", "Reroll"),
@@ -503,6 +505,21 @@ namespace GuildrunAccess.Core.Strings
         public static string HeroStat(string name, string value) => F("hero.stat", value, name);
         public static string HeroHealth => Get("hero.health");
         public static string HeroMana => Get("hero.mana");
+
+        /// <summary>"rank C": a hero's rank as the game's card shows it.</summary>
+        public static string HeroRank(string rank) => F("hero.rank", rank);
+
+        /// <summary>"Skorn, Warrior, rank C": a hero's name, then its classes, then its rank, whatever is
+        /// missing left out: the line every control standing for a hero opens with.</summary>
+        public static string HeroTitle(string name, IEnumerable<string> classes, string rank)
+        {
+            var parts = new List<string> { name };
+            if (classes != null)
+                foreach (var c in classes)
+                    if (!string.IsNullOrEmpty(c)) parts.Add(c);
+            if (!string.IsNullOrEmpty(rank)) parts.Add(HeroRank(rank));
+            return string.Join(", ", parts);
+        }
         public static string HeroNoRelic => Get("hero.no_relic");
         public static string HeroNoAbilities => Get("hero.no_abilities");
         public static string HeroReroll => Get("hero.reroll");

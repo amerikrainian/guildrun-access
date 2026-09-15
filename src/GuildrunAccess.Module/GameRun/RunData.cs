@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Ember.Balancing.SimulationBridge;
 using Ember.Scopes.Battle.Board.Controllers;
 using Ember.Scopes.Battle.Board.Data;
@@ -13,6 +14,7 @@ using Ember.Scopes.GameRun.UI.Slots;
 using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
 using gg.leyline.balancing.Data;
 using GuildrunAccess.Core;
+using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Module.Interop;
 using UnityEngine;
 
@@ -199,6 +201,131 @@ namespace GuildrunAccess.Module.GameRun
         /// <summary>The name of the hero in a party/reserve slot, or null when empty or unknown.</summary>
         public static string HeroName(BottomHeroView view)
             => TryHeroId(view, out var id) ? HeroName(id) : null;
+
+        // ---- classes and rank ----
+
+        // The rank letters the game's hero card shows (its Rank_C .. Rank_S sprites, rank 1 first); a
+        // rank past them reads as its number.
+        private static readonly string[] RankLetters = { "C", "B", "A", "S" };
+
+        /// <summary>The hero's rank as the game shows it ("C" at rank 1), or null without data.</summary>
+        public static string HeroRank(HeroData hero)
+        {
+            if (hero == null) return null;
+            try
+            {
+                int rank = hero.Rank;
+                return rank >= 1 && rank <= RankLetters.Length ? RankLetters[rank - 1] : rank.ToString();
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: hero rank failed: " + e.Message);
+                return null;
+            }
+        }
+
+        /// <summary>The hero's classes, localized, in the game's order (a specialization's extra class
+        /// included); empty without data.</summary>
+        public static List<string> HeroClasses(HeroData hero)
+        {
+            var names = new List<string>();
+            try
+            {
+                var refs = hero != null ? hero._allClasses : null;
+                if (refs == null) return names;
+                for (int i = 0; i < refs.Count; i++) AddClassName(names, refs[i]);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: hero classes failed: " + e.Message);
+            }
+            return names;
+        }
+
+        /// <summary>A hero entry's classes (what the hero starts with), for a hero shown without its run
+        /// data; empty without any.</summary>
+        public static List<string> HeroClasses(Ember.Balancing.Sheets.Characters.Heroes.IHeroEntry entry)
+        {
+            var names = new List<string>();
+            try
+            {
+                // The classes live on the sheet entry (the interface exposes none).
+                var sheet = entry != null ? entry.TryCast<Ember.Balancing.Sheets.Characters.Heroes.HeroEntry>() : null;
+                var refs = sheet != null ? sheet.GetClasses() : null;
+                if (refs == null) return names;
+                foreach (var reference in refs) AddClassName(names, reference);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: entry classes failed: " + e.Message);
+            }
+            return names;
+        }
+
+        // A class reference resolved through the game's balancing to its localized name.
+        private static void AddClassName(List<string> names, BalancingRef<Ember.Balancing.Sheets.Characters.Classes.IHeroClassEntry> reference)
+        {
+            var balancing = Ember.Balancing.EmberBalancing.Instance;
+            var entry = balancing != null ? balancing.Get<Ember.Balancing.Sheets.Characters.Classes.IHeroClassEntry>(reference) : null;
+            string name = NameOf(entry);
+            if (!string.IsNullOrWhiteSpace(name)) names.Add(name);
+        }
+
+        /// <summary>"Skorn, Warrior, rank C": the hero's name with its classes and rank, the line every
+        /// control standing for a hero opens with; null without a name. Feedback about a hero ("Skorn
+        /// picked up") keeps the plain <see cref="HeroName(HeroData)"/>.</summary>
+        public static string HeroLabel(HeroData hero)
+        {
+            string name = HeroName(hero);
+            return name != null ? Strings.HeroTitle(name, HeroClasses(hero), HeroRank(hero)) : null;
+        }
+
+        public static string HeroLabel(HeroId id) => HeroLabel(Hero(id));
+
+        /// <summary>The label of the hero in a party/reserve slot, or null when empty or unknown.</summary>
+        public static string HeroLabel(BottomHeroView view)
+            => TryHeroId(view, out var id) ? HeroLabel(id) : null;
+
+        /// <summary>The label of the hero a character entry stands for: the owned hero of that entry (its
+        /// classes and rank as they are now), else the entry's name and starting classes.</summary>
+        public static string HeroLabel(Ember.Balancing.Sheets.Characters.ICharacterEntry entry)
+        {
+            var owned = OwnedHero(entry);
+            if (owned != null) return HeroLabel(owned);
+            string name = EntryName(entry);
+            if (name == null) return null;
+            var hero = entry != null ? entry.TryCast<Ember.Balancing.Sheets.Characters.Heroes.IHeroEntry>() : null;
+            return Strings.HeroTitle(name, HeroClasses(hero), null);
+        }
+
+        // The party's or reserve's hero whose entry this is (the same balancing object), or null.
+        private static HeroData OwnedHero(Ember.Balancing.Sheets.Characters.ICharacterEntry entry)
+        {
+            var party = Party;
+            if (entry == null || party == null) return null;
+            return OwnedHero(party._activeHeroPanel, entry) ?? OwnedHero(party._reserveHeroPanel, entry);
+        }
+
+        private static HeroData OwnedHero(BottomHeroPanelView panel, Ember.Balancing.Sheets.Characters.ICharacterEntry entry)
+        {
+            try
+            {
+                if (panel == null || panel.HeroViews == null) return null;
+                foreach (var view in panel.HeroViews)
+                {
+                    if (view == null || view.IsEmpty) continue;
+                    if (!TryHeroId(view, out var id)) continue;
+                    var hero = Hero(id);
+                    var owned = hero != null ? hero.HeroEntry : null;
+                    if (owned != null && owned.Pointer == entry.Pointer) return hero;
+                }
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: owned hero lookup failed: " + e.Message);
+            }
+            return null;
+        }
 
         /// <summary>The item's localized name, or null.</summary>
         public static string ItemName(ItemData item)

@@ -33,7 +33,8 @@ namespace GuildrunAccess.Module.GameRun
         {
             var parts = new List<string>();
             string name = RunData.HeroName(view);
-            if (!string.IsNullOrEmpty(name)) parts.Add(name);
+            string label = RunData.HeroLabel(view);
+            if (!string.IsNullOrEmpty(label)) parts.Add(label);
             string vitals = BoardSection.VitalsOf(view);
             if (!string.IsNullOrEmpty(vitals)) parts.Add(vitals);
             var card = HeroActions.ShownHeroCard(name);

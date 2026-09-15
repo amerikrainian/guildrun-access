@@ -101,7 +101,7 @@ namespace GuildrunAccess.Module.GameRun
                     catch (Exception e) { CoreLog.Warning("Sell hero failed: " + e.Message); Speech.Say(Strings.RunMoveFailed, interrupt: true); }
                 }));
             }
-            ChoiceSubmenuScreen.Open(Strings.RunHeroActions(heroName), options);
+            ChoiceSubmenuScreen.Open(Strings.RunHeroActions(RunData.HeroLabel(heroId) ?? heroName), options);
         }
 
         // ---- equip ----
@@ -160,7 +160,7 @@ namespace GuildrunAccess.Module.GameRun
                 bool free = RunData.HasFreeSlot(RunData.Hero(heroId));
                 string wearing = RunLabels.Wearing(view._itemSlotViews);
                 string detail = free ? wearing : wearing == null ? Strings.RunSlotsFull : wearing + ", " + Strings.RunSlotsFull;
-                options.Add(new ChoiceOption(heroName, () =>
+                options.Add(new ChoiceOption(RunData.HeroLabel(view) ?? heroName, () =>
                 {
                     Speech.Say(RunData.Equip(id, itemId) ? Strings.RunEquipped(itemName, heroName) : Strings.RunEquipFailed, interrupt: true);
                 }, detail, enabled: free));

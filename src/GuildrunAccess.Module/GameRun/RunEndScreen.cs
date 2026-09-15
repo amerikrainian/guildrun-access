@@ -205,7 +205,7 @@ namespace GuildrunAccess.Module.GameRun
         private static string BackupName(EndScreenBackupHeroIconView view)
         {
             var hero = view._bottomHeroView;
-            string name = hero != null ? RunData.HeroName(hero) : null;
+            string name = hero != null ? RunData.HeroLabel(hero) : null;
             string abilities = hero != null ? HeroCardNodes.AbilitiesLine(hero._abilitiesView) : null;
             if (string.IsNullOrEmpty(name)) return abilities ?? view.gameObject.name;
             return string.IsNullOrEmpty(abilities) ? name : name + ": " + abilities;

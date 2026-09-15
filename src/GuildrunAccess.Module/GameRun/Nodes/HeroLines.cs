@@ -44,7 +44,7 @@ namespace GuildrunAccess.Module.GameRun
         public static IEnumerable<string> ForSlot(BottomHeroView view, string vitals = null)
         {
             if (view == null || view.IsEmpty) yield break;
-            yield return RunData.HeroName(view);
+            yield return RunData.HeroLabel(view);
             if (!string.IsNullOrEmpty(vitals)) yield return vitals;
             yield return HeroCardNodes.AbilitiesLine(view._abilitiesView);
         }

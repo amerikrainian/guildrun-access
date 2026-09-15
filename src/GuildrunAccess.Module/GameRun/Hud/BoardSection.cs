@@ -490,7 +490,7 @@ namespace GuildrunAccess.Module.GameRun
         {
             if (RunData.TryHeroAt(cell, out var hero))
             {
-                string name = RunData.HeroName(hero) ?? Strings.RunParty;
+                string name = RunData.HeroLabel(hero) ?? Strings.RunParty;
                 var view = RunData.ViewOf(hero);
                 return view != null ? RunLabels.WithItems(name, view._itemSlotViews) : name;
             }
@@ -518,7 +518,9 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- the battlefield ----
 
-        private struct Unit { public string Name; public HealthBarView Bar; public bool IsHero; public CharacterViewController View; }
+        // Name is the plain name (it matches the sidebar's card); Label opens the unit's readout (a hero's
+        // name with its classes and rank).
+        private struct Unit { public string Name; public string Label; public HealthBarView Bar; public bool IsHero; public CharacterViewController View; }
 
         /// <summary>Whether any unit stands on the battlefield: a character view with a live health bar,
         /// which is the fight itself. The run screen's activity hangs on it (see
@@ -573,13 +575,13 @@ namespace GuildrunAccess.Module.GameRun
                     Announcements = new List<NodeAnnouncement>
                     {
                         // "Pimenta, wearing Freezing Tome, hero, health 650": the hero named as on the board.
-                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))), kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Label, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))), kind: AnnouncementKinds.Label),
                         new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
                         // "2 of 3" within its side, under the same setting as a stamped position.
                         new NodeAnnouncement(() => GraphAnnouncer.PositionText != null ? GraphAnnouncer.PositionText(index, count) : null, kind: AnnouncementKinds.Position),
                     },
-                    SearchText = () => u.Name,
+                    SearchText = () => u.Label,
                     // Landing shows the unit's card in the sidebar, as hovering it does; the buffers read
                     // it: the hero buffer as name, stats, abilities, the control buffer as the tooltips.
                     OnFocus = () => Peek(u.View),
@@ -632,7 +634,7 @@ namespace GuildrunAccess.Module.GameRun
                 if (c == null || !c.gameObject.activeInHierarchy) continue;
                 HealthBarView bar;
                 if (!bars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) continue;
-                units.Add(new Unit { Name = UnitName(bar, c), Bar = bar, IsHero = isHero, View = c });
+                units.Add(new Unit { Name = UnitName(bar, c), Label = UnitLabel(bar, c), Bar = bar, IsHero = isHero, View = c });
             }
         }
 
@@ -642,6 +644,17 @@ namespace GuildrunAccess.Module.GameRun
         {
             string name = bar._characterNameText != null ? bar._characterNameText.text : null;
             return string.IsNullOrWhiteSpace(name) ? RunData.UnitName(unit) : name;
+        }
+
+        // A hero's unit opens with its classes and rank ("Skorn, Warrior, rank C"); an enemy's with its name.
+        private static string UnitLabel(HealthBarView bar, CharacterViewController unit)
+        {
+            if (unit != null && Nullables.TryGet(() => unit.HeroId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId hero))
+            {
+                string label = RunData.HeroLabel(hero);
+                if (!string.IsNullOrWhiteSpace(label)) return label;
+            }
+            return UnitName(bar, unit);
         }
 
         /// <summary>The unit whose bar this is (the board registries' views, matched by entity id), or
@@ -673,7 +686,7 @@ namespace GuildrunAccess.Module.GameRun
         // and enemies buffers (one line per unit, read live on every buffer key).
         private static string UnitLine(Unit u)
         {
-            var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))) };
+            var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Label, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))) };
             string shield = Shield(u.Bar);
             if (shield != null) parts.Add(shield);
             string mana = Mana(u.Bar);
@@ -748,7 +761,7 @@ namespace GuildrunAccess.Module.GameRun
             if (views == null || !views.TryGetValue(enemy, out c) || c == null) return null;
             var bar = BarOf(c);
             if (bar == null) return null;
-            return UnitLine(new Unit { Name = UnitName(bar, c), Bar = bar, IsHero = false, View = c });
+            return UnitLine(new Unit { Name = UnitName(bar, c), Label = UnitLabel(bar, c), Bar = bar, IsHero = false, View = c });
         }
 
         /// <summary>One line per unit of a side, heroes or enemies, in the battlefield's order; empty
