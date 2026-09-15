@@ -9,20 +9,31 @@ using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Screens;
 using GuildrunAccess.Core.Strings;
+using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.Interop;
 using GuildrunAccess.Module.UI;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
+using Navigation = GuildrunAccess.Core.UI.Navigation;
 
 namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The "board" stop, in one of two shapes. While placing: the grid, every cell as a node (enemy rows
     /// first, then the player's, each side a region), Enter dropping a picked-up hero or opening the
-    /// occupant's menu. During a fight: every unit with a health bar, heroes first, with health and mana.
+    /// occupant's menu, Shift+arrows stepping the hero under focus one cell. During a fight: every unit
+    /// with a health bar, heroes first, with health and mana.
     /// </summary>
     internal sealed class BoardSection : ScreenSection
     {
+        /// <summary>The action keys of the Shift+arrow moves (bound in the module's input registration).</summary>
+        public const string MoveUp = "run.move.up";
+        public const string MoveDown = "run.move.down";
+        public const string MoveLeft = "run.move.left";
+        public const string MoveRight = "run.move.right";
+
+        private const string CellPrefix = "run:cell:";
+
         private readonly HeroActions _actions;
 
         public BoardSection(HeroActions actions) { _actions = actions; }
@@ -61,8 +72,45 @@ namespace GuildrunAccess.Module.GameRun
         {
             b.StartRow("grid");
             for (int x = 0; x < width; x++)
-                b.AddItem(ControlId.Structural("run:cell:" + x + ":" + y), CellNode(new Vector2Int(x, y)));
+                b.AddItem(CellId(new Vector2Int(x, y)), CellNode(new Vector2Int(x, y)));
             b.EndRow();
+        }
+
+        private static ControlId CellId(Vector2Int cell) => ControlId.Structural(CellPrefix + cell.x + ":" + cell.y);
+
+        // The cell under focus, from the focused node's key; false off the grid.
+        private static bool TryFocusedCell(out Vector2Int cell)
+        {
+            cell = default;
+            var node = Navigation.FocusedNode;
+            var key = node != null ? node.Id.StructuralKey as string : null;
+            if (key == null || !key.StartsWith(CellPrefix, StringComparison.Ordinal)) return false;
+            var parts = key.Substring(CellPrefix.Length).Split(':');
+            if (parts.Length != 2 || !int.TryParse(parts[0], out int x) || !int.TryParse(parts[1], out int y)) return false;
+            cell = new Vector2Int(x, y);
+            return true;
+        }
+
+        public override IEnumerable<ElementAction> GetActions()
+        {
+            // Shift+arrows: the hero under focus steps one cell that way (trading places with a hero
+            // standing there, as a drag would), focus following it, the new cell's coordinates the
+            // whole announcement. Off the grid, into the enemy rows, from an empty or enemy cell, or
+            // outside placement: nothing happens and nothing is said.
+            yield return new ElementAction(MoveUp, Strings.Get("bind.run.move.up"), _ => Nudge(0, 1));
+            yield return new ElementAction(MoveDown, Strings.Get("bind.run.move.down"), _ => Nudge(0, -1));
+            yield return new ElementAction(MoveLeft, Strings.Get("bind.run.move.left"), _ => Nudge(-1, 0));
+            yield return new ElementAction(MoveRight, Strings.Get("bind.run.move.right"), _ => Nudge(1, 0));
+        }
+
+        private static void Nudge(int dx, int dy)
+        {
+            if (!RunData.Placing() || !TryFocusedCell(out var from) || !RunData.TryHeroAt(from, out _)) return;
+            var to = new Vector2Int(from.x + dx, from.y + dy);
+            if (!RunData.IsPlayerCell(to)) return;
+            if (!RunData.SwapBoard(from, to)) { Speech.Say(Strings.RunMoveFailed, interrupt: true); return; }
+            Navigation.FocusNode(CellId(to), announce: false);
+            Speech.Say(RunLabels.CellName(to), interrupt: true);
         }
 
         // How many rows from the bottom belong to the player (the placeable range).

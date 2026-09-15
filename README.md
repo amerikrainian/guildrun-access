@@ -26,6 +26,7 @@ Requires the Steam version of the game on Windows and a screen reader (NVDA, JAW
 Focus mode is on at launch (Ctrl+Shift+A toggles it). Arrows navigate, Tab and Shift+Tab cycle
 control groups, Enter activates, Backspace is the secondary action, Escape backs out, Home and End
 jump, Alt+Up and Alt+Down jump sections, and typing letters searches the focused group.
+On the placement board, Shift+arrows move the focused hero one cell, speaking its new coordinates.
 Ctrl+Shift+M opens the mod menu with its settings and key help.
 
 Everything a control carries beyond its focus line waits in the buffers: Ctrl+Right and Ctrl+Left

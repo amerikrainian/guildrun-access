@@ -97,6 +97,10 @@ namespace GuildrunAccess.Core.Strings
             D("bind.ui.regionPrev", "Previous section"),
             D("bind.ui.regionNext", "Next section"),
             D("bind.ui.readFocus", "Read current control"),
+            D("bind.run.move.up", "Move hero up"),
+            D("bind.run.move.down", "Move hero down"),
+            D("bind.run.move.left", "Move hero left"),
+            D("bind.run.move.right", "Move hero right"),
             D("bind.mod.focus", "Toggle navigation"),
             D("bind.mod.reload", "Reload mod code"),
 

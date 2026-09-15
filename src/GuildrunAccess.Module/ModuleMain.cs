@@ -113,6 +113,12 @@ namespace GuildrunAccess.Module
             InputManager.Register(UiActions.End, "Jump to last", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.End));
             InputManager.Register(UiActions.RegionPrev, "Previous section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, alt: true));
             InputManager.Register(UiActions.RegionNext, "Next section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, alt: true));
+            // The run's board: Shift+arrows step the focused hero one cell (the board section answers
+            // them; anywhere else the keys do nothing).
+            InputManager.Register(BoardSection.MoveUp, "Move hero up", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, shift: true));
+            InputManager.Register(BoardSection.MoveDown, "Move hero down", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, shift: true));
+            InputManager.Register(BoardSection.MoveLeft, "Move hero left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.LeftArrow, shift: true));
+            InputManager.Register(BoardSection.MoveRight, "Move hero right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.RightArrow, shift: true));
             // Buffer review, the Harkest Dungeon keys: Ctrl+Left/Right switch buffers, Ctrl+Up/Down step lines.
             Buffers.Init();
             InputManager.Register("buffer.next", "Next buffer", InputCategory.UI, Buffers.Controls.NextBuffer).AddBinding(new KeyboardBinding(KeyCode.RightArrow, ctrl: true));

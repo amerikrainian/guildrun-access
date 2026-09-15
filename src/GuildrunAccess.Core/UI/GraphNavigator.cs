@@ -410,7 +410,10 @@ namespace GuildrunAccess.Core.UI
                     return true;
                 }
                 default:
-                    return false;
+                    // A UI key the navigator has no meaning of its own for is the focused screen's to
+                    // answer, by the action's key (the run HUD's Shift+arrows move a hero); unanswered,
+                    // it falls through to the action's own handler.
+                    return Screen != null && Screen.InvokeAction(action.Key);
             }
         }
 

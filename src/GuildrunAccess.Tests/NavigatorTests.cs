@@ -35,6 +35,51 @@ namespace GuildrunAccess.Tests
 
         private static InputAction Action(string key) => new InputAction(key, key) { Category = InputCategory.UI };
 
+        // A screen answering a key of its own (the run HUD's Shift+arrow moves) at screen level.
+        private sealed class OwnKeyScreen : Screen
+        {
+            public int Moves;
+            public override string Key => "test.ownkey";
+            public override bool IsActive() => true;
+            public override void Build(GraphBuilder b)
+            {
+                b.PushContext("Board", null);
+                b.AddItem(ControlId.Structural("cell"), new NodeVtable
+                {
+                    Announcements = new[] { new NodeAnnouncement(() => "cell", kind: AnnouncementKinds.Label) },
+                });
+                b.PopContext();
+            }
+            public override IEnumerable<ElementAction> GetActions()
+            {
+                yield return new ElementAction("run.move.up", "Move hero up", _ => Moves++);
+            }
+        }
+
+        [Fact]
+        public void AUiKeyTheNavigatorDoesNotOwnGoesToTheScreenByItsKey()
+        {
+            Speech.Speak = (t, i) => { };
+            NavInput.Current = new FakeNavInput { FrameCount = 1 };
+            try
+            {
+                var nav = new GraphNavigator();
+                var screen = new OwnKeyScreen();
+                nav.Attach(screen);
+                nav.EnsureFocus();
+
+                Assert.True(nav.OnInputJustPressed(Action("run.move.up")));
+                Assert.Equal(1, screen.Moves);
+                // A key nobody answers is not consumed: it falls through to its own handler.
+                Assert.False(nav.OnInputJustPressed(Action("run.move.down")));
+                Assert.Equal(1, screen.Moves);
+            }
+            finally
+            {
+                Speech.Speak = (t, i) => { };
+            }
+        }
+
         // A tab strip: landing on a tab selects it (the vtable's focus hook), Enter selects it too.
         private sealed class TabScreen : Screen
         {
