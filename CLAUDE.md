@@ -249,7 +249,10 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes
    panel, tooltips through the game's own tooltip pipeline. Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
    `LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `GameRun/RunData`.
-6. **(done)** End screen, progression, the sidebar (inspect cards, damage tracker), battle events
+6. **(done)** End screen (a boss victory shows it in the game's short form, `Show(_, true)` from the
+   flow controller's OnStart timer: every navigation button hidden, one caption-less click-anywhere
+   button whose click hides it back to the result panel, listed as Continue and pressed by Escape),
+   progression, the sidebar (inspect cards, damage tracker), battle events
    (`GameRun/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties
    bars, cast animations: the battle events log, a run-HUD stop, and NOTHING spoken as it happens;
    only what the game draws is reported: the simulation's own `BattleLogger` is developer debug text

@@ -247,20 +247,33 @@ namespace GuildrunAccess.Module.GameRun
             var wish = wishlist != null ? wishlist._wishListButton : null;
             if (GameNodes.IsShown(wish) && wish.interactable)
                 b.AddItem(ControlId.Structural("end:btn:wishlist"), GameNodes.Button(wish));
+            // The boss victory's form (the game's short animation): every navigation button hidden,
+            // and one full-screen button without a caption that a click anywhere lands on, closing
+            // the screen back to the result panel.
+            var anywhere = AnywhereButton(end);
+            if (anywhere != null)
+                b.AddItem(ControlId.Structural("end:btn:anywhere"), GameNodes.Button(anywhere, () => Strings.EndContinue));
+        }
+
+        private static Button AnywhereButton(EndScreenController end)
+        {
+            var button = end._bossVictoryAnywhereButton;
+            return GameNodes.IsShown(button) && button.interactable ? button : null;
         }
 
         public override object InitialFocusStop => "actions";
 
         public override IEnumerable<ElementAction> GetActions()
         {
-            // Escape: the main way on (Continue), else Proceed.
+            // Escape: the main way on (New run, Continue), else the boss victory's click-anywhere.
             yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
             {
                 var end = Controller();
                 var nav = end != null ? end._navigationView : null;
                 if (nav == null) return;
                 var button = GameNodes.IsShown(nav._newRunButton) && nav._newRunButton.interactable ? nav._newRunButton
-                    : GameNodes.IsShown(nav._continueButton) && nav._continueButton.interactable ? nav._continueButton : null;
+                    : GameNodes.IsShown(nav._continueButton) && nav._continueButton.interactable ? nav._continueButton
+                    : AnywhereButton(end);
                 if (button != null) button.onClick.Invoke();
             });
         }

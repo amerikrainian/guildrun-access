@@ -202,6 +202,7 @@ namespace GuildrunAccess.Core.Strings
             D("end.heroes", "final team"),
             D("end.backup", "backup team"),
             D("end.no_items", "no items"),
+            D("end.continue", "Continue"),
             D("end.no_highlights", "no highlights"),
 
             // The meta-progression (unlock timeline) after a run.
@@ -548,6 +549,7 @@ namespace GuildrunAccess.Core.Strings
         public static string EndHeroes => Get("end.heroes");
         public static string EndBackup => Get("end.backup");
         public static string EndNoItems => Get("end.no_items");
+        public static string EndContinue => Get("end.continue");
         public static string EndNoHighlights => Get("end.no_highlights");
         public static string ScreenProgression => Get("screen.progression");
         public static string ProgressionXp(int xp, int level) => F("progression.xp", xp, level);
