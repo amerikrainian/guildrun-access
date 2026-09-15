@@ -29,12 +29,40 @@ namespace GuildrunAccess.Module.Screens
 
         private TMP_Text _version;
 
+        // The controller whose buttons are still in their prefab state, and the frame that started.
+        private System.IntPtr _settling;
+        private int _settlingSince;
+        private const int SettleFrames = 120;
+
         private static MainMenuUIController Controller() => GameScopes.Controller<MainMenuUIController>();
 
         public override bool IsActive()
         {
             var c = Controller();
-            return c != null && c.gameObject.activeInHierarchy;
+            return c != null && c.gameObject.activeInHierarchy && !Settling(c);
+        }
+
+        // Until the controller's OnStart has run UpdateButtonStates, every button of the prefab is
+        // active at once, Abandon Run and Replay Tutorial included, a pair the game never shows
+        // together (the first needs a saved run, the second none): the menu would read as eight
+        // entries and shrink under the player a moment later. Hold off while both are active, at most
+        // two seconds per controller instance so a surprise never hides the menu for good.
+        private bool Settling(MainMenuUIController c)
+        {
+            var abandon = c._abandonRunButton;
+            var tutorial = c._playFromTutorialButton;
+            bool both = abandon != null && tutorial != null && abandon.gameObject.activeSelf && tutorial.gameObject.activeSelf;
+            if (!both)
+            {
+                _settling = System.IntPtr.Zero;
+                return false;
+            }
+            if (_settling != c.Pointer)
+            {
+                _settling = c.Pointer;
+                _settlingSince = UnityEngine.Time.frameCount;
+            }
+            return UnityEngine.Time.frameCount - _settlingSince < SettleFrames;
         }
 
         public override void Build(GraphBuilder b)
