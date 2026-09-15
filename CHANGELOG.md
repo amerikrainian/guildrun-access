@@ -3,8 +3,8 @@
 ## V0.0.4
 
 - The battle board is read as the hex grid it is with the Q E A D Z C scheme; arrows move between groups with up/down and units within said group. Shift alongside letters move heroes.
-- A fighting unit's health is no longer re-read while focus rests on it; its line is read as focus lands, and the party and enemies buffers keep the live numbers.
-- Every control standing for a hero now opens with its classes and rank after its name ("Skorn, Warrior, rank C"): board cells, units in a fight, party and reserve slots, the hero menus, the battle result and end screen rows; a hero card adds the rank its badge shows.
+- A fighting unit's health is no longer re-read while focus rests on it. It proved to be useless at communicating critical information.
+- Every control standing for a hero now opens with its classes and rank after its name. This is probably too verbose, but it's a start.
 
 ## V0.0.3
 
