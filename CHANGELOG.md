@@ -3,6 +3,7 @@
 ## V0.0.4
 
 - The battle board is read as the hex grid it is with the Q E A D Z C scheme; arrows move between groups with up/down and units within said group. Shift alongside letters move heroes.
+- A fighting unit's health is no longer re-read while focus rests on it; its line is read as focus lands, and the party and enemies buffers keep the live numbers.
 
 ## V0.0.3
 

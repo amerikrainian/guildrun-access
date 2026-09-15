@@ -566,18 +566,18 @@ namespace GuildrunAccess.Module.GameRun
                     // Units fall all through a fight: when the focused one does, focus slides to a
                     // neighbour without reading it out (the death is in the battle events log).
                     QuietVanish = true,
-                    // Resting on a unit follows its fight: the line is re-read as its health, shield or
-                    // mana change (coalesced, interrupting, so the latest state is what is heard).
-                    LiveReadout = true,
+                    // A unit's line is read when focus lands on it and holds the vitals of that moment;
+                    // parked on a unit, nothing is re-read as they change (a fight changes them every
+                    // tick, and following that is spam): stepping back onto the unit reads them afresh,
+                    // and the buffers read them live.
                     Announcements = new List<NodeAnnouncement>
                     {
                         // "Pimenta, wearing Freezing Tome, hero, health 650": the hero named as on the board.
                         new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Name, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))), kind: AnnouncementKinds.Label),
                         new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
-                        // Mana regenerates all fight long: it rides along in a re-read but never causes one.
-                        new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value) { LiveReadoutIgnore = true },
+                        new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
                         // "2 of 3" within its side, under the same setting as a stamped position.
-                        new NodeAnnouncement(() => GraphAnnouncer.PositionText != null ? GraphAnnouncer.PositionText(index, count) : null, kind: AnnouncementKinds.Position) { LiveReadoutIgnore = true },
+                        new NodeAnnouncement(() => GraphAnnouncer.PositionText != null ? GraphAnnouncer.PositionText(index, count) : null, kind: AnnouncementKinds.Position),
                     },
                     SearchText = () => u.Name,
                     // Landing shows the unit's card in the sidebar, as hovering it does; the buffers read
