@@ -111,6 +111,8 @@ namespace GuildrunAccess.Core.Strings
             D("screen.confirm", "Confirm"),
             D("screen.error", "Error"),
             D("dialog.stack_trace", "stack trace"),
+            D("dialog.copied", "copied to clipboard"),
+            D("dialog.copy_failed", "could not copy"),
             D("mainmenu.version", "version {0}"),
             D("leaderboard.visible", "Show leaderboard"),
             D("screen.exit", "Exit"),
@@ -476,6 +478,8 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenConfirm => Get("screen.confirm");
         public static string ScreenError => Get("screen.error");
         public static string DialogStackTrace => Get("dialog.stack_trace");
+        public static string DialogCopied => Get("dialog.copied");
+        public static string DialogCopyFailed => Get("dialog.copy_failed");
         public static string MainMenuVersion(string version) => F("mainmenu.version", version);
         public static string LeaderboardVisible => Get("leaderboard.visible");
         public static string ScreenExit => Get("screen.exit");

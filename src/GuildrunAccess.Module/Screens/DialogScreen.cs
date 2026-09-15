@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GuildrunAccess.Core;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -73,6 +74,10 @@ namespace GuildrunAccess.Module.Screens
                 b.AddItem(ControlId.Structural(_key + ":text" + i), GameNodes.Text(() => t.text));
             }
 
+            // The error box's stack trace: its first line (the exception and its message) on the
+            // control, every line in the control buffer, and Enter copies the whole text to the
+            // clipboard (the game's own Ctrl+A, Ctrl+C needs the field clicked into, which focus mode
+            // keeps from the game's input).
             int k = 0;
             foreach (var field in p.GetComponentsInChildren<TMP_InputField>(false))
             {
@@ -80,8 +85,15 @@ namespace GuildrunAccess.Module.Screens
                 var f = field;
                 b.AddItem(ControlId.Structural(_key + ":field" + k++), new NodeVtable
                 {
-                    Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Strings.DialogStackTrace) },
-                    Details = () => GameNodes.Lines(f.text.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries)),
+                    ControlType = ControlTypes.Button,
+                    Announcements = new List<NodeAnnouncement>
+                    {
+                        GameNodes.LabelPart(() => Strings.DialogStackTrace),
+                        new NodeAnnouncement(() => FirstLine(f.text), kind: AnnouncementKinds.Value),
+                    },
+                    SearchText = () => Strings.DialogStackTrace,
+                    OnActivate = () => Copy(f.text),
+                    Details = () => GameNodes.Lines(Lines(f.text)),
                 });
             }
 
@@ -93,6 +105,40 @@ namespace GuildrunAccess.Module.Screens
             }
 
             b.PopContext();
+        }
+
+        private static string[] Lines(string text)
+            => (text ?? "").Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
+
+        private static string FirstLine(string text)
+        {
+            var lines = Lines(text);
+            return lines.Length > 0 ? lines[0].Trim() : null;
+        }
+
+        private static void Copy(string text)
+        {
+            try
+            {
+                GUIUtility.systemCopyBuffer = text ?? "";
+                Speech.Say(Strings.DialogCopied, interrupt: true);
+            }
+            catch (System.Exception e)
+            {
+                CoreLog.Warning("Dialog: clipboard copy failed: " + e.Message);
+                Speech.Say(Strings.DialogCopyFailed, interrupt: true);
+            }
+        }
+
+        // The stack trace the game shows is otherwise only in its own player log: put it in ours too,
+        // once per showing, so a bug report can quote it.
+        public override void OnPush()
+        {
+            var p = Panel();
+            if (p == null) return;
+            foreach (var field in p.GetComponentsInChildren<TMP_InputField>(false))
+                if (field != null && !string.IsNullOrWhiteSpace(field.text))
+                    CoreLog.Info("Game error dialog: " + field.text.Trim());
         }
 
         // A real choice has a caption; the full-screen modal backdrop button (which cancels on click)
