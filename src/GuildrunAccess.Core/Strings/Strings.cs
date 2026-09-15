@@ -377,6 +377,8 @@ namespace GuildrunAccess.Core.Strings
 
             // The relic reward picker (after a challenge fight), when its own title text is missing.
             D("screen.relic_picker", "Choose your reward"),
+            // The tutorial's modal texts, read as a dialog whose Enter skips the text shown.
+            D("screen.tutorial", "Tutorial"),
         };
 
         private static readonly Dictionary<string, string> _defaults = BuildDefaults();
@@ -692,5 +694,6 @@ namespace GuildrunAccess.Core.Strings
         public static string PickerChoices => Get("picker.choices");
         public static string PickerNoChoices => Get("picker.no_choices");
         public static string ScreenRelicPicker => Get("screen.relic_picker");
+        public static string ScreenTutorial => Get("screen.tutorial");
     }
 }

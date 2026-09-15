@@ -5,6 +5,7 @@
 - The battle board is read as the hex grid it is with the Q E A D Z C scheme; arrows move between groups with up/down and units within said group. Shift alongside letters move heroes.
 - A fighting unit's health is no longer re-read while focus rests on it. It proved to be useless at communicating critical information.
 - Every control standing for a hero now opens with its classes and rank after its name. This is probably too verbose, but it's a start.
+- The tutorial now completes. Its steps show timed texts behind a modal before they listen for the player's action, and the mod let the player act through the modal, so the action went unheard, no step ever completed, and the game reset the tutorial at the main menu every time: the same first run forever, the difficulty locked, and no run ever saved (no Continue). The texts are now a modal of their own: each reads as it shows, Enter or Escape skips it as a click does, and nothing beneath acts until the step asks for the player.
 
 ## V0.0.3
 

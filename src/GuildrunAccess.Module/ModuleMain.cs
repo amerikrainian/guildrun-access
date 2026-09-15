@@ -170,6 +170,9 @@ namespace GuildrunAccess.Module
             ScreenManager.Register(new ComicScreen());
             ScreenManager.Register(new CompendiumScreen());
             ScreenManager.Register(new ModMenuScreen());
+            // The tutorial's modal phase (its timed texts): exclusive, so a step's action prompt is
+            // listening by the time the player acts.
+            ScreenManager.Register(new TutorialPromptScreen());
             // Modal dialogs (layer 30, exclusive): the privacy consent that greets a fresh install, the
             // generic confirmation, the error box, and the exit / survey prompts.
             ScreenManager.Register(new DialogScreen<Ember.System.UI.GdprDialogPanel>("dialog.privacy", () => Strings.ScreenPrivacy));

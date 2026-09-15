@@ -24,6 +24,9 @@ namespace GuildrunAccess.Module.Readers
             foreach (var d in displays)
             {
                 if (d == null) continue;
+                // The timed texts (a step's modal phase) are the tutorial screen's: it reads each one
+                // as the control Enter skips (see Screens.TutorialPromptScreen).
+                if (d.TryCast<TimedTutorialTextDisplay>() != null) continue;
                 int id = d.GetInstanceID();
                 var container = d.Container;
                 bool shown = container != null && container.activeInHierarchy && d.gameObject.activeInHierarchy;

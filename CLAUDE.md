@@ -33,12 +33,21 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   flags analytics on tamper. Never write to `Obscured*` fields.
 - **Saves**: `%LocalAppData%Low\Leyline\Guildrun\Saves\steam-<id>\{Profile,Run}` (Steam Cloud
   synced). The game saves a run only while `GameRunPersistenceService.Data.IsSavingActive` is on,
-  which it turns on once the tutorial's save-point step (`Ftue_11_ThirdShop`, requiring the second
-  shop's rank-up prompt) completes; Quit to Menu saves through the same gate, so before that point
-  the run is dropped. That is the game's design and the mod leaves it alone (decided 2026-09-14): a
-  mod player can walk past the tutorial's blocking modal without ranking a hero up, and then no run
-  saves until they do. The main menu's `UpdateButtonStates` runs from its `OnStart`, a frame or
-  more after the scope is injected: until then every prefab button is active.
+  which it turns on once the tutorial's save-point step (`Ftue_11_ThirdShop`) completes; Quit to
+  Menu saves through the same gate, so before that point the run is dropped, and the main menu's
+  `HandleUnfinishedTutorial` resets the tutorial progress whenever a run ends short of the save
+  point (`ProgressionReader.HasActiveTutorialProgress`), so the first run replays: its comic, its
+  fixed hero choices, the difficulty locked. The tutorial (`gg.leyline.tutorialsystem`: one
+  `TutorialStepFlow` per step under the run scope, a list of `TutorialFlowElement`s) shows timed
+  texts behind a modal (`TimedInfoFlowElement`, 15 s each, a legacy `Input.GetMouseButtonDown`
+  click skipping one by setting `_elapsedTime = _waitDuration`) BEFORE its action prompt starts
+  listening (`WaitForHeroPickElement` and kin subscribe when they start), so a player who acts
+  through the modal is not heard and the step never completes. `Screens/TutorialPromptScreen` is
+  the keyboard's modal: exclusive while an executing flow's first incomplete element is a timed
+  text or a delay, each text a control, Enter/Escape the click. The game's own logs are in
+  `Guildrun_Data\Logs\<date>-game.log` ("Completing step", "Tutorial save point reached"). The
+  main menu's `UpdateButtonStates` runs from its `OnStart`, a frame or more after the scope is
+  injected: until then every prefab button is active.
 
 ## Decompiled reference
 - `game/il2cppdump/dump.cs` — Il2CppDumper output (gitignored; regenerate with

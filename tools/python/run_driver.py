@@ -64,6 +64,22 @@ def wait_change(before: str, seconds: float = 60) -> str:
     return before
 
 
+def focus_id() -> str:
+    m = re.search(r"^focus: ControlId\((.*)\)", dev.call("/nav"), re.M)
+    return m.group(1) if m else ""
+
+
+def focus_stop(prefix: str, tabs: int = 10) -> bool:
+    """Tab round the screen's stops until the focused control's id starts with prefix (a panel's own
+    stop, when a detour left focus on one of the HUD sections under it)."""
+    for verb in ("ui.prev", "ui.next"):  # a panel's own stops come first; its stops do not wrap
+        for _ in range(tabs):
+            if focus_id().startswith(prefix):
+                return True
+            press(verb)
+    return focus_id().startswith(prefix)
+
+
 def placing() -> bool:
     return "True" in dev.call("/eval", body="return (" + PLACING + ").ToString();")
 
@@ -76,8 +92,14 @@ def main() -> int:
     args = ap.parse_args()
     target = STAGE_KEYS[args.until]
 
+    seen: list[tuple[str, str]] = []
     for step in range(1, args.max + 1):
         s = screen()
+        # A stall guard: the same screen and focus four times running means a press that changes
+        # nothing (a dialog re-opening, a button re-pressed); stop rather than hammer it.
+        seen.append((s, focus_id()))
+        if len(seen) >= 4 and len(set(seen[-4:])) == 1:
+            print(f"  stalled on {s} at {seen[-1][1]}"); return 6
         if s == "(none)":
             # Between two panels no screen is active (the run HUD is inactive outside placement and
             # fights): wait for the next one rather than treat the gap as an unknown screen.
@@ -95,6 +117,8 @@ def main() -> int:
                 press("ui.home"); press("ui.activate"); time.sleep(1)
             press("ui.back"); wait_change(s)
         elif s == "gamerun.crossroads":
+            if not focus_stop("crossroads:"):
+                print("  no crossroads path under focus"); return 2
             press("ui.activate"); wait_change(s)
         elif s == "gamerun.event":
             if nav_has(r"event:choice:"):
@@ -113,6 +137,12 @@ def main() -> int:
             press("ui.back"); wait_change(s)
         elif s == "app.comic":
             # A comic strip (the intro, the defeat): Continue turns its pages.
+            press("ui.activate"); time.sleep(2)
+        elif s == "tutorial":
+            # A tutorial text (a step's modal phase): Enter skips it, as a click does.
+            press("ui.activate"); time.sleep(0.7)
+        elif s == "gamerun.heropicker":
+            # The starting hero: the first card.
             press("ui.activate"); time.sleep(2)
         elif s == "gamerun":
             ok = False
