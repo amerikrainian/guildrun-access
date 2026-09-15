@@ -13,6 +13,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using GuildrunAccess.Module.Interop;
+using Navigation = GuildrunAccess.Core.UI.Navigation;
 using Screen = GuildrunAccess.Core.Screens.Screen;
 
 namespace GuildrunAccess.Module.GameRun
@@ -20,15 +21,32 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// A hero's rank-up choice (<see cref="BasePickerView"/>: the specialization picker and the rank
     /// modifier picker, which the run's navigation controller shows when a hero ranks up): the picker's
-    /// title as the context, the hero's card as the shared hero grid, the choices as buttons carrying
-    /// name, kind and description (the full tooltip in the control buffer), and Continue once it appears. Choosing
-    /// goes through the choice view's own click handler.
+    /// title as the context, then one Tab-stop read top to bottom with the arrows, as an event is: the
+    /// hero's line (the shared hero grid, its card in the buffers), the choices as bare buttons
+    /// carrying name, kind and description (the full tooltip in the control buffer), and Continue
+    /// once the choice is made, landed on as it appears. Choosing goes through the choice view's own
+    /// click handler.
     /// </summary>
     public sealed class PickerScreen : Screen
     {
         public override string Key => "gamerun.picker";
         public override int Layer => 20;
         public override bool Exclusive => true;
+
+        private static readonly ControlId ContinueId = ControlId.Structural("picker:continue");
+        private bool _continueShown;
+
+        // Continue appears once the choice is made (the chosen button gone by then): land on it, so the
+        // result is a keypress away.
+        public override void OnUpdate()
+        {
+            var picker = Picker();
+            bool shown = picker != null && GameNodes.IsShown(picker._continueButton);
+            if (shown && !_continueShown) Navigation.FocusNode(ContinueId);
+            _continueShown = shown;
+        }
+
+        public override void OnPop() => _continueShown = false;
 
         private static NavigationUIController Nav => GameScopes.Controller<NavigationUIController>();
 
@@ -52,20 +70,16 @@ namespace GuildrunAccess.Module.GameRun
             if (picker == null) return;
 
             b.PushContext(Title(picker), null, positions: false);
+            // One Tab-stop: the hero, the choices, Continue, read top to bottom with the arrows alone.
+            b.BeginStop("picker");
 
-            // The hero ranking up: its card, through the shared grid (one column).
+            // The hero ranking up: its line, through the shared grid (one column); Down is the first choice.
             var card = picker.GetComponentInChildren<HeroCardView>(false);
             if (card != null)
-            {
-                b.BeginStop("hero");
-                b.PushContext(Strings.PickerHero, null, positions: false);
                 HeroCardNodes.AddGrid(b, "picker:hero", new List<HeroCardView> { card }, i => null, null);
-                b.PopContext();
-            }
 
-            // The choices: specializations or rank modifiers, whichever this picker offers.
-            b.BeginStop("choices");
-            b.PushContext(Strings.PickerChoices, Strings.RoleList);
+            // The choices, specializations or rank modifiers, whichever this picker offers, bare: no
+            // list context and no counts, each choice its own caption.
             int n = 0;
             foreach (var choice in picker.GetComponentsInChildren<SpecializationChoiceView>(false))
             {
@@ -79,16 +93,14 @@ namespace GuildrunAccess.Module.GameRun
                 n++;
                 b.AddItem(ControlId.Structural("picker:mod:" + choice.GetInstanceID()), Modifier(choice));
             }
-            if (n == 0)
-                b.AddItem(ControlId.Structural("picker:none"), GameNodes.Text(() => Strings.PickerNoChoices));
-            b.PopContext();
 
+            // Continue once the choice is made; before the choices arrive (the picker animating in),
+            // a line saying so.
             var cont = picker._continueButton;
             if (GameNodes.IsShown(cont))
-            {
-                b.BeginStop("actions");
-                b.AddItem(ControlId.Structural("picker:continue"), GameNodes.Button(cont));
-            }
+                b.AddItem(ContinueId, GameNodes.Button(cont));
+            else if (n == 0)
+                b.AddItem(ControlId.Structural("picker:none"), GameNodes.Text(() => Strings.PickerNoChoices));
 
             b.PopContext();
         }

@@ -371,7 +371,6 @@ namespace GuildrunAccess.Core.Strings
 
             // A hero's rank-up choice (specialization / rank modifier picker).
             D("screen.picker", "Rank up"),
-            D("picker.hero", "hero"),
             D("picker.choices", "choices"),
             D("picker.no_choices", "no choices yet"),
 
@@ -690,7 +689,6 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenEvent => Get("screen.event");
         public static string EventOutcome => Get("event.outcome");
         public static string ScreenPicker => Get("screen.picker");
-        public static string PickerHero => Get("picker.hero");
         public static string PickerChoices => Get("picker.choices");
         public static string PickerNoChoices => Get("picker.no_choices");
         public static string ScreenRelicPicker => Get("screen.relic_picker");
