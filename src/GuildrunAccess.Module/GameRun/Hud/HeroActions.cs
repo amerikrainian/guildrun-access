@@ -155,10 +155,15 @@ namespace GuildrunAccess.Module.GameRun
                 if (!RunData.TryHeroId(view, out var heroId)) continue;
                 string heroName = RunData.HeroName(view) ?? Strings.RunParty;
                 var id = heroId;
+                // A hero with every slot taken is listed but not a target (the mouse cannot drop
+                // there either): the registry would take the item and lose it (see RunData.Equip).
+                bool free = RunData.HasFreeSlot(RunData.Hero(heroId));
+                string wearing = RunLabels.Wearing(view._itemSlotViews);
+                string detail = free ? wearing : wearing == null ? Strings.RunSlotsFull : wearing + ", " + Strings.RunSlotsFull;
                 options.Add(new ChoiceOption(heroName, () =>
                 {
                     Speech.Say(RunData.Equip(id, itemId) ? Strings.RunEquipped(itemName, heroName) : Strings.RunEquipFailed, interrupt: true);
-                }, RunLabels.Wearing(view._itemSlotViews)));
+                }, detail, enabled: free));
             }
         }
 

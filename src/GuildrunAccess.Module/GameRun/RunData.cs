@@ -242,13 +242,21 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- actions (the registry's own operations; the drag controllers call these) ----
 
-        /// <summary>Equip a reserve item to a hero's next free slot. False when the call could not be made.</summary>
+        /// <summary>Equip a reserve item to a hero's next free slot. False when the call could not be
+        /// made, or when the hero has no free slot: the registry's EquipItem checks none itself (the
+        /// game's mouse drag checks before calling it), takes the item out of the reserve and then
+        /// finds no slot to put it in, and the item is gone from every view for the rest of the run.</summary>
         public static bool Equip(HeroId hero, ItemId item)
         {
             try
             {
                 var service = Service();
                 if (service == null) return false;
+                if (!HasFreeSlot(Hero(hero)))
+                {
+                    CoreLog.Warning("RunData: equip refused: the hero's item slots are full");
+                    return false;
+                }
                 service.EquipItem(hero, item, NoSlot());
                 return true;
             }
@@ -440,11 +448,16 @@ namespace GuildrunAccess.Module.GameRun
             return null;
         }
 
-        /// <summary>Whether the hero has a free item slot.</summary>
+        /// <summary>Whether the hero has a free item slot. Counted the game's way: its EquippedItemCount
+        /// is the slot list's length, empties included, so it never says anything about room.</summary>
         public static bool HasFreeSlot(HeroData hero)
         {
-            try { return hero != null && hero.EquippedItemCount < hero.ItemSlotCount; }
-            catch (Exception) { return false; }
+            try { return hero != null && hero.GetFreeItemSlotCount() > 0; }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: free slot count failed: " + e.Message);
+                return false;
+            }
         }
     }
 }

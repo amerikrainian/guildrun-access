@@ -244,7 +244,10 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
 3. **(done)** Main menu and the modal dialogs (privacy consent, confirm, error, exit, survey).
 4. **(done)** Settings (tabs, sliders, toggles, dropdowns) and the run-start flow (difficulty).
 5. **(done)** The game run: hero picker, run HUD (placement grid with keyboard moves, party/reserve
-   with equip/unequip menus, items, relics, info, speed, menu), battle result (all forms), shop,
+   with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
+   `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
+   of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is
+   `GetFreeItemSlotCount`), items, relics, info, speed, menu), battle result (all forms), shop,
    crossroads, events (campfire included), rank-up pickers, the relic reward picker
    (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes
    panel, tooltips through the game's own tooltip pipeline. Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,

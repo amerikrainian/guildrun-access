@@ -298,6 +298,7 @@ namespace GuildrunAccess.Core.Strings
             // {0} = the item, {1} = the hero.
             D("run.equipped", "{0} equipped to {1}"),
             D("run.equip_failed", "could not equip"),
+            D("run.slots_full", "item slots full"),
             // {0} = the hero's name.
             D("run.hero_actions", "{0}"),
             D("run.inspect", "Inspect"),
@@ -612,6 +613,7 @@ namespace GuildrunAccess.Core.Strings
         public static string RunEquipTo(string item) => F("run.equip_to", item);
         public static string RunEquipped(string item, string hero) => F("run.equipped", item, hero);
         public static string RunEquipFailed => Get("run.equip_failed");
+        public static string RunSlotsFull => Get("run.slots_full");
         public static string RunHeroActions(string hero) => F("run.hero_actions", hero);
         public static string RunInspect => Get("run.inspect");
         public static string RunInspectFailed => Get("run.inspect_failed");
