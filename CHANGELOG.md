@@ -3,9 +3,9 @@
 ## V0.0.3
 
 - The main menu no longer reads as eight entries for a moment before the game hides the ones it does not offer.
-- The boss victory's end screen now offers its Continue (the game's click-anywhere), and Escape presses it; before, no key did anything there.
-- Equipping an item to a hero whose item slots are full is refused: the hero is listed as "item slots full" and disabled. Before, the game took the item out of the reserve and lost it.
-- Shift+arrows on the placement board move the focused hero one cell, speaking its new coordinates; at the edge of the player's rows nothing happens.
+- The boss victory's end screen now offers its Continue (the game's click-anywhere), and Escape presses it.
+- Equipping an item to a hero whose item slots are full is refused.
+- Shift+arrows on the placement board move the focused hero one cell, speaking its new coordinates.
 
 ## V0.0.2
 
