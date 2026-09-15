@@ -97,10 +97,20 @@ namespace GuildrunAccess.Core.Strings
             D("bind.ui.regionPrev", "Previous section"),
             D("bind.ui.regionNext", "Next section"),
             D("bind.ui.readFocus", "Read current control"),
-            D("bind.run.move.up", "Move hero up"),
-            D("bind.run.move.down", "Move hero down"),
+            // The battle board's hex keys (Q E A D Z C, the hexagon's layout on the keyboard) and the
+            // Shift+letter hero moves.
+            D("bind.run.hex.upleft", "Cell up left"),
+            D("bind.run.hex.upright", "Cell up right"),
+            D("bind.run.hex.left", "Cell left"),
+            D("bind.run.hex.right", "Cell right"),
+            D("bind.run.hex.downleft", "Cell down left"),
+            D("bind.run.hex.downright", "Cell down right"),
+            D("bind.run.move.upleft", "Move hero up left"),
+            D("bind.run.move.upright", "Move hero up right"),
             D("bind.run.move.left", "Move hero left"),
             D("bind.run.move.right", "Move hero right"),
+            D("bind.run.move.downleft", "Move hero down left"),
+            D("bind.run.move.downright", "Move hero down right"),
             D("bind.mod.focus", "Toggle navigation"),
             D("bind.mod.reload", "Reload mod code"),
 

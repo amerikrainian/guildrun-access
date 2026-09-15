@@ -54,6 +54,12 @@ namespace GuildrunAccess.Core.UI
         /// <summary>Move focus to the FIRST node of a Tab-stop.</summary>
         public virtual void FocusStop(object stopKey) { }
 
+        /// <summary>Move focus to a node of the current render right now and announce it as a move
+        /// (interrupting, the contexts crossed read as an arrow's are): a screen's own key that lands
+        /// somewhere. False when the node is not in the render or is the focused one already, so the
+        /// caller stays silent as at an edge.</summary>
+        public virtual bool MoveTo(Graph.ControlId id) => false;
+
         /// <summary>The Tab-stop the focused node belongs to, or null.</summary>
         public virtual object FocusedStopKey => null;
 
@@ -104,6 +110,8 @@ namespace GuildrunAccess.Core.UI
         public static void FocusNode(Graph.ControlId id, bool announce = true) => Active?.FocusNode(id, announce);
 
         public static void FocusStop(object stopKey) => Active?.FocusStop(stopKey);
+
+        public static bool MoveTo(Graph.ControlId id) => Active != null && Active.MoveTo(id);
 
         public static object FocusedStopKey => Active?.FocusedStopKey;
 

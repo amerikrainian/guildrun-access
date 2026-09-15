@@ -21,18 +21,33 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The "board" stop, in one of two shapes. While placing: the grid, every cell as a node (enemy rows
     /// first, then the player's, each side a region), Enter dropping a picked-up hero or opening the
-    /// occupant's menu, Shift+arrows stepping the hero under focus one cell. During a fight: every unit
-    /// with a health bar, heroes first, with health and mana.
+    /// occupant's menu. During a fight: every unit with a health bar, heroes first, with health and
+    /// mana. The game's board is a pointy-top hex grid (Unity's hexagon layout, odd rows half a cell to
+    /// the right), so a cell has no neighbour straight up or down: Q E A D Z C step focus to its six
+    /// neighbours and Shift+the same letter moves the hero under focus there, while the arrows jump
+    /// between units (Up toward the enemies, Down toward the heroes, Left and Right round a side) and
+    /// Home and End to a side's first and last. The board's nodes carry no edges of their own: the
+    /// navigator hands an unwired arrow to the screen, and this section answers it.
     /// </summary>
     internal sealed class BoardSection : ScreenSection
     {
-        /// <summary>The action keys of the Shift+arrow moves (bound in the module's input registration).</summary>
-        public const string MoveUp = "run.move.up";
-        public const string MoveDown = "run.move.down";
+        /// <summary>The action keys of the hex steps and of the Shift+letter moves (bound in the module's
+        /// input registration to Q E A D Z C, the hexagon's own layout on the keyboard).</summary>
+        public const string StepUpLeft = "run.hex.upleft";
+        public const string StepUpRight = "run.hex.upright";
+        public const string StepLeft = "run.hex.left";
+        public const string StepRight = "run.hex.right";
+        public const string StepDownLeft = "run.hex.downleft";
+        public const string StepDownRight = "run.hex.downright";
+        public const string MoveUpLeft = "run.move.upleft";
+        public const string MoveUpRight = "run.move.upright";
         public const string MoveLeft = "run.move.left";
         public const string MoveRight = "run.move.right";
+        public const string MoveDownLeft = "run.move.downleft";
+        public const string MoveDownRight = "run.move.downright";
 
         private const string CellPrefix = "run:cell:";
+        private const string UnitPrefix = "run:unit:";
 
         private readonly HeroActions _actions;
 
@@ -68,12 +83,12 @@ namespace GuildrunAccess.Module.GameRun
             b.PopContext();
         }
 
+        // Raw nodes, no row wiring: on a hex grid the arrows are not a cell's neighbours (the hex keys
+        // are) but jumps between units, answered in GetActions.
         private void AddGridRow(GraphBuilder b, int width, int y)
         {
-            b.StartRow("grid");
             for (int x = 0; x < width; x++)
-                b.AddItem(CellId(new Vector2Int(x, y)), CellNode(new Vector2Int(x, y)));
-            b.EndRow();
+                b.AddNode(CellId(new Vector2Int(x, y)), CellNode(new Vector2Int(x, y)));
         }
 
         private static ControlId CellId(Vector2Int cell) => ControlId.Structural(CellPrefix + cell.x + ":" + cell.y);
@@ -91,26 +106,171 @@ namespace GuildrunAccess.Module.GameRun
             return true;
         }
 
+        /// <summary>Whether the letters are the board's keys right now: a grid cell is focused during
+        /// placement (the run screen's type-ahead search stands down then).</summary>
+        internal static bool OwnsLetters() => RunData.Placing() && TryFocusedCell(out _);
+
         public override IEnumerable<ElementAction> GetActions()
         {
-            // Shift+arrows: the hero under focus steps one cell that way (trading places with a hero
-            // standing there, as a drag would), focus following it, the new cell's coordinates the
-            // whole announcement. Off the grid, into the enemy rows, from an empty or enemy cell, or
-            // outside placement: nothing happens and nothing is said.
-            yield return new ElementAction(MoveUp, Strings.Get("bind.run.move.up"), _ => Nudge(0, 1));
-            yield return new ElementAction(MoveDown, Strings.Get("bind.run.move.down"), _ => Nudge(0, -1));
-            yield return new ElementAction(MoveLeft, Strings.Get("bind.run.move.left"), _ => Nudge(-1, 0));
-            yield return new ElementAction(MoveRight, Strings.Get("bind.run.move.right"), _ => Nudge(1, 0));
+            // The board's keys answer only while focus rests on one of its nodes: anywhere else on the
+            // HUD they are not offered, so the arrows keep their meaning there and the letters go to the
+            // type-ahead search.
+            if (RunData.Placing())
+            {
+                if (!TryFocusedCell(out var cell)) yield break;
+                // Q E A D Z C: focus steps to the cell's neighbour that way, announced as any move; off
+                // the grid nothing happens and nothing is said, as at a list's edge.
+                yield return new ElementAction(StepUpLeft, Strings.Get("bind.run.hex.upleft"), _ => Step(cell, HexDir.UpLeft));
+                yield return new ElementAction(StepUpRight, Strings.Get("bind.run.hex.upright"), _ => Step(cell, HexDir.UpRight));
+                yield return new ElementAction(StepLeft, Strings.Get("bind.run.hex.left"), _ => Step(cell, HexDir.Left));
+                yield return new ElementAction(StepRight, Strings.Get("bind.run.hex.right"), _ => Step(cell, HexDir.Right));
+                yield return new ElementAction(StepDownLeft, Strings.Get("bind.run.hex.downleft"), _ => Step(cell, HexDir.DownLeft));
+                yield return new ElementAction(StepDownRight, Strings.Get("bind.run.hex.downright"), _ => Step(cell, HexDir.DownRight));
+                // Arrows: jumps between units. Up from the heroes' side lands on the enemy nearest
+                // straight ahead (the closest column, then the closest row), Down from the enemies' side
+                // on the hero; Left and Right cycle the focused side's units in reading order (from an
+                // empty cell, the next one along), Home and End its first and last. Nothing that way
+                // (the far edge of a side, a side without units): silent, an edge.
+                yield return new ElementAction(UiActions.Up, Strings.Get("bind.ui.up"), _ => SwitchSide(cell, toEnemies: true));
+                yield return new ElementAction(UiActions.Down, Strings.Get("bind.ui.down"), _ => SwitchSide(cell, toEnemies: false));
+                yield return new ElementAction(UiActions.Left, Strings.Get("bind.ui.left"), _ => CycleUnit(cell, -1));
+                yield return new ElementAction(UiActions.Right, Strings.Get("bind.ui.right"), _ => CycleUnit(cell, 1));
+                yield return new ElementAction(UiActions.Home, Strings.Get("bind.ui.home"), _ => JumpUnit(cell, first: true));
+                yield return new ElementAction(UiActions.End, Strings.Get("bind.ui.end"), _ => JumpUnit(cell, first: false));
+                // Shift+Q E A D Z C: the hero under focus steps one cell that way (trading places with a
+                // hero standing there, as a drag would), focus following it, the new cell's coordinates
+                // the whole announcement. Off the grid, into the enemy rows, or from an empty or enemy
+                // cell: nothing happens and nothing is said.
+                yield return new ElementAction(MoveUpLeft, Strings.Get("bind.run.move.upleft"), _ => Nudge(cell, HexDir.UpLeft));
+                yield return new ElementAction(MoveUpRight, Strings.Get("bind.run.move.upright"), _ => Nudge(cell, HexDir.UpRight));
+                yield return new ElementAction(MoveLeft, Strings.Get("bind.run.move.left"), _ => Nudge(cell, HexDir.Left));
+                yield return new ElementAction(MoveRight, Strings.Get("bind.run.move.right"), _ => Nudge(cell, HexDir.Right));
+                yield return new ElementAction(MoveDownLeft, Strings.Get("bind.run.move.downleft"), _ => Nudge(cell, HexDir.DownLeft));
+                yield return new ElementAction(MoveDownRight, Strings.Get("bind.run.move.downright"), _ => Nudge(cell, HexDir.DownRight));
+                yield break;
+            }
+            // A fight: the same arrows over the units, a side at a time (heroes then enemies, each in
+            // the battlefield's order). Up from a hero is the enemy at the same place in its row (the
+            // last when there are fewer), Down from an enemy the hero.
+            if (!FocusedUnitKey(out _)) yield break;
+            var units = Units();
+            int at = FocusedUnitIndex(units);
+            if (at < 0) yield break;
+            yield return new ElementAction(UiActions.Up, Strings.Get("bind.ui.up"), _ => SwitchFightSide(units, at, toEnemies: true));
+            yield return new ElementAction(UiActions.Down, Strings.Get("bind.ui.down"), _ => SwitchFightSide(units, at, toEnemies: false));
+            yield return new ElementAction(UiActions.Left, Strings.Get("bind.ui.left"), _ => CycleFightUnit(units, at, -1));
+            yield return new ElementAction(UiActions.Right, Strings.Get("bind.ui.right"), _ => CycleFightUnit(units, at, 1));
+            yield return new ElementAction(UiActions.Home, Strings.Get("bind.ui.home"), _ => JumpFightUnit(units, at, first: true));
+            yield return new ElementAction(UiActions.End, Strings.Get("bind.ui.end"), _ => JumpFightUnit(units, at, first: false));
         }
 
-        private static void Nudge(int dx, int dy)
+        // ---- the grid's keys ----
+
+        private static void Step(Vector2Int from, HexDir dir)
         {
-            if (!RunData.Placing() || !TryFocusedCell(out var from) || !RunData.TryHeroAt(from, out _)) return;
-            var to = new Vector2Int(from.x + dx, from.y + dy);
+            HexGrid.Neighbor(from.x, from.y, dir, out int x, out int y);
+            var to = new Vector2Int(x, y);
+            if (OnGrid(to)) Navigation.MoveTo(CellId(to));
+        }
+
+        private static void Nudge(Vector2Int from, HexDir dir)
+        {
+            if (!RunData.TryHeroAt(from, out _)) return;
+            HexGrid.Neighbor(from.x, from.y, dir, out int x, out int y);
+            var to = new Vector2Int(x, y);
             if (!RunData.IsPlayerCell(to)) return;
             if (!RunData.SwapBoard(from, to)) { Speech.Say(Strings.RunMoveFailed, interrupt: true); return; }
             Navigation.FocusNode(CellId(to), announce: false);
             Speech.Say(RunLabels.CellName(to), interrupt: true);
+        }
+
+        // Up from the heroes' side, Down from the enemies': the unit of the other side nearest straight
+        // ahead, by column (the odd rows' half-cell shift counted) and then by row.
+        private static void SwitchSide(Vector2Int from, bool toEnemies)
+        {
+            if (RunData.IsPlayerCell(from) != toEnemies) return;
+            bool heroes = !toEnemies;
+            float column = HexGrid.Column(from.x, from.y);
+            bool found = false;
+            Vector2Int best = default;
+            float bestDx = 0f;
+            int bestDy = 0;
+            foreach (var cell in SideCells(heroes))
+            {
+                if (!Occupied(cell, heroes)) continue;
+                float dx = Math.Abs(HexGrid.Column(cell.x, cell.y) - column);
+                int dy = Math.Abs(cell.y - from.y);
+                if (found && (dx > bestDx || (dx == bestDx && dy >= bestDy))) continue;
+                best = cell;
+                bestDx = dx;
+                bestDy = dy;
+                found = true;
+            }
+            if (found) Navigation.MoveTo(CellId(best));
+        }
+
+        // Left and Right: the next unit of the focused cell's side that way in reading order, round the
+        // ends; the focused cell itself is never the answer, so a side's lone unit stays put, silent.
+        private static void CycleUnit(Vector2Int from, int dir)
+        {
+            bool heroes = RunData.IsPlayerCell(from);
+            var cells = SideCells(heroes);
+            int at = IndexOf(cells, from);
+            int n = cells.Count;
+            if (at < 0) return;
+            for (int i = 1; i < n; i++)
+            {
+                var cell = cells[((at + dir * i) % n + n) % n];
+                if (Occupied(cell, heroes)) { Navigation.MoveTo(CellId(cell)); return; }
+            }
+        }
+
+        // Home and End: the first and last unit of the focused cell's side in reading order.
+        private static void JumpUnit(Vector2Int from, bool first)
+        {
+            bool heroes = RunData.IsPlayerCell(from);
+            var cells = SideCells(heroes);
+            for (int i = 0; i < cells.Count; i++)
+            {
+                var cell = cells[first ? i : cells.Count - 1 - i];
+                if (Occupied(cell, heroes)) { Navigation.MoveTo(CellId(cell)); return; }
+            }
+        }
+
+        // A side's cells in the grid's reading order (the row farthest from the player first, left to
+        // right): the order Left and Right cycle its units in.
+        private static List<Vector2Int> SideCells(bool heroes)
+        {
+            var cells = new List<Vector2Int>();
+            var board = RunData.Board();
+            if (board == null) return cells;
+            int w, h;
+            try { w = board.BoardWidth; h = board.BoardHeight; }
+            catch (Exception) { return cells; }
+            int playerRows = PlayerRows(h);
+            int top = heroes ? playerRows - 1 : h - 1, bottom = heroes ? 0 : playerRows;
+            for (int y = top; y >= bottom; y--)
+                for (int x = 0; x < w; x++) cells.Add(new Vector2Int(x, y));
+            return cells;
+        }
+
+        // Only heroes stand on the player's side and only enemies on theirs: one registry read per cell.
+        private static bool Occupied(Vector2Int cell, bool heroes)
+            => heroes ? RunData.TryHeroAt(cell, out _) : RunData.TryEnemyAt(cell, out _);
+
+        private static int IndexOf(List<Vector2Int> cells, Vector2Int cell)
+        {
+            for (int i = 0; i < cells.Count; i++)
+                if (cells[i].x == cell.x && cells[i].y == cell.y) return i;
+            return -1;
+        }
+
+        private static bool OnGrid(Vector2Int cell)
+        {
+            var board = RunData.Board();
+            if (board == null || cell.x < 0 || cell.y < 0) return false;
+            try { return cell.x < board.BoardWidth && cell.y < board.BoardHeight; }
+            catch (Exception) { return false; }
         }
 
         // How many rows from the bottom belong to the player (the placeable range).
@@ -122,6 +282,59 @@ namespace GuildrunAccess.Module.GameRun
                 else break;
             return rows;
         }
+
+        // ---- the battlefield's keys ----
+
+        // The focused node's unit, by the bar instance id in its key; false off the battlefield.
+        private static bool FocusedUnitKey(out int instance)
+        {
+            instance = 0;
+            var key = Navigation.FocusedNode?.Id.StructuralKey as string;
+            return key != null && key.StartsWith(UnitPrefix, StringComparison.Ordinal)
+                && int.TryParse(key.Substring(UnitPrefix.Length), out instance);
+        }
+
+        private static int FocusedUnitIndex(List<Unit> units)
+        {
+            if (!FocusedUnitKey(out int instance)) return -1;
+            for (int i = 0; i < units.Count; i++)
+                if (units[i].Bar.GetInstanceID() == instance) return i;
+            return -1;
+        }
+
+        // The units of one side are contiguous in the battlefield's order (heroes first).
+        private static void SideRange(List<Unit> units, bool heroes, out int start, out int count)
+        {
+            start = 0;
+            count = 0;
+            for (int i = 0; i < units.Count; i++)
+                if (units[i].IsHero == heroes) { if (count == 0) start = i; count++; }
+        }
+
+        private static void SwitchFightSide(List<Unit> units, int at, bool toEnemies)
+        {
+            if (units[at].IsHero != toEnemies) return;
+            SideRange(units, units[at].IsHero, out int from, out _);
+            SideRange(units, !units[at].IsHero, out int start, out int count);
+            if (count == 0) return;
+            Navigation.MoveTo(UnitId(units[start + Math.Min(at - from, count - 1)]));
+        }
+
+        private static void CycleFightUnit(List<Unit> units, int at, int dir)
+        {
+            SideRange(units, units[at].IsHero, out int start, out int count);
+            if (count < 2) return;
+            Navigation.MoveTo(UnitId(units[start + ((at - start + dir) % count + count) % count]));
+        }
+
+        private static void JumpFightUnit(List<Unit> units, int at, bool first)
+        {
+            SideRange(units, units[at].IsHero, out int start, out int count);
+            if (count == 0) return;
+            Navigation.MoveTo(UnitId(units[first ? start : start + count - 1]));
+        }
+
+        private static ControlId UnitId(Unit u) => ControlId.Structural(UnitPrefix + u.Bar.GetInstanceID());
 
         // "Pimenta, wearing Freezing Tome, 5, 1" / "Snake, 3, 6" / "empty, 1, 3": column then row on
         // the game's one grid, the container saying whose side it is.
@@ -332,17 +545,23 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         // An empty battlefield declares nothing: the run screen is not active then (a fight has just
-        // ended, or the HUD is between panels), so there is no landing to announce.
+        // ended, or the HUD is between panels), so there is no landing to announce. Raw nodes, heroes
+        // then enemies, each side a region: the arrows are answered in GetActions, and a unit speaks its
+        // place within its side itself (a raw node gets no stamped position).
         private void BuildBattlefield(GraphBuilder b)
         {
             var units = Units();
             if (units.Count == 0) return;
+            SideRange(units, heroes: true, out _, out int heroCount);
             b.BeginStop("board");
             b.PushContext(Strings.RunBoard, Strings.RoleList);
             for (int i = 0; i < units.Count; i++)
             {
                 var u = units[i];
-                b.AddItem(ControlId.Structural("run:unit:" + u.Bar.GetInstanceID()), new NodeVtable
+                if (i == 0 || units[i - 1].IsHero != u.IsHero) b.SetRegion(u.IsHero ? "run:board:heroes" : "run:board:enemies");
+                int index = u.IsHero ? i + 1 : i - heroCount + 1;
+                int count = u.IsHero ? heroCount : units.Count - heroCount;
+                b.AddNode(UnitId(u), new NodeVtable
                 {
                     // Units fall all through a fight: when the focused one does, focus slides to a
                     // neighbour without reading it out (the death is in the battle events log).
@@ -357,6 +576,8 @@ namespace GuildrunAccess.Module.GameRun
                         new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
                         // Mana regenerates all fight long: it rides along in a re-read but never causes one.
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value) { LiveReadoutIgnore = true },
+                        // "2 of 3" within its side, under the same setting as a stamped position.
+                        new NodeAnnouncement(() => GraphAnnouncer.PositionText != null ? GraphAnnouncer.PositionText(index, count) : null, kind: AnnouncementKinds.Position) { LiveReadoutIgnore = true },
                     },
                     SearchText = () => u.Name,
                     // Landing shows the unit's card in the sidebar, as hovering it does; the buffers read
@@ -366,6 +587,7 @@ namespace GuildrunAccess.Module.GameRun
                     SideLines = HeroLines.Side(() => UnitHeroLines(u), () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
                 });
             }
+            b.SetRegion(null);
             b.PopContext();
         }
 

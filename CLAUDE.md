@@ -219,10 +219,15 @@ runs; spoken text is still captured. The game already runs in the background whe
 Arrows navigate, Tab/Shift+Tab cycle control groups, Enter activates, Backspace is the secondary
 action, Escape backs out, Home/End jump, Alt+Up/Down jump sections, typing letters searches the
 focused group. Ctrl+arrows review the buffers (below). Space is unbound: nothing is read on demand
-by a key; everything a control carries beyond its focus line waits in a buffer. Shift+arrows on the
-placement board move the focused hero one cell (`BoardSection`'s own actions: a UI key the
-navigator has no meaning for is offered to the focused screen by its action key through
-`Screen.InvokeAction` before it falls through to the action's handler).
+by a key; everything a control carries beyond its focus line waits in a buffer. The battle board is a
+pointy-top hex grid (Unity's hexagon `Grid`, odd rows half a cell to the right, no cell straight up
+or down): Q E A D Z C step focus to the focused cell's six neighbours (`Core/UI/HexGrid`), Shift+the
+same letter moves the focused hero there, the arrows jump between units (Up toward the enemies, Down
+toward the heroes, Left/Right round a side, Home/End to its ends; the same over the units of a
+fight), and type-ahead stands down while a cell is focused. The board's nodes are raw, with no edges:
+a UI key the navigator has no meaning for, or an arrow/Home/End the graph has no edge for, is offered
+to the focused screen by its action key through `Screen.InvokeAction` before it falls through to the
+action's handler, and `Navigation.MoveTo` lands on and announces the answer as a move.
 
 ## Buffers (the Harkest Dungeon pattern: `Core/Buffers`, `Module/UI/Buffers`)
 Review lists for the information a focus announcement leaves out, read live on every keypress:

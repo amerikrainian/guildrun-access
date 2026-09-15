@@ -113,12 +113,22 @@ namespace GuildrunAccess.Module
             InputManager.Register(UiActions.End, "Jump to last", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.End));
             InputManager.Register(UiActions.RegionPrev, "Previous section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, alt: true));
             InputManager.Register(UiActions.RegionNext, "Next section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, alt: true));
-            // The run's board: Shift+arrows step the focused hero one cell (the board section answers
-            // them; anywhere else the keys do nothing).
-            InputManager.Register(BoardSection.MoveUp, "Move hero up", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, shift: true));
-            InputManager.Register(BoardSection.MoveDown, "Move hero down", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, shift: true));
-            InputManager.Register(BoardSection.MoveLeft, "Move hero left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.LeftArrow, shift: true));
-            InputManager.Register(BoardSection.MoveRight, "Move hero right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.RightArrow, shift: true));
+            // The run's board, a pointy-top hex grid: Q E A D Z C step focus to the focused cell's six
+            // neighbours (the letters' layout on the keyboard is the hexagon's: no cell lies straight up
+            // or down), Shift+the same letter moves the focused hero there. The board section answers
+            // them while a cell is focused; anywhere else the letters are the type-ahead search's.
+            InputManager.Register(BoardSection.StepUpLeft, "Cell up left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Q)).Repeating();
+            InputManager.Register(BoardSection.StepUpRight, "Cell up right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.E)).Repeating();
+            InputManager.Register(BoardSection.StepLeft, "Cell left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.A)).Repeating();
+            InputManager.Register(BoardSection.StepRight, "Cell right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.D)).Repeating();
+            InputManager.Register(BoardSection.StepDownLeft, "Cell down left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Z)).Repeating();
+            InputManager.Register(BoardSection.StepDownRight, "Cell down right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.C)).Repeating();
+            InputManager.Register(BoardSection.MoveUpLeft, "Move hero up left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Q, shift: true));
+            InputManager.Register(BoardSection.MoveUpRight, "Move hero up right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.E, shift: true));
+            InputManager.Register(BoardSection.MoveLeft, "Move hero left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.A, shift: true));
+            InputManager.Register(BoardSection.MoveRight, "Move hero right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.D, shift: true));
+            InputManager.Register(BoardSection.MoveDownLeft, "Move hero down left", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.Z, shift: true));
+            InputManager.Register(BoardSection.MoveDownRight, "Move hero down right", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.C, shift: true));
             // Buffer review, the Harkest Dungeon keys: Ctrl+Left/Right switch buffers, Ctrl+Up/Down step lines.
             Buffers.Init();
             InputManager.Register("buffer.next", "Next buffer", InputCategory.UI, Buffers.Controls.NextBuffer).AddBinding(new KeyboardBinding(KeyCode.RightArrow, ctrl: true));

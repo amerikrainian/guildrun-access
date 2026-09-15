@@ -26,7 +26,13 @@ Requires the Steam version of the game on Windows and a screen reader (NVDA, JAW
 Focus mode is on at launch (Ctrl+Shift+A toggles it). Arrows navigate, Tab and Shift+Tab cycle
 control groups, Enter activates, Backspace is the secondary action, Escape backs out, Home and End
 jump, Alt+Up and Alt+Down jump sections, and typing letters searches the focused group.
-On the placement board, Shift+arrows move the focused hero one cell, speaking its new coordinates.
+The battle board is a hex grid with the points of the hexes facing up and down, so no cell lies straight
+above or below another. On it, Q E A D Z C step to the focused cell's six neighbours the way the letters
+sit on the keyboard (A and D along the row, Q and E to the row ahead, Z and C to the row behind), and
+Shift with the same letter moves the focused hero there, speaking its new coordinates. The arrows jump
+between units instead: Up to the enemy nearest ahead, Down back to a hero, Left and Right round the
+units of that side, Home and End to its first and last. During a fight the arrows work the same way over
+the fighting units.
 Ctrl+Shift+M opens the mod menu with its settings and key help.
 
 Everything a control carries beyond its focus line waits in the buffers: Ctrl+Right and Ctrl+Left

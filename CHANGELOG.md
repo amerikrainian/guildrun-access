@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.0.4
+
+- The battle board is read as the hex grid it is with the Q E A D Z C scheme; arrows move between groups with up/down and units within said group. Shift alongside letters move heroes.
+
 ## V0.0.3
 
 - The main menu no longer reads as eight entries for a moment before the game hides the ones it does not offer.

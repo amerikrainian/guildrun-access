@@ -131,6 +131,22 @@ namespace GuildrunAccess.Core.UI
 
         public override object FocusedStopKey => _graph?.CurrentNode?.StopKey;
 
+        public override bool MoveTo(ControlId id)
+        {
+            if (id == null || _graph == null || !_graph.Rerender()) return false;
+            var from = _graph.CurrentNode;
+            if (from != null && from.Id.Equals(id)) return false;
+            if (!_graph.Focus(id)) return false;
+            var node = _graph.CurrentNode;
+            if (node == null) return false;
+            PlayHover(node);
+            FireFocus(node);
+            Speak(ComposeMove(from, node, entry: false), interrupt: true);
+            _lastSpokenKey = node.Id;
+            _lastSpokenNode = node;
+            return true;
+        }
+
         /// <summary>The live render + focused node id (dev inspection).</summary>
         public GraphRender CurrentRender => _graph?.Current;
         public ControlId FocusedNodeId => _graph?.CurrentNode?.Id;
@@ -361,14 +377,16 @@ namespace GuildrunAccess.Core.UI
 
             switch (action.Key)
             {
-                case UiActions.Up: return Arrow(NavDirection.Up);
-                case UiActions.Down: return Arrow(NavDirection.Down);
-                case UiActions.Left: return Arrow(NavDirection.Left);
-                case UiActions.Right: return Arrow(NavDirection.Right);
+                // An arrow, Home or End the graph has no edge for is the focused screen's to answer by
+                // the action's key (the run HUD's board jumps between units); unanswered, it bubbles.
+                case UiActions.Up: return Arrow(NavDirection.Up) || ScreenAnswers(action.Key);
+                case UiActions.Down: return Arrow(NavDirection.Down) || ScreenAnswers(action.Key);
+                case UiActions.Left: return Arrow(NavDirection.Left) || ScreenAnswers(action.Key);
+                case UiActions.Right: return Arrow(NavDirection.Right) || ScreenAnswers(action.Key);
                 case UiActions.Next: return Tab(1);
                 case UiActions.Prev: return Tab(-1);
-                case UiActions.Home: return JumpEdge(first: true);
-                case UiActions.End: return JumpEdge(first: false);
+                case UiActions.Home: return JumpEdge(first: true) || ScreenAnswers(action.Key);
+                case UiActions.End: return JumpEdge(first: false) || ScreenAnswers(action.Key);
                 // Region jumps consume only when the focused node is IN a region; elsewhere Ctrl+arrows bubble.
                 case UiActions.RegionPrev: return _graph?.CurrentNode?.RegionKey != null && RegionJump(-1);
                 case UiActions.RegionNext: return _graph?.CurrentNode?.RegionKey != null && RegionJump(1);
@@ -416,6 +434,8 @@ namespace GuildrunAccess.Core.UI
                     return Screen != null && Screen.InvokeAction(action.Key);
             }
         }
+
+        private bool ScreenAnswers(string actionKey) => Screen != null && Screen.InvokeAction(actionKey);
 
         private static GraphDir ToDir(NavDirection dir)
         {
@@ -562,10 +582,11 @@ namespace GuildrunAccess.Core.UI
                 return true;
             }
 
-            // First/last along the vertical axis of the current structure.
+            // First/last along the vertical axis of the current structure. Already there, or nothing
+            // wired that way: not consumed, so the screen may answer the key itself.
             var move = _graph.MoveToEdge(first ? GraphDir.Up : GraphDir.Down);
             if (move.Moved) AnnounceMove(move);
-            return true;
+            return move.Moved;
         }
 
         private bool RegionJump(int dir)
