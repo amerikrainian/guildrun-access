@@ -56,6 +56,12 @@ failure is invisible to the player, so every catch logs, and nothing caches game
 - `holders.py Type [--game-only]` — who holds a field of that type (how to reach a service or view
   from a scene scan) and which methods take it (what to hook for a notification or event).
 - `census.py [--report]` — rebuild `types.tsv`; `--report` is the obfuscation/name-quality census.
+- `disasm.py Type.Method [...] [--calls]` (run with `uv run --with capstone python ...`) — the native
+  body of a game method from `GameAssembly.dll` at the dump's RVA, calls resolved to dump names and
+  field reads annotated; `--calls` is the dozen-line shape. The dump has no bodies: this is how a
+  game rule (what Quit to Menu does, what gates a save) is read without guessing. Lambdas and
+  coroutines by their dump names (`NavigationUIController.<OnStart>b__50_8`,
+  `RunSessionService.<GoBackToMenuAsync>d__39.MoveNext`).
 - `dev.py <cmd>` — the dev server from the command line: `launch`, `kill`, `reload`, `nav`, `input
   ui.down ui.activate`, `speech --tail 20`, `log --grep X`, `gui --grep RE --context 3`, `eval file.cs`,
   `wait "<bool expr>"`, `typeinfo Name`, `actions`, `module`, `screenshot out.png`, `click [x y]`
