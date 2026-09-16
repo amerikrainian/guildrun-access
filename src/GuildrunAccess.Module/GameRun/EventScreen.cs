@@ -4,6 +4,7 @@ using Ember.Scopes.Event.UI.ChoiceButtons;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Screens;
 using GuildrunAccess.Core.Strings;
+using GuildrunAccess.Core.Text;
 using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.UI;
 using GuildrunAccess.Module.Interop;
@@ -186,7 +187,7 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement>
                 {
                     GameNodes.LabelPart(() => view._buttonText != null ? view._buttonText.text : null),
-                    new NodeAnnouncement(() => item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null, kind: AnnouncementKinds.Value),
+                    new NodeAnnouncement(() => Unnamed(view._buttonText, item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null), kind: AnnouncementKinds.Value),
                     GameNodes.DisabledPart(() => button == null || button.interactable),
                 },
                 SearchText = () => view._buttonText != null ? view._buttonText.text : null,
@@ -194,6 +195,17 @@ namespace GuildrunAccess.Module.GameRun
                 Details = () => item != null ? TooltipReader.Lines(item.TooltipRaycastTarget)
                     : relic != null ? TooltipReader.Lines(relic._tooltipRaycastTarget) : null,
             };
+        }
+
+        // An offered item's or relic's name when the caption does not already say it ("Gain Hasty Vest"
+        // names its vest, "Take the armor" would not): the tooltip's heading names it in the buffer either
+        // way, so the name is never lost, only not said twice.
+        private static string Unnamed(TMPro.TMP_Text caption, string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return null;
+            string text = caption != null ? TextUtil.StripRichText(caption.text) : null;
+            string plain = TextUtil.StripRichText(name);
+            return !string.IsNullOrEmpty(text) && text.IndexOf(plain, System.StringComparison.OrdinalIgnoreCase) >= 0 ? null : name;
         }
 
         // The outcome summary: its text plus the item, relic or hero it shows.
@@ -206,7 +218,7 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement>
                 {
                     GameNodes.LabelPart(() => summary._text != null ? summary._text.text : null),
-                    new NodeAnnouncement(() => item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null, kind: AnnouncementKinds.Value),
+                    new NodeAnnouncement(() => Unnamed(summary._text, item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null), kind: AnnouncementKinds.Value),
                 },
                 SearchText = () => summary._text != null ? summary._text.text : null,
                 Details = () => item != null ? TooltipReader.Lines(item.TooltipRaycastTarget)
