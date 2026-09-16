@@ -19,6 +19,9 @@ namespace GuildrunAccess.Module.GameRun
 
         protected RunPanelScreen()
         {
+            // The panel's stops and the HUD sections under them: Tab past the last comes round to the
+            // first, as on the run HUD.
+            Wrap = true;
             Actions = Add(new HeroActions()); // no nodes; its landing and pop cleanup ride the lifecycle
         }
 
