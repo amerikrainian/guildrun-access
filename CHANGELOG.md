@@ -6,6 +6,7 @@
 - Ctrl+S speaks the shards. In the shop, Ctrl+R rerolls and Ctrl+F freezes.
 - The party and enemies buffers list each unit's status icons with their numbers/stacks.
 - Compendium hero pages are no longer groupped under their tabs, so you can read their abilities.
+- We no longer duplicate choices for rank A and above. Gotta love fancy UI rendering.
 
 ## V0.0.4
 

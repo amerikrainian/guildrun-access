@@ -25,7 +25,10 @@ namespace GuildrunAccess.Module.GameRun
     /// hero's line (the shared hero grid, its card in the buffers), the choices as bare buttons
     /// carrying name, kind and description (the full tooltip in the control buffer), and Continue
     /// once the choice is made, landed on as it appears. Choosing goes through the choice view's own
-    /// click handler.
+    /// click handler: the view type the shown picker drives, since the rank modifier prefab carries a
+    /// <see cref="SpecializationChoiceView"/> on the same object as its
+    /// <see cref="RankModifierChoiceView"/> (the same texts wired to both, only the latter's click
+    /// subscribed), so listing every view of both types read each modifier twice, the first copy dead.
     /// </summary>
     public sealed class PickerScreen : Screen
     {
@@ -79,19 +82,27 @@ namespace GuildrunAccess.Module.GameRun
                 HeroCardNodes.AddGrid(b, "picker:hero", new List<HeroCardView> { card }, i => null, null);
 
             // The choices, specializations or rank modifiers, whichever this picker offers, bare: no
-            // list context and no counts, each choice its own caption.
+            // list context and no counts, each choice its own caption. Only the view type this picker
+            // drives (each picker instantiates its own prefab and subscribes its own view's click): the
+            // modifier prefab's twin SpecializationChoiceView is inert.
             int n = 0;
-            foreach (var choice in picker.GetComponentsInChildren<SpecializationChoiceView>(false))
+            if (picker.TryCast<SpecializationPickerView>() != null)
             {
-                if (choice == null || !choice.gameObject.activeInHierarchy) continue;
-                n++;
-                b.AddItem(ControlId.Structural("picker:spec:" + choice.GetInstanceID()), Specialization(choice));
+                foreach (var choice in picker.GetComponentsInChildren<SpecializationChoiceView>(false))
+                {
+                    if (choice == null || !choice.gameObject.activeInHierarchy) continue;
+                    n++;
+                    b.AddItem(ControlId.Structural("picker:spec:" + choice.GetInstanceID()), Specialization(choice));
+                }
             }
-            foreach (var choice in picker.GetComponentsInChildren<RankModifierChoiceView>(false))
+            else
             {
-                if (choice == null || !choice.gameObject.activeInHierarchy) continue;
-                n++;
-                b.AddItem(ControlId.Structural("picker:mod:" + choice.GetInstanceID()), Modifier(choice));
+                foreach (var choice in picker.GetComponentsInChildren<RankModifierChoiceView>(false))
+                {
+                    if (choice == null || !choice.gameObject.activeInHierarchy) continue;
+                    n++;
+                    b.AddItem(ControlId.Structural("picker:mod:" + choice.GetInstanceID()), Modifier(choice));
+                }
             }
 
             // Continue once the choice is made; before the choices arrive (the picker animating in),
@@ -139,9 +150,13 @@ namespace GuildrunAccess.Module.GameRun
             return lines.Count > 0 ? lines : GameNodes.Lines(description != null ? description.text : null);
         }
 
-        // A rank modifier: "<name>, <description>", Enter picks it.
+        // A rank modifier: "<name>, Class Upgrade, <description>", Enter picks it. The kind is the card's
+        // subtitle, which the twin SpecializationChoiceView on the same object holds (the modifier view
+        // has no field for it); a card without one says nothing there.
         private static NodeVtable Modifier(RankModifierChoiceView choice)
         {
+            var twin = choice.GetComponent<SpecializationChoiceView>();
+            var subtitle = twin != null && twin._subtitleText != null ? twin._subtitleText.GetComponent<TMP_Text>() : null;
             return new NodeVtable
             {
                 ControlType = ControlTypes.Button,
@@ -149,6 +164,7 @@ namespace GuildrunAccess.Module.GameRun
                 {
                     GameNodes.LabelPart(() => choice._itemNameText != null && !string.IsNullOrWhiteSpace(choice._itemNameText.text)
                         ? choice._itemNameText.text : TooltipReader.Title(choice._tooltipRaycastTarget)),
+                    new NodeAnnouncement(() => subtitle != null && subtitle.isActiveAndEnabled ? subtitle.text : null, kind: AnnouncementKinds.Value),
                     GameNodes.TooltipPart(() => choice._modifierDescriptionText != null ? choice._modifierDescriptionText.text : null),
                 },
                 SearchText = () => choice._itemNameText != null ? choice._itemNameText.text : null,
