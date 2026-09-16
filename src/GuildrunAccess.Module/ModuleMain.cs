@@ -135,6 +135,24 @@ namespace GuildrunAccess.Module
             InputManager.Register("buffer.prev", "Previous buffer", InputCategory.UI, Buffers.Controls.PreviousBuffer).AddBinding(new KeyboardBinding(KeyCode.LeftArrow, ctrl: true));
             InputManager.Register("buffer.line.next", "Next buffer line", InputCategory.UI, Buffers.Controls.NextLine).AddBinding(new KeyboardBinding(KeyCode.UpArrow, ctrl: true)).Repeating();
             InputManager.Register("buffer.line.prev", "Previous buffer line", InputCategory.UI, Buffers.Controls.PreviousLine).AddBinding(new KeyboardBinding(KeyCode.DownArrow, ctrl: true)).Repeating();
+            // The glance keys: a digit speaks one fact group of the unit the focused control concerns,
+            // in place (UnitGlance); Shift+2, 3, 4 the same group with each stat's breakdown; Ctrl+S
+            // the run's shards. Digits and Ctrl chords never clash with the type-ahead search, which
+            // owns the bare letters.
+            Glance("glance.vitals", "Unit health, shield and mana", KeyCode.Alpha1, KeyCode.Keypad1, () => UnitGlance.Speak(UnitGlance.Group.Vitals));
+            Glance("glance.attack", "Unit attack, magic and defense", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.Speak(UnitGlance.Group.Attack));
+            Glance("glance.tempo", "Unit attack speed, crit, range and move speed", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.Speak(UnitGlance.Group.Tempo));
+            Glance("glance.sustain", "Unit regen, omnivamp and resistances", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.Speak(UnitGlance.Group.Sustain));
+            Glance("glance.statuses", "Unit statuses", KeyCode.Alpha5, KeyCode.Keypad5, () => UnitGlance.Speak(UnitGlance.Group.Statuses));
+            Glance("glance.target", "Unit target", KeyCode.Alpha6, KeyCode.Keypad6, () => UnitGlance.Speak(UnitGlance.Group.Target));
+            Glance("glance.attack.detail", "Unit attack, magic and defense, with breakdown", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.Speak(UnitGlance.Group.Attack, detail: true), shift: true);
+            Glance("glance.tempo.detail", "Unit attack speed, crit, range and move speed, with breakdown", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.Speak(UnitGlance.Group.Tempo, detail: true), shift: true);
+            Glance("glance.sustain.detail", "Unit regen, omnivamp and resistances, with breakdown", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.Speak(UnitGlance.Group.Sustain, detail: true), shift: true);
+            InputManager.Register("run.shards", "Shards", InputCategory.UI, RunGlance.Shards).AddBinding(new KeyboardBinding(KeyCode.S, ctrl: true));
+            // The shop's reroll and freeze, answered by the shop screen's own actions (ShopScreen) and
+            // by nothing else: no handler here.
+            InputManager.Register("shop.reroll", "Shop reroll", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.R, ctrl: true));
+            InputManager.Register("shop.freeze", "Shop freeze", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.F, ctrl: true));
 
             // Global: always live, so the player can hand the keyboard back to the game and reclaim it.
             InputManager.Register("mod.focus", "Toggle navigation", InputCategory.Global, ToggleFocus)
@@ -148,6 +166,14 @@ namespace GuildrunAccess.Module
             FocusMode.Toggle();
             Speech.Say(FocusMode.Active ? Strings.FocusOn : Strings.FocusOff, interrupt: true);
             if (FocusMode.Active) Navigation.AnnounceCurrent();
+        }
+
+        // A glance key on the digit row and the keypad alike.
+        private static void Glance(string key, string label, KeyCode digit, KeyCode keypad, Action speak, bool shift = false)
+        {
+            InputManager.Register(key, label, InputCategory.UI, speak)
+                .AddBinding(new KeyboardBinding(digit, shift: shift))
+                .AddBinding(new KeyboardBinding(keypad, shift: shift));
         }
 
         private static void RegisterScreens()
@@ -198,6 +224,7 @@ namespace GuildrunAccess.Module
             Safe(_tutorials.Tick, "tutorials");
             Safe(BattleEvents.Tick, "battle events");
             Safe(SyntheticMouse.Tick, "synthetic mouse");
+            Safe(Later.Tick, "later");
             Safe(Buffers.Tick, "buffers");
         }
 

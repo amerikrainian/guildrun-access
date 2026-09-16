@@ -228,7 +228,17 @@ runs; spoken text is still captured. The game already runs in the background whe
 Arrows navigate, Tab/Shift+Tab cycle control groups, Enter activates, Backspace is the secondary
 action, Escape backs out, Home/End jump, Alt+Up/Down jump sections, typing letters searches the
 focused group. Ctrl+arrows review the buffers (below). Space is unbound: nothing is read on demand
-by a key; everything a control carries beyond its focus line waits in a buffer. The battle board is a
+by a key; everything a control carries beyond its focus line waits in a buffer, except the glance
+keys: digits 1-6 speak one fact group of the unit the focused control concerns (`NodeVtable.Subject`,
+set wherever the hero buffer finds a hero; `GameRun/UnitGlance`), in place, focus unmoved: 1 vitals,
+2 attack/magic/defense, 3 attack speed/crit/range/move speed, 4 sustain (nonzero), 5 statuses, 6 the
+target; Shift+2/3/4 add each stat's breakdown. Live from the simulation entity and the bar while the
+unit stands on the board, else the registry sheet, else a data-less card's own panels (shop, picker).
+Read stats as the `CharacterStat` struct off `CharacterStatsComponent`'s properties, NEVER through
+the `IReadOnlyCharacterStat` proxy `GetStat` returns (it misreads the boxed struct: the value carries
+the type ordinal, base 0, IsIntValue false). Ctrl+S the shards (`RunGlance`); Ctrl+R/Ctrl+F reroll
+and freeze from anywhere on the shop (the shop section's `GetActions`; feedback deferred a few frames
+through `UI/Later`). Digits and Ctrl chords never clash with type-ahead; bare letters do. The battle board is a
 pointy-top hex grid (Unity's hexagon `Grid`, odd rows half a cell to the right, no cell straight up
 or down): Q E A D Z C step focus to the focused cell's six neighbours (`Core/UI/HexGrid`), Shift+the
 same letter moves the focused hero there, the arrows jump between units (Up toward the enemies, Down

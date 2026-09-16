@@ -94,6 +94,14 @@ namespace GuildrunAccess.Module.GameRun
 
         private static ControlId CellId(Vector2Int cell) => ControlId.Structural(CellPrefix + cell.x + ":" + cell.y);
 
+        // The glance keys' subject on a cell: its occupant's registry id, or nothing on an empty cell.
+        private static object CellSubject(Vector2Int cell)
+        {
+            if (RunData.TryHeroAt(cell, out var hero)) return hero;
+            if (RunData.TryEnemyAt(cell, out var enemy)) return enemy;
+            return null;
+        }
+
         // The cell under focus, from the focused node's key; false off the grid.
         private static bool TryFocusedCell(out Vector2Int cell)
         {
@@ -360,6 +368,7 @@ namespace GuildrunAccess.Module.GameRun
                 // review reads, without leaving the grid.
                 OnFocus = () => Peek(cell),
                 Details = () => CellDetails(cell),
+                Subject = () => CellSubject(cell),
                 SideLines = HeroLines.Side(() => CellHeroLines(cell),
                     () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? ItemNodes.ItemTooltips(view._itemSlotViews) : null; }),
             };
@@ -587,6 +596,7 @@ namespace GuildrunAccess.Module.GameRun
                     // it: the hero buffer as name, stats, abilities, the control buffer as the tooltips.
                     OnFocus = () => Peek(u.View),
                     Details = () => UnitDetails(u),
+                    Subject = () => u.View,
                     SideLines = HeroLines.Side(() => UnitHeroLines(u), () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
                 });
             }
@@ -609,7 +619,7 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         // A registry's views as an array (the value collection copied out: no interop enumerator).
-        private static Il2CppReferenceArray<CharacterViewController> ViewsOf<TKey>(
+        internal static Il2CppReferenceArray<CharacterViewController> ViewsOf<TKey>(
             Il2CppSystem.Collections.Generic.Dictionary<TKey, CharacterViewController> views)
         {
             try
@@ -711,7 +721,7 @@ namespace GuildrunAccess.Module.GameRun
             return views != null && views.TryGetValue(id, out c) ? BarOf(c) : null;
         }
 
-        private static HealthBarView BarOf(CharacterViewController c)
+        internal static HealthBarView BarOf(CharacterViewController c)
         {
             var battle = GameScopes.Controller<BattleUIController>();
             if (c == null || !c.gameObject.activeInHierarchy || battle == null || battle._healthBars == null) return null;
@@ -782,7 +792,7 @@ namespace GuildrunAccess.Module.GameRun
 
         private static string Number(int value) => value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
 
-        private static string Mana(HealthBarView bar)
+        internal static string Mana(HealthBarView bar)
         {
             var slider = bar._manaSlider;
             if (slider == null || !slider.gameObject.activeInHierarchy || slider.maxValue <= 0) return null;
@@ -795,7 +805,7 @@ namespace GuildrunAccess.Module.GameRun
         // the whole seconds left, which the game rewrites on the icon every tick since build
         // 25323618. The keys are copied out (no interop enumerator), so the order is the
         // dictionary's, not the drawn one.
-        private static List<string> Statuses(HealthBarView bar)
+        internal static List<string> Statuses(HealthBarView bar)
         {
             var lines = new List<string>();
             try

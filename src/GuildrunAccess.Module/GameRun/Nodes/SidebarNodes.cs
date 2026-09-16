@@ -75,6 +75,7 @@ namespace GuildrunAccess.Module.GameRun
                     },
                     SearchText = () => EnemyName(enemy),
                     Details = () => EnemyDetails(enemy),
+                    Subject = () => enemy,
                     SideLines = HeroLines.Side(() => EnemyRows(enemy), null),
                 });
                 b.PopContext();

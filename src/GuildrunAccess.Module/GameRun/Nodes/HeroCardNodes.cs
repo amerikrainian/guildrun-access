@@ -284,6 +284,7 @@ namespace GuildrunAccess.Module.GameRun
                 OnActivate = activate,
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => CardDetails(card, extras),
+                Subject = () => card,
                 SideLines = HeroLines.Side(() => CardRows(card, extras), () => ItemNodes.ItemTooltips(Slots(card))),
             };
         }
@@ -346,6 +347,7 @@ namespace GuildrunAccess.Module.GameRun
                 OnActivate = activate,
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => tooltip != null ? tooltip() : null,
+                Subject = () => card,
                 SideLines = HeroLines.Side(() => HeroLines.ForCard(card), () => ItemNodes.ItemTooltips(Slots(card))),
             };
         }

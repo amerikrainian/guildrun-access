@@ -70,6 +70,7 @@ namespace GuildrunAccess.Module.GameRun
                     // and the buffers read it.
                     OnFocus = () => { if (RunData.TryHeroId(view, out var id)) HeroActions.PeekHero(id); },
                     Details = () => SlotDetails(view),
+                    Subject = () => view,
                     SideLines = HeroLines.Side(() => SlotRows(view), () => ItemNodes.ItemTooltips(view._itemSlotViews)),
                 });
             }

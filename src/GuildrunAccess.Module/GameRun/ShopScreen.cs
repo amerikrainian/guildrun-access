@@ -11,6 +11,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
+using GuildrunAccess.Core;
+using GuildrunAccess.Core.Buffers;
+using Navigation = GuildrunAccess.Core.UI.Navigation;
 
 namespace GuildrunAccess.Module.GameRun
 {
@@ -117,6 +120,69 @@ namespace GuildrunAccess.Module.GameRun
                 if (GameNodes.IsShown(shop._proceedButton))
                     b.AddItem(ControlId.Structural("shop:proceed"), GameNodes.Button(shop._proceedButton));
                 b.PopContext();
+            }
+
+            // Ctrl+R and Ctrl+F: the reroll and freeze buttons pressed from anywhere on the shop,
+            // focus unmoved (the keys are registered without a handler of their own, so they reach
+            // the shop screen here and mean nothing elsewhere).
+            public override IEnumerable<ElementAction> GetActions()
+            {
+                if (Open() == null) yield break;
+                yield return new ElementAction("shop.reroll", Strings.Get("bind.shop.reroll"), _ => Reroll());
+                yield return new ElementAction("shop.freeze", Strings.Get("bind.shop.freeze"), _ => Freeze());
+            }
+
+            // The game redraws the offers over the frames after a reroll (its template rows linger
+            // for about six), so the feedback waits: the button's caption, which carries the new
+            // cost, then the focused control's line, since what stood under focus changed.
+            private static void Reroll()
+            {
+                var shop = Open();
+                if (shop == null || !Press(shop._rerollShopButton, Strings.ShopReroll)) return;
+                Later.Frames(12, () =>
+                {
+                    var s = Open();
+                    var parts = new List<string> { s != null ? Caption(s._rerollShopButton, Strings.ShopReroll) : Strings.ShopReroll };
+                    var node = Navigation.FocusedNode;
+                    if (node != null)
+                        foreach (var line in NodeLines.Lines(node)) { parts.Add(line); break; }
+                    Speech.Say(string.Join(", ", parts), interrupt: true);
+                }, "shop reroll feedback");
+            }
+
+            // The freeze toggle's caption a couple of frames on; the state from the shop's reader when
+            // the caption reads the same either way.
+            private static void Freeze()
+            {
+                var shop = Open();
+                if (shop == null) return;
+                string before = Caption(shop._freezeShopButton, Strings.ShopFreeze);
+                if (!Press(shop._freezeShopButton, Strings.ShopFreeze)) return;
+                Later.Frames(2, () =>
+                {
+                    var s = Open();
+                    if (s == null) return;
+                    string after = Caption(s._freezeShopButton, Strings.ShopFreeze);
+                    if (after != before) { Speech.Say(after, interrupt: true); return; }
+                    var reader = s._shopReader;
+                    bool frozen = reader != null && reader.IsShopFrozen != null && reader.IsShopFrozen.CurrentValue;
+                    Speech.Say(after + ", " + (frozen ? Strings.ShopFrozen : Strings.ShopUnfrozen), interrupt: true);
+                }, "shop freeze feedback");
+            }
+
+            // The button clicked as the game would. A hidden one is silent (the key means nothing
+            // then); a disabled one, a reroll the shards cannot pay, speaks its caption with the
+            // disabled state and stays.
+            private static bool Press(Button button, string fallback)
+            {
+                if (!GameNodes.IsShown(button)) return false;
+                if (!button.interactable)
+                {
+                    Speech.Say(Caption(button, fallback) + ", " + Strings.StateDisabled, interrupt: true);
+                    return false;
+                }
+                button.onClick.Invoke();
+                return true;
             }
         }
 

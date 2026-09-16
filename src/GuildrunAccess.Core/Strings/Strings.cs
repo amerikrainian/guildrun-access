@@ -112,6 +112,20 @@ namespace GuildrunAccess.Core.Strings
             D("bind.run.move.downleft", "Move hero down left"),
             D("bind.run.move.downright", "Move hero down right"),
             D("bind.mod.focus", "Toggle navigation"),
+            // The glance keys: a digit reads one fact group of the unit the focused control concerns,
+            // in place, focus unmoved; Shift+2, 3, 4 the same group with each stat's breakdown.
+            D("bind.glance.vitals", "Unit health, shield and mana"),
+            D("bind.glance.attack", "Unit attack, magic and defense"),
+            D("bind.glance.tempo", "Unit attack speed, crit, range and move speed"),
+            D("bind.glance.sustain", "Unit regen, omnivamp and resistances"),
+            D("bind.glance.statuses", "Unit statuses"),
+            D("bind.glance.target", "Unit target"),
+            D("bind.glance.attack.detail", "Unit attack, magic and defense, with breakdown"),
+            D("bind.glance.tempo.detail", "Unit attack speed, crit, range and move speed, with breakdown"),
+            D("bind.glance.sustain.detail", "Unit regen, omnivamp and resistances, with breakdown"),
+            D("bind.run.shards", "Shards"),
+            D("bind.shop.reroll", "Shop reroll"),
+            D("bind.shop.freeze", "Shop freeze"),
             D("bind.mod.reload", "Reload mod code"),
 
             // Screen names, spoken on entry.
@@ -164,7 +178,7 @@ namespace GuildrunAccess.Core.Strings
             D("run.unit_hero", "{0}, hero, {1}"),
             D("run.unit_enemy", "{0}, enemy, {1}"),
             // {0} = current mana, {1} = max mana.
-            D("run.mana", "mana {0} of {1}"),
+            D("run.mana", "mana {0}/{1}"),
             // {0} = shield points, spoken only while a shield is up.
             D("run.shield", "shield {0}"),
             // A status icon on a unit's bar, in the party and enemies buffers. {0} = the status,
@@ -172,6 +186,18 @@ namespace GuildrunAccess.Core.Strings
             D("run.status", "{0} {1}"),
             // ...or the seconds left on a timed one (Stun), which the game counts down on the icon.
             D("run.status_timed", "{0} {1} seconds"),
+            // The glance keys' lines. {0} = a name (health, mana), {1} = the current value, {2} = the max.
+            D("glance.pair", "{0} {1}/{2}"),
+            // {0} = a counter's title (the game's tooltip title), {1} = its value.
+            D("glance.value", "{0} {1}"),
+            // A stat's breakdown after its total, each part only when it is nonzero: {0} = the base
+            // value, the rank bonus, the other bonuses (items, relics, effects).
+            D("glance.base", "base {0}"),
+            D("glance.rank", "rank {0}"),
+            D("glance.bonus", "bonus {0}"),
+            // {0} = the unit a fighting unit is attacking right now.
+            D("glance.target", "attacking {0}"),
+            D("glance.no_target", "no target"),
             // {0} = slot number (1-based).
             D("run.party_slot", "party slot {0}"),
             D("run.reserve_slot", "reserve slot {0}"),
@@ -363,6 +389,9 @@ namespace GuildrunAccess.Core.Strings
             D("shop.cost", "cost {0}"),
             D("shop.reroll", "Reroll"),
             D("shop.freeze", "Freeze"),
+            // The freeze key's feedback when the button's own caption does not change with the state.
+            D("shop.frozen", "frozen"),
+            D("shop.unfrozen", "unfrozen"),
             D("shop.threat", "threat level"),
             D("shop.nothing", "nothing for sale"),
 
@@ -545,6 +574,13 @@ namespace GuildrunAccess.Core.Strings
         public static string RunMana(string current, string max) => F("run.mana", current, max);
         public static string RunStatus(string status, int stacks) => F("run.status", status, stacks);
         public static string RunStatusTimed(string status, int seconds) => F("run.status_timed", status, seconds);
+        public static string GlancePair(string name, string current, string max) => F("glance.pair", name, current, max);
+        public static string GlanceValue(string name, string value) => F("glance.value", name, value);
+        public static string GlanceBase(string value) => F("glance.base", value);
+        public static string GlanceRank(string value) => F("glance.rank", value);
+        public static string GlanceBonus(string value) => F("glance.bonus", value);
+        public static string GlanceTarget(string unit) => F("glance.target", unit);
+        public static string GlanceNoTarget => Get("glance.no_target");
         public static string RunShield(string amount) => F("run.shield", amount);
         public static string RunPartySlot(int index) => F("run.party_slot", index);
         public static string RunReserveSlot(int index) => F("run.reserve_slot", index);
@@ -689,6 +725,8 @@ namespace GuildrunAccess.Core.Strings
         public static string ShopCost(string price) => F("shop.cost", price);
         public static string ShopReroll => Get("shop.reroll");
         public static string ShopFreeze => Get("shop.freeze");
+        public static string ShopFrozen => Get("shop.frozen");
+        public static string ShopUnfrozen => Get("shop.unfrozen");
         public static string ShopThreat => Get("shop.threat");
         public static string ShopNothing => Get("shop.nothing");
         public static string ScreenCrossroads => Get("screen.crossroads");

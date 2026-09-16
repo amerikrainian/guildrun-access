@@ -142,6 +142,12 @@ namespace GuildrunAccess.Core.Graph
         /// Null or empty for a key = that buffer has nothing here and the review keys skip it.</summary>
         public Func<string, IEnumerable<string>> SideLines;
 
+        /// <summary>Optional. The game thing this control concerns, for the glance keys (the digits
+        /// read one fact group of the unit under focus, in place): a unit's view, card, slot or id,
+        /// whatever the module's resolver understands. Read at the keypress, never cached. Null = the
+        /// glance keys are silent here.</summary>
+        public Func<object> Subject;
+
         /// <summary>Optional. Drag/drop participation (Backslash): pick up here, or place the held thing
         /// here. The action owns the whole pick-up/place state machine; the core only dispatches.</summary>
         public Action OnDrag;
