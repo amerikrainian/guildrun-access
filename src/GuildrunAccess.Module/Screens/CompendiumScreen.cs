@@ -240,6 +240,26 @@ namespace GuildrunAccess.Module.Screens
 
         private static void AddHeroDetail(GraphBuilder b, HeroInfoCompendiumView hero)
         {
+            // The page tabs (Abilities / Gameplay / Personality): their own stop, a horizontal strip
+            // under the hero's title (Left/Right; landing selects the page), with the page itself in
+            // the stop after it.
+            var tabs = hero._tabs;
+            var toggles = new List<Toggle>();
+            if (tabs != null)
+                foreach (var toggle in tabs.GetComponentsInChildren<Toggle>(false))
+                    if (GameNodes.IsShown(toggle)) toggles.Add(toggle);
+            if (toggles.Count > 0)
+            {
+                b.BeginStop("detail:" + hero.GetInstanceID() + ":tabs");
+                b.PushContext(HeroTitle(hero), null, positions: true);
+                b.StartRow();
+                foreach (var t in toggles)
+                    b.AddItem(ControlId.Structural("compendium:detail:" + hero.GetInstanceID() + ":tab:" + t.GetInstanceID()), GameNodes.Tab(t, () => TabCaption(t)));
+                b.EndRow();
+                b.PopContext();
+            }
+
+            // The page: the hero's name and trophies, then the selected tab's content.
             b.BeginStop("detail:" + hero.GetInstanceID());
             b.PushContext(HeroTitle(hero), null, positions: false);
 
@@ -256,24 +276,7 @@ namespace GuildrunAccess.Module.Screens
                 Details = () => masteryTarget != null ? TooltipReader.Lines(masteryTarget) : null,
             });
 
-            // Abilities / Gameplay / Personality: a tab selects on landing, so the selected tab's page
-            // (the only one shown) is listed right under its tab, where Down reaches it; listed after
-            // the whole strip it would sit past the tabs that switch the page away on the way down.
-            var tabs = hero._tabs;
-            bool contentAdded = false;
-            if (tabs != null)
-                foreach (var toggle in tabs.GetComponentsInChildren<Toggle>(false))
-                {
-                    if (!GameNodes.IsShown(toggle)) continue;
-                    var t = toggle;
-                    b.AddItem(ControlId.Structural("compendium:detail:" + hero.GetInstanceID() + ":tab:" + t.GetInstanceID()), GameNodes.Tab(t, () => TabCaption(t)));
-                    if (t.isOn && !contentAdded)
-                    {
-                        AddTabContent(b, hero);
-                        contentAdded = true;
-                    }
-                }
-            if (!contentAdded) AddTabContent(b, hero);
+            AddTabContent(b, hero);
 
             b.PopContext();
         }
