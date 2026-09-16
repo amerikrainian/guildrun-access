@@ -256,16 +256,32 @@ namespace GuildrunAccess.Module.Screens
                 Details = () => masteryTarget != null ? TooltipReader.Lines(masteryTarget) : null,
             });
 
-            // Abilities / Gameplay / Personality.
+            // Abilities / Gameplay / Personality: a tab selects on landing, so the selected tab's page
+            // (the only one shown) is listed right under its tab, where Down reaches it; listed after
+            // the whole strip it would sit past the tabs that switch the page away on the way down.
             var tabs = hero._tabs;
+            bool contentAdded = false;
             if (tabs != null)
                 foreach (var toggle in tabs.GetComponentsInChildren<Toggle>(false))
                 {
                     if (!GameNodes.IsShown(toggle)) continue;
                     var t = toggle;
                     b.AddItem(ControlId.Structural("compendium:detail:" + hero.GetInstanceID() + ":tab:" + t.GetInstanceID()), GameNodes.Tab(t, () => TabCaption(t)));
+                    if (t.isOn && !contentAdded)
+                    {
+                        AddTabContent(b, hero);
+                        contentAdded = true;
+                    }
                 }
+            if (!contentAdded) AddTabContent(b, hero);
 
+            b.PopContext();
+        }
+
+        // The selected tab's page: the ability blocks, or the gameplay and personality texts,
+        // whichever the game shows.
+        private static void AddTabContent(GraphBuilder b, HeroInfoCompendiumView hero)
+        {
             // The abilities shown (the signature ability and the specializations), each with the
             // tooltip the game composes for its entry: the compendium's blocks carry no tooltip target,
             // so the entries come from the hero and the controller's specialization table.
@@ -309,8 +325,6 @@ namespace GuildrunAccess.Module.Screens
             }
             AddCaptioned(b, "compendium:detail:" + hero.GetInstanceID() + ":currentguild", hero._currentGuildText, hero._guildTooltipRaycastTarget);
             AddCaptioned(b, "compendium:detail:" + hero.GetInstanceID() + ":motivation", hero._motivationText);
-
-            b.PopContext();
         }
 
         // "Aria, Mage, Frost, Burn".

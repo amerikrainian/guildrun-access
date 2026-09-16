@@ -2,10 +2,10 @@
 
 ## V0.0.5
 
-- Glance keys on the unit under focus, spoken in place with focus unmoved: 1 health, shield and mana; 2 base attack damage, attack, magic and defense; 3 attack speed, crit, range and move speed; 4 regen, omnivamp and resistances when nonzero; 5 statuses; 6 who it is attacking. Shift+2, 3, 4 add each stat's breakdown (base, rank, bonus). In a fight the numbers are live from the board; elsewhere the hero's sheet or the card answers.
-- Ctrl+S speaks the shards. In the shop, Ctrl+R rerolls and Ctrl+F freezes from anywhere on the screen, reading the button's caption back (the new cost, the frozen state) and the offer under focus after a reroll.
-- The party and enemies buffers list each unit's status icons with their numbers: stacks, or the seconds left on a timed status, which the game now counts down on the icon.
-- Mana reads as "mana 30/85".
+- Glance keys on the unit under focus, spoken in place with focus unmoved: 1 health, shield and mana; 2 base attack damage, attack, magic and defense; 3 attack speed, crit, range and move speed; 4 regen, omnivamp and resistances when nonzero; 5 statuses; 6 who it is attacking. Shift+2, 3, 4 add each stat's breakdown (base, rank, bonus).
+- Ctrl+S speaks the shards. In the shop, Ctrl+R rerolls and Ctrl+F freezes.
+- The party and enemies buffers list each unit's status icons with their numbers/stacks.
+- Compendium: a hero's Abilities, Gameplay and Personality pages are listed right under their tab, so Down from the Abilities tab reaches the abilities instead of the next tab switching the page away.
 
 ## V0.0.4
 
