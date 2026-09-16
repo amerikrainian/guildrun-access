@@ -24,6 +24,12 @@ namespace GuildrunAccess.Module.GameRun
     /// </summary>
     public sealed class RunEndScreen : Screen
     {
+        public RunEndScreen()
+        {
+            // Tab past the last stop comes round to the first, as on the run HUD.
+            Wrap = true;
+        }
+
         public override string Key => "gamerun.end";
         public override int Layer => 20;
         public override bool Exclusive => true;

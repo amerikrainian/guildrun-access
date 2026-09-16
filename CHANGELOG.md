@@ -7,6 +7,7 @@
 - The party and enemies buffers list each unit's status icons with their numbers/stacks.
 - Compendium hero pages are no longer groupped under their tabs, so you can read their abilities.
 - We no longer duplicate choices for rank A and above. Gotta love fancy UI rendering.
+- Allow tab to wrap pretty much anywhere you care to: events, crossroads, and the shop are examples of where this can now be done.
 
 ## V0.0.4
 

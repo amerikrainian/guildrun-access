@@ -382,8 +382,8 @@ namespace GuildrunAccess.Core.Strings
             // The shop between fights.
             D("screen.shop", "Shop"),
             D("shop.heroes", "heroes"),
-            D("shop.items", "items"),
-            D("shop.relics", "relics"),
+            D("shop.items", "shop items"),
+            D("shop.relics", "shop relics"),
             D("shop.actions", "actions"),
             // {0} = the price as the shop shows it.
             D("shop.cost", "cost {0}"),

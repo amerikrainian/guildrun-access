@@ -33,6 +33,12 @@ namespace GuildrunAccess.Module.GameRun
     /// </summary>
     public sealed class BattleResultScreen : Screen
     {
+        public BattleResultScreen()
+        {
+            // Tab past the last stop comes round to the first, as on the run HUD.
+            Wrap = true;
+        }
+
         public override string Key => "gamerun.result";
         public override int Layer => 10;
         public override bool Exclusive => true;
