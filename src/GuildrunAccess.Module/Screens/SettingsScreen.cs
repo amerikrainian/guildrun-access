@@ -22,6 +22,12 @@ namespace GuildrunAccess.Module.Screens
     /// </summary>
     public sealed class SettingsScreen : Screen
     {
+        public SettingsScreen()
+        {
+            // Tab past the last stop comes round to the tabs, as on the run HUD.
+            Wrap = true;
+        }
+
         public override string Key => "settings";
         public override int Layer => 27; // above the run's pause menu, which opens it
         public override bool Exclusive => true;
