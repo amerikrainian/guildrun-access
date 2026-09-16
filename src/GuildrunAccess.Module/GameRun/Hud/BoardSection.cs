@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Ember.Balancing.Sheets.Characters.Attacks;
 using Ember.Scopes.Battle.Characters;
 using Ember.Scopes.Battle.UI;
 using Ember.Scopes.Battle.UI.Hud;
@@ -682,8 +683,9 @@ namespace GuildrunAccess.Module.GameRun
         // The bar's own label is an inactive text set once at spawn (the starting health, "<b>520</b>"),
         // never the value of the moment; the bar keeps the live current health and shield as fields,
         // updated with every hit and heal it draws.
-        // "Karsu, hero, health 650, shield 40, mana 45 of 85": the unit's whole line, for the party
-        // and enemies buffers (one line per unit, read live on every buffer key).
+        // "Karsu, hero, health 650, shield 40, mana 45 of 85, Poison 3, Stun 2 seconds": the unit's
+        // whole line, for the party and enemies buffers (one line per unit, read live on every
+        // buffer key), its status icons last.
         private static string UnitLine(Unit u)
         {
             var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Label, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))) };
@@ -691,6 +693,7 @@ namespace GuildrunAccess.Module.GameRun
             if (shield != null) parts.Add(shield);
             string mana = Mana(u.Bar);
             if (mana != null) parts.Add(mana);
+            parts.AddRange(Statuses(u.Bar));
             return string.Join(", ", parts);
         }
 
@@ -784,6 +787,43 @@ namespace GuildrunAccess.Module.GameRun
             var slider = bar._manaSlider;
             if (slider == null || !slider.gameObject.activeInHierarchy || slider.maxValue <= 0) return null;
             return Strings.RunMana(((int)slider.value).ToString(), ((int)slider.maxValue).ToString());
+        }
+
+        // "Poison 3", "Stun 2 seconds": the bar's status icons with the number each shows. The bar
+        // keeps its live icons by status type; a stacking status's icon shows its stacks, a timed
+        // one's (the bar's TimerStatusTypes: stun, stealth, the can't-act statuses, immunity...)
+        // the whole seconds left, which the game rewrites on the icon every tick since build
+        // 25323618. The keys are copied out (no interop enumerator), so the order is the
+        // dictionary's, not the drawn one.
+        private static List<string> Statuses(HealthBarView bar)
+        {
+            var lines = new List<string>();
+            try
+            {
+                var icons = bar._activeStatusIcons;
+                if (icons == null || icons.Count == 0) return lines;
+                var types = new Il2CppStructArray<StatusType>(icons.Count);
+                icons.Keys.CopyTo(types, 0);
+                for (int i = 0; i < types.Length; i++)
+                {
+                    StatusIconView icon;
+                    if (!icons.TryGetValue(types[i], out icon) || icon == null || !icon.gameObject.activeInHierarchy) continue;
+                    string name = Strings.Status(types[i].ToString());
+                    int count = icon.CurrentStackCount;
+                    lines.Add(IsTimerStatus(types[i]) ? Strings.RunStatusTimed(name, count) : Strings.RunStatus(name, count));
+                }
+            }
+            catch (Exception e) { CoreLog.Warning("Units: status icons unreadable: " + e.Message); }
+            return lines;
+        }
+
+        private static bool IsTimerStatus(StatusType type)
+        {
+            var timers = HealthBarView.TimerStatusTypes;
+            if (timers == null) return false;
+            for (int i = 0; i < timers.Length; i++)
+                if (timers[i] == type) return true;
+            return false;
         }
     }
 }

@@ -167,6 +167,11 @@ namespace GuildrunAccess.Core.Strings
             D("run.mana", "mana {0} of {1}"),
             // {0} = shield points, spoken only while a shield is up.
             D("run.shield", "shield {0}"),
+            // A status icon on a unit's bar, in the party and enemies buffers. {0} = the status,
+            // {1} = the number the icon shows: the stacks of a stacking status (Poison 3)...
+            D("run.status", "{0} {1}"),
+            // ...or the seconds left on a timed one (Stun), which the game counts down on the icon.
+            D("run.status_timed", "{0} {1} seconds"),
             // {0} = slot number (1-based).
             D("run.party_slot", "party slot {0}"),
             D("run.reserve_slot", "reserve slot {0}"),
@@ -538,6 +543,8 @@ namespace GuildrunAccess.Core.Strings
         public static string RunMenu => Get("run.menu");
         public static string RunUnit(bool hero, string name, string health) => F(hero ? "run.unit_hero" : "run.unit_enemy", name, health);
         public static string RunMana(string current, string max) => F("run.mana", current, max);
+        public static string RunStatus(string status, int stacks) => F("run.status", status, stacks);
+        public static string RunStatusTimed(string status, int seconds) => F("run.status_timed", status, seconds);
         public static string RunShield(string amount) => F("run.shield", amount);
         public static string RunPartySlot(int index) => F("run.party_slot", index);
         public static string RunReserveSlot(int index) => F("run.reserve_slot", index);
