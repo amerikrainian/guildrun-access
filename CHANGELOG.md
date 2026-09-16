@@ -5,7 +5,7 @@
 - Glance keys on the unit under focus, spoken in place with focus unmoved: 1 health, shield and mana; 2 base attack damage, attack, magic and defense; 3 attack speed, crit, range and move speed; 4 regen, omnivamp and resistances when nonzero; 5 statuses; 6 who it is attacking. Shift+2, 3, 4 add each stat's breakdown (base, rank, bonus).
 - Ctrl+S speaks the shards. In the shop, Ctrl+R rerolls and Ctrl+F freezes.
 - The party and enemies buffers list each unit's status icons with their numbers/stacks.
-- Compendium: a hero's Abilities, Gameplay and Personality tabs are a horizontal strip in their own stop (Left/Right), with the selected page in the stop after it, so the abilities can be read: before, Down from the Abilities tab landed on the next tab and switched the page away.
+- Compendium hero pages are no longer groupped under their tabs, so you can read their abilities.
 
 ## V0.0.4
 
