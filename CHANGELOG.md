@@ -6,7 +6,7 @@
 - A fighting unit's health is no longer re-read while focus rests on it. It proved to be useless at communicating critical information.
 - Every control standing for a hero now opens with its classes and rank after its name. This is probably too verbose, but it's a start.
 - The tutorial now completes and is independent of modal timing.
-- Consoledate rank picker into one group, like the events.
+- Consolidate rank picker into one group, like the events.
 
 ## V0.0.3
 
