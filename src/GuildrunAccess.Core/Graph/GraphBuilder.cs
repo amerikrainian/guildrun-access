@@ -13,6 +13,11 @@ namespace GuildrunAccess.Core.Graph
     ///
     /// <para><b>Raw mode</b>: <see cref="AddNode"/> + <see cref="Connect"/> for arbitrary topologies.</para>
     ///
+    /// <para><b>Columns</b>: <see cref="StartColumn"/> / <see cref="EndColumn"/> lay containers side by
+    /// side inside one stop (heroes, items and relics for sale): up/down within a column, left/right
+    /// across consecutive columns with the index kept where the neighbour reaches that far, each column
+    /// typically its own context.</para>
+    ///
     /// Orthogonal to both: <see cref="BeginStop"/> groups nodes into Tab-stops (arrows never cross a stop;
     /// Tab cycles them), <see cref="SetRegion"/> tags nodes with a region for Ctrl+arrow jumps, and the
     /// PARENT STACK builds the presentation hierarchy: <see cref="PushContext"/> pushes a non-focusable
@@ -46,6 +51,16 @@ namespace GuildrunAccess.Core.Graph
         // Menu mode.
         private readonly List<Row> _rows = new List<Row>();
         private Row _currentRow;
+
+        // Columns: raw nodes in vertical chains of their own, consecutive columns of a stop chained across.
+        private sealed class Column
+        {
+            public readonly List<GraphNode> Items = new List<GraphNode>();
+            public object StopKey;
+        }
+
+        private readonly List<Column> _columns = new List<Column>();
+        private Column _currentColumn;
 
         // Raw mode.
         private readonly List<GraphNode> _rawNodes = new List<GraphNode>();
@@ -91,6 +106,7 @@ namespace GuildrunAccess.Core.Graph
         public GraphBuilder BeginStop(object key = null)
         {
             if (_currentRow != null) throw new InvalidOperationException("Cannot begin a stop inside an open row");
+            if (_currentColumn != null) throw new InvalidOperationException("Cannot begin a stop inside an open column");
             _stopKey = key ?? AutoStopKey(_stopAuto);
             _stopAuto++;
             _regionKey = null; // regions are per-stop
@@ -150,6 +166,7 @@ namespace GuildrunAccess.Core.Graph
         {
             if (id == null) throw new ArgumentNullException(nameof(id));
             if (_currentRow != null) throw new InvalidOperationException("Cannot begin a group inside an open row");
+            if (_currentColumn != null) throw new InvalidOperationException("Cannot begin a group inside an open column");
             bool isExpanded = expanded ?? (_expansion != null ? _expansion.Contains(id) : defaultExpanded);
 
             GraphNode header = null;
@@ -192,6 +209,7 @@ namespace GuildrunAccess.Core.Graph
         public GraphBuilder StartRow(object rowKey = null)
         {
             if (_currentRow != null) throw new InvalidOperationException("Cannot start a row while another is open");
+            if (_currentColumn != null) throw new InvalidOperationException("Cannot start a row inside an open column");
             _currentRow = new Row { Key = rowKey, StopKey = _stopKey };
             return this;
         }
@@ -206,13 +224,44 @@ namespace GuildrunAccess.Core.Graph
             return this;
         }
 
-        /// <summary>Add a control: into the open row, or as its own single-item row. A no-op inside a
-        /// collapsed group's subtree.</summary>
+        // ---- columns ----
+
+        /// <summary>Open a vertical column: the controls added until <see cref="EndColumn"/> chain up/down
+        /// among themselves, and consecutive columns of one stop chain left/right, the index kept where
+        /// the neighbour reaches that far (its last control else). So containers sit side by side, each
+        /// pushed as its own context: Right crosses from the last hero for sale to the items. Column nodes
+        /// are raw: no menu row chains into them, Home and End walk the column, an explicit
+        /// <see cref="Connect"/> edge wins, and positions stamp within the column (unless its context
+        /// said no). An empty column declares nothing, so a container with nothing in it is simply
+        /// not there and its neighbours meet.</summary>
+        public GraphBuilder StartColumn()
+        {
+            if (_currentRow != null) throw new InvalidOperationException("Cannot start a column inside an open row");
+            if (_currentColumn != null) throw new InvalidOperationException("Cannot start a column while another is open");
+            _currentColumn = new Column { StopKey = _stopKey };
+            return this;
+        }
+
+        public GraphBuilder EndColumn()
+        {
+            if (_currentColumn == null) throw new InvalidOperationException("No column to end");
+            if (_currentColumn.Items.Count > 0) _columns.Add(_currentColumn);
+            _currentColumn = null;
+            return this;
+        }
+
+        /// <summary>Add a control: into the open column or row, or as its own single-item row. A no-op
+        /// inside a collapsed group's subtree.</summary>
         public GraphBuilder AddItem(ControlId id, NodeVtable vtable)
         {
             if (Suppressed) return this;
             var node = MakeNode(id, vtable);
-            if (_currentRow != null)
+            if (_currentColumn != null)
+            {
+                _rawNodes.Add(node);
+                _currentColumn.Items.Add(node);
+            }
+            else if (_currentRow != null)
             {
                 _currentRow.Items.Add(node);
                 _rowOf[node] = _currentRow;
@@ -278,6 +327,7 @@ namespace GuildrunAccess.Core.Graph
         public GraphRender Build()
         {
             if (_currentRow != null) throw new InvalidOperationException("Unclosed row - call EndRow()");
+            if (_currentColumn != null) throw new InvalidOperationException("Unclosed column - call EndColumn()");
             if (_rawNodes.Count == 0 && _rows.Count == 0) return null;
 
             var render = new GraphRender();
@@ -287,6 +337,7 @@ namespace GuildrunAccess.Core.Graph
             foreach (var e in _rawEdges)
                 if (render.Nodes.ContainsKey(e.From) && render.Nodes.ContainsKey(e.To))
                     render.Nodes[e.From].Transitions[e.Dir] = new Transition(e.To, e.Label);
+            WireColumns();
             StitchModeBoundaries();
 
             render.StartKey = _start != null && render.Nodes.ContainsKey(_start)
@@ -355,7 +406,8 @@ namespace GuildrunAccess.Core.Graph
 
         // Auto-stamp "n of m" positions: a multi-item row's members are positioned within their ROW (a
         // bar); single-item-row nodes among the siblings sharing their (parent, stop), the vertical
-        // list/tree level arrows actually traverse. Raw/grid nodes get none. Announced only when m > 1.
+        // list/tree level arrows actually traverse; a column's members within their column. Raw/grid
+        // nodes get none. Announced only when m > 1.
         private void StampPositions()
         {
             var groups = new Dictionary<object, List<GraphNode>>();
@@ -380,6 +432,11 @@ namespace GuildrunAccess.Core.Graph
                 list.Add(node);
             }
             foreach (var key in keys) Stamp(groups[key]);
+            foreach (var column in _columns)
+            {
+                var parent = column.Items[0].Parent;
+                if (parent == null || !parent.SuppressChildPositions) Stamp(column.Items);
+            }
         }
 
         private static void Stamp(List<GraphNode> siblings)
@@ -390,6 +447,32 @@ namespace GuildrunAccess.Core.Graph
                 siblings[i].PositionIndex = i + 1;
                 siblings[i].PositionCount = siblings.Count;
             }
+        }
+
+        // Columns: up/down within each, left/right between consecutive columns of the same stop, the
+        // index kept where the neighbour reaches that far (its last control else). Only MISSING edges
+        // are filled, so an explicit Connect edge wins.
+        private void WireColumns()
+        {
+            for (int c = 0; c < _columns.Count; c++)
+            {
+                var column = _columns[c];
+                var left = c > 0 && Equals(_columns[c - 1].StopKey, column.StopKey) ? _columns[c - 1] : null;
+                var right = c < _columns.Count - 1 && Equals(_columns[c + 1].StopKey, column.StopKey) ? _columns[c + 1] : null;
+                for (int i = 0; i < column.Items.Count; i++)
+                {
+                    var node = column.Items[i];
+                    if (i > 0) Fill(node, GraphDir.Up, column.Items[i - 1]);
+                    if (i < column.Items.Count - 1) Fill(node, GraphDir.Down, column.Items[i + 1]);
+                    if (left != null) Fill(node, GraphDir.Left, left.Items[Math.Min(i, left.Items.Count - 1)]);
+                    if (right != null) Fill(node, GraphDir.Right, right.Items[Math.Min(i, right.Items.Count - 1)]);
+                }
+            }
+        }
+
+        private static void Fill(GraphNode node, GraphDir dir, GraphNode to)
+        {
+            if (!node.Transitions.ContainsKey(dir)) node.Transitions[dir] = new Transition(to.Id);
         }
 
         private static void AddNodeTo(GraphRender render, GraphNode node)

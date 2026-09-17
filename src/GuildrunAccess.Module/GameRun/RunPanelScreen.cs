@@ -8,8 +8,8 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// A panel the game shows over the run between fights (the shop, the crossroads, an event): its own
     /// stops first, then the run HUD's sections that stay on screen and interactable under it: the party
-    /// and reserve slots, the item reserve, relics, the shards and the rewind, the act map, the sidebar
-    /// and the menu. So a player in the shop can equip what they bought, inspect a hero, read what the
+    /// and reserve slots, the inventory (the item reserve and the relics), the shards and the rewind, the
+    /// act map, the sidebar and the menu. So a player in the shop can equip what they bought, inspect a hero, read what the
     /// map holds next, or sell, as the mouse can; the board, Fight, battle speed and events stay with
     /// the battle. Escape cancels a pending move, else does what the panel's Escape does.
     /// </summary>
@@ -32,8 +32,7 @@ namespace GuildrunAccess.Module.GameRun
         protected void AddHud()
         {
             Add(new PartySection(Actions));
-            Add(new ItemsSection(Actions));
-            Add(new RelicsSection());
+            Add(new InventorySection(Actions));
             Add(new InfoSection());
             Add(new MapSection());
             Add(new SidebarSection());

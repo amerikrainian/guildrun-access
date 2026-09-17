@@ -206,8 +206,6 @@ namespace GuildrunAccess.Core.Strings
             D("run.reserve_slot", "reserve slot {0}"),
             D("run.slot_empty", "empty"),
             D("run.item_slot_empty", "empty item slot"),
-            D("run.no_items", "no items in reserve"),
-            D("run.no_relics", "no relics"),
             D("run.gold", "gold"),
             D("run.shards", "shards"),
             D("run.difficulty", "difficulty"),
@@ -396,7 +394,6 @@ namespace GuildrunAccess.Core.Strings
             D("shop.frozen", "frozen"),
             D("shop.unfrozen", "unfrozen"),
             D("shop.threat", "threat level"),
-            D("shop.nothing", "nothing for sale"),
 
             // The crossroads after a shop: the next paths.
             D("screen.crossroads", "Crossroads"),
@@ -590,8 +587,6 @@ namespace GuildrunAccess.Core.Strings
         public static string RunReserveSlot(int index) => F("run.reserve_slot", index);
         public static string RunSlotEmpty => Get("run.slot_empty");
         public static string RunItemSlotEmpty => Get("run.item_slot_empty");
-        public static string RunNoItems => Get("run.no_items");
-        public static string RunNoRelics => Get("run.no_relics");
         public static string RunGold => Get("run.gold");
         public static string RunShards => Get("run.shards");
         public static string RunDifficulty => Get("run.difficulty");
@@ -732,7 +727,6 @@ namespace GuildrunAccess.Core.Strings
         public static string ShopFrozen => Get("shop.frozen");
         public static string ShopUnfrozen => Get("shop.unfrozen");
         public static string ShopThreat => Get("shop.threat");
-        public static string ShopNothing => Get("shop.nothing");
         public static string ScreenCrossroads => Get("screen.crossroads");
         public static string CrossroadsPaths => Get("crossroads.paths");
         public static string ScreenEvent => Get("screen.event");

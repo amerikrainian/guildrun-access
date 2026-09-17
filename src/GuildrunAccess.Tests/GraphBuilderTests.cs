@@ -291,5 +291,87 @@ namespace GuildrunAccess.Tests
             Assert.Equal(Id("cell2"), render.Nodes[Id("cell1")].Transitions[GraphDir.Right].Destination);
             Assert.Equal(Id("list1"), render.Nodes[Id("cell1")].Transitions[GraphDir.Up].Destination);
         }
+
+        [Fact]
+        public void ColumnsChainDownWithinAndAcrossByIndex()
+        {
+            var render = new GraphBuilder()
+                .StartColumn().AddItem(Id("a1"), Vt("A1")).AddItem(Id("a2"), Vt("A2")).AddItem(Id("a3"), Vt("A3")).EndColumn()
+                .StartColumn().AddItem(Id("b1"), Vt("B1")).AddItem(Id("b2"), Vt("B2")).EndColumn()
+                .Build();
+
+            Assert.Equal(Id("a2"), render.Nodes[Id("a1")].Transitions[GraphDir.Down].Destination);
+            Assert.Equal(Id("a1"), render.Nodes[Id("a2")].Transitions[GraphDir.Up].Destination);
+            Assert.False(render.Nodes[Id("a1")].Transitions.ContainsKey(GraphDir.Up));
+            Assert.False(render.Nodes[Id("a3")].Transitions.ContainsKey(GraphDir.Down)); // never down into the next column
+            Assert.Equal(Id("b1"), render.Nodes[Id("a1")].Transitions[GraphDir.Right].Destination);
+            Assert.Equal(Id("b2"), render.Nodes[Id("a3")].Transitions[GraphDir.Right].Destination); // clamped to the shorter column
+            Assert.Equal(Id("a2"), render.Nodes[Id("b2")].Transitions[GraphDir.Left].Destination);
+            Assert.False(render.Nodes[Id("a1")].Transitions.ContainsKey(GraphDir.Left));
+            Assert.False(render.Nodes[Id("b1")].Transitions.ContainsKey(GraphDir.Right));
+        }
+
+        [Fact]
+        public void ColumnsNeverCrossAStop()
+        {
+            var render = new GraphBuilder()
+                .BeginStop("one").StartColumn().AddItem(Id("a1"), Vt("A1")).EndColumn()
+                .BeginStop("two").StartColumn().AddItem(Id("b1"), Vt("B1")).EndColumn()
+                .Build();
+
+            Assert.False(render.Nodes[Id("a1")].Transitions.ContainsKey(GraphDir.Right));
+            Assert.False(render.Nodes[Id("b1")].Transitions.ContainsKey(GraphDir.Left));
+        }
+
+        [Fact]
+        public void EmptyColumnIsNoContainer()
+        {
+            var render = new GraphBuilder()
+                .StartColumn().AddItem(Id("a1"), Vt("A1")).EndColumn()
+                .StartColumn().EndColumn()
+                .StartColumn().AddItem(Id("c1"), Vt("C1")).EndColumn()
+                .Build();
+
+            Assert.Equal(2, render.Order.Count);
+            Assert.Equal(Id("c1"), render.Nodes[Id("a1")].Transitions[GraphDir.Right].Destination);
+            Assert.Null(new GraphBuilder().StartColumn().EndColumn().Build());
+        }
+
+        [Fact]
+        public void ColumnsStampPositionsWithinTheColumn()
+        {
+            var render = new GraphBuilder()
+                .PushContext("heroes").StartColumn().AddItem(Id("a1"), Vt("A1")).AddItem(Id("a2"), Vt("A2")).EndColumn().PopContext()
+                .PushContext("items", positions: false).StartColumn().AddItem(Id("b1"), Vt("B1")).AddItem(Id("b2"), Vt("B2")).EndColumn().PopContext()
+                .Build();
+
+            Assert.Equal(1, render.Nodes[Id("a1")].PositionIndex);
+            Assert.Equal(2, render.Nodes[Id("a1")].PositionCount);
+            Assert.Equal(2, render.Nodes[Id("a2")].PositionIndex);
+            Assert.Equal(0, render.Nodes[Id("b1")].PositionCount);
+        }
+
+        [Fact]
+        public void ExplicitEdgesWinOverColumnWiring()
+        {
+            var render = new GraphBuilder()
+                .StartColumn().AddItem(Id("a1"), Vt("A1")).AddItem(Id("a2"), Vt("A2")).EndColumn()
+                .StartColumn().AddItem(Id("b1"), Vt("B1")).EndColumn()
+                .Connect(Id("a2"), GraphDir.Right, Id("a1"))
+                .Build();
+
+            Assert.Equal(Id("a1"), render.Nodes[Id("a2")].Transitions[GraphDir.Right].Destination);
+            Assert.Equal(Id("b1"), render.Nodes[Id("a1")].Transitions[GraphDir.Right].Destination);
+        }
+
+        [Fact]
+        public void ColumnsAndRowsDoNotNest()
+        {
+            Assert.Throws<InvalidOperationException>(() => new GraphBuilder().StartRow().StartColumn());
+            Assert.Throws<InvalidOperationException>(() => new GraphBuilder().StartColumn().StartRow());
+            Assert.Throws<InvalidOperationException>(() => new GraphBuilder().StartColumn().BeginStop("x"));
+            Assert.Throws<InvalidOperationException>(() => new GraphBuilder().StartColumn().AddItem(Id("a"), Vt("A")).Build());
+            Assert.Throws<InvalidOperationException>(() => new GraphBuilder().EndColumn());
+        }
     }
 }

@@ -29,8 +29,7 @@ namespace GuildrunAccess.Module.GameRun
             Add(new ActionsSection());
             Add(new BoardSection(_actions));
             Add(new PartySection(_actions));
-            Add(new ItemsSection(_actions));
-            Add(new RelicsSection());
+            Add(new InventorySection(_actions));
             Add(new InfoSection());
             Add(new MapSection());
             Add(new SidebarSection());

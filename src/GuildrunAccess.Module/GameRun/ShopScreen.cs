@@ -18,11 +18,14 @@ using Navigation = GuildrunAccess.Core.UI.Navigation;
 namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
-    /// The shop between fights (<see cref="ShopUIController"/>): the hero offers as the shared hero list
-    /// with each card's price on its line, the items and relics for sale as controls carrying name,
-    /// cost, sale tag and description (the full tooltip in the control buffer), and the actions (reroll,
-    /// freeze, the key fragment offer, proceed); then the run HUD the shop leaves on screen (the party,
-    /// the item reserve, relics, info, map, sidebar, menu), where a hero's or item's menu offers Sell.
+    /// The shop between fights (<see cref="ShopUIController"/>): one stop of offers, the heroes, items
+    /// and relics for sale side by side as columns (up/down within one, Right and Left across, Alt+arrows
+    /// too), each a container only while it has something left to buy: a sold-out container is gone,
+    /// and with all three gone the stop is. A hero is the shared hero line with its price; an item or
+    /// relic carries name, cost, sale tag and description (the full tooltip in the control buffer).
+    /// Then the actions (reroll, freeze, the key fragment offer, proceed) and the run HUD the shop
+    /// leaves on screen (the party, the inventory, info, map, sidebar, menu), where a hero's or item's
+    /// menu offers Sell.
     /// Buying goes through the view's own click handler, so the game's purchase flow runs as for a
     /// mouse click. Escape presses Proceed.
     /// </summary>
@@ -58,7 +61,7 @@ namespace GuildrunAccess.Module.GameRun
                 shop._proceedButton.onClick.Invoke();
         }
 
-        // The shop's own stops: heroes, items, relics, actions.
+        // The shop's own stops: the offers (heroes, items and relics as columns), then the actions.
         private sealed class ShopSection : ScreenSection
         {
             public override void Build(GraphBuilder b)
@@ -77,19 +80,23 @@ namespace GuildrunAccess.Module.GameRun
                         views.Add(v);
                         cards.Add(v._heroCardView);
                     }
+                b.BeginStop("shop:offers");
                 if (cards.Count > 0)
                 {
-                    b.BeginStop("shop:heroes");
+                    b.SetRegion("shop:heroes");
                     b.PushContext(Strings.ShopHeroes, null, positions: true);
+                    b.StartColumn();
                     HeroCardNodes.AddGrid(b, "shop:hero", cards,
                         i => () => Buy(views[i]),
                         i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; });
+                    b.EndColumn();
                     b.PopContext();
                 }
 
                 // Items, then relics (the regular panels, or the super-shop ones when those are up).
                 AddOffers(b, "items", Strings.ShopItems, shop._itemToBuyPanel, shop._superShopItemToBuyPanel);
                 AddOffers(b, "relics", Strings.ShopRelics, shop._relicsToBuyPanel, shop._superShopRelicsToBuyPanel, shop._superShopTeamSizeRelicsToBuyPanel);
+                b.SetRegion(null);
 
                 // Actions.
                 b.BeginStop("shop:actions");
@@ -204,7 +211,8 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(text) || text == button.gameObject.name ? fallback : text;
         }
 
-        // The offers in whichever of the given panels is showing. An offer is a row the game bound an
+        // The offers in whichever of the given panels is showing, as one column of the offers stop (none:
+        // no container). An offer is a row the game bound an
         // item or relic entry to (SetShopItem / SetShopRelic): the panel prefab also ships template
         // rows ("Very Long Item Name", cost 666) that stay active next to the real ones for the shop's
         // first frames until ClearItems destroys them, and those carry no entry.
@@ -217,12 +225,13 @@ namespace GuildrunAccess.Module.GameRun
                 foreach (var item in panel.GetComponentsInChildren<ShopItemView>(false))
                     if (item != null && item.gameObject.activeInHierarchy && IsOffer(item)) items.Add(item);
             }
-            b.BeginStop("shop:" + key);
+            if (items.Count == 0) return;
+            b.SetRegion("shop:" + key);
             b.PushContext(label, Strings.RoleList);
-            if (items.Count == 0)
-                b.AddItem(ControlId.Structural("shop:" + key + ":none"), GameNodes.Text(() => Strings.ShopNothing));
+            b.StartColumn();
             foreach (var item in items)
                 b.AddItem(ControlId.Structural("shop:" + key + ":" + item.GetInstanceID()), Offer(item));
+            b.EndColumn();
             b.PopContext();
         }
 

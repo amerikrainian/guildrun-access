@@ -176,7 +176,7 @@ Five projects (see `docs/plan.md` for the port map):
   and its `HeroMoves` (the pending keyboard drag); the other run screens; `RunData` (registry reads
   and moves), `BattleEvents` (the HUD hooks); the shop, crossroads and event panels are
   `RunPanelScreen`s: their own stops first, then the HUD sections the game leaves on screen and
-  interactable under them (party, items, relics, info, map, sidebar, menu), where a hero's or item's
+  interactable under them (party, inventory, info, map, sidebar, menu), where a hero's or item's
   menu offers Sell while the shop is up (`ShopService.SellItem/SellHero`); `Nodes/` the run's reusable
   node readers: hero cards, items, sidebar, leaderboard), `UI/GameNodes` (node factories over uGUI Button/Toggle/Slider/TMP),
   `UI/TooltipReader`, `UI/FocusMode`, `Input/KeyboardBinding` + `UnityNavInput`. A long screen
@@ -291,7 +291,10 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
    `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
    of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is
-   `GetFreeItemSlotCount`), items, relics, info, speed, menu), battle result (all forms), shop,
+   `GetFreeItemSlotCount`), inventory (the reserve's items and the relics as side-by-side columns of
+   one stop, `GraphBuilder.StartColumn`: Up/Down within one, Right/Left across, an empty container
+   dropped; the shop's heroes, items and relics for sale are one such stop too), info, speed, menu),
+   battle result (all forms), shop,
    crossroads, events (campfire included), rank-up pickers, the relic reward picker
    (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes
    panel, tooltips through the game's own tooltip pipeline. Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
