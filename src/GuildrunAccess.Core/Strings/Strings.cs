@@ -150,6 +150,7 @@ namespace GuildrunAccess.Core.Strings
             D("hero.stats", "stats"),
             D("hero.abilities", "abilities"),
             D("hero.relic", "relic"),
+            D("hero.relic_named", "relic {0}"),
             // {0} = a stat value, {1} = the stat name as the game labels it.
             D("hero.stat", "{1} {0}"),
             D("hero.health", "health"),
@@ -537,6 +538,7 @@ namespace GuildrunAccess.Core.Strings
         public static string HeroStats => Get("hero.stats");
         public static string HeroAbilities => Get("hero.abilities");
         public static string HeroRelic => Get("hero.relic");
+        public static string HeroRelicNamed(string name) => F("hero.relic_named", name);
         public static string HeroStat(string name, string value) => F("hero.stat", value, name);
         public static string HeroHealth => Get("hero.health");
         public static string HeroMana => Get("hero.mana");

@@ -14,9 +14,10 @@ namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The starting-hero choice at the top of a run (<see cref="HeroPickerController"/>): the offered
-    /// cards as the shared hero grid (<see cref="HeroCardNodes.AddGrid"/>) with an extra relic row for
-    /// the bundled relic, Enter recruiting through the card's own selection button, and the reroll
-    /// button (when offered) as the last stop.
+    /// cards as the shared hero grid (<see cref="HeroCardNodes.AddGrid"/>), each hero's line naming the
+    /// relic bundled with it before the stats (the offer is the pair), with an extra relic row in the
+    /// buffers for its description and tooltip, Enter recruiting through the card's own selection
+    /// button, and the reroll button (when offered) as the last stop.
     /// </summary>
     public sealed class HeroPickerScreen : Screen
     {
@@ -66,7 +67,7 @@ namespace GuildrunAccess.Module.GameRun
                 rows.Add(new HeroCardNodes.GridRow("relic", () => Strings.HeroRelic,
                     card => RelicLine(ChoiceOf(choices, card)), card => RelicTooltip(ChoiceOf(choices, card))));
 
-            HeroCardNodes.AddGrid(b, "hero", cards, i => () => Select(choices[i]), null, rows.ToArray());
+            HeroCardNodes.AddGrid(b, "hero", cards, i => () => Select(choices[i]), i => RelicSuffix(choices[i]), rows.ToArray());
 
             // The reroll offer, when the game shows one.
             var reroll = c._reRollPanelView;
@@ -108,6 +109,15 @@ namespace GuildrunAccess.Module.GameRun
         // prefab's placeholder text, so the panel's visibility gates the row.
         private static bool HasRelic(InitialHeroChoiceView v)
             => v != null && v._relicPanel != null && v._relicPanel.gameObject.activeInHierarchy;
+
+        // The hero line's relic part, "relic Starter Kit: Sustained Shard Boost", or nothing when the offer
+        // bundles none: the pair is the choice, so its other half is not left to the buffers.
+        private static string RelicSuffix(InitialHeroChoiceView v)
+        {
+            if (!HasRelic(v)) return null;
+            string name = ItemNodes.RelicName(v._relicView);
+            return string.IsNullOrWhiteSpace(name) ? null : Strings.HeroRelicNamed(name);
+        }
 
         private static string RelicLine(InitialHeroChoiceView v)
         {
