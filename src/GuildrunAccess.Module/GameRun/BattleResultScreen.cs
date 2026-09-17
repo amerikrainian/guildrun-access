@@ -335,9 +335,13 @@ namespace GuildrunAccess.Module.GameRun
         {
             b.BeginStop("actions");
             var added = new HashSet<int>();
+            // A shown button is listed even while not interactable: the game grays Proceed out for the
+            // instant after it is pressed, while the panel fades, and a node dropped then would leave
+            // focus to be re-seated on the tracker's last entry and spoken. The disabled state is read
+            // on landing only, so that instant is never heard.
             foreach (var button in new[] { panel._proceedButton, panel._summaryButton, panel._surveyButton })
             {
-                if (!GameNodes.IsShown(button) || !button.interactable) continue;
+                if (!GameNodes.IsShown(button)) continue;
                 added.Add(button.GetInstanceID());
                 b.AddItem(ControlId.Structural("result:btn:" + button.GetInstanceID()), GameNodes.Button(button));
             }
