@@ -1,5 +1,10 @@
 # Changelog
 
+## V0.0.6
+
+- More glance keys: ctrl+c to check unit position on the board and ctrl+t for time elapsed in combat.
+- Redesign shop and party items views into grids to try and reduce UI verbosity.
+
 ## V0.0.5
 
 - Glance keys on the unit under focus, spoken in place with focus unmoved: 1 health, shield and mana; 2 base attack damage, attack, magic and defense; 3 attack speed, crit, range and move speed; 4 regen, omnivamp and resistances when nonzero; 5 statuses; 6 who it is attacking. Shift+2, 3, 4 add each stat's breakdown (base, rank, bonus).
