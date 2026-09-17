@@ -137,8 +137,9 @@ namespace GuildrunAccess.Module
             InputManager.Register("buffer.line.prev", "Previous buffer line", InputCategory.UI, Buffers.Controls.PreviousLine).AddBinding(new KeyboardBinding(KeyCode.DownArrow, ctrl: true)).Repeating();
             // The glance keys: a digit speaks one fact group of the unit the focused control concerns,
             // in place (UnitGlance); Shift+2, 3, 4 the same group with each stat's breakdown; Ctrl+S
-            // the run's shards. Digits and Ctrl chords never clash with the type-ahead search, which
-            // owns the bare letters.
+            // the run's shards, Ctrl+C the focused cell's or unit's board coordinates, Ctrl+T the
+            // battle timer (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
+            // which owns the bare letters.
             Glance("glance.vitals", "Unit health, shield and mana", KeyCode.Alpha1, KeyCode.Keypad1, () => UnitGlance.Speak(UnitGlance.Group.Vitals));
             Glance("glance.attack", "Unit attack, magic and defense", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.Speak(UnitGlance.Group.Attack));
             Glance("glance.tempo", "Unit attack speed, crit, range and move speed", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.Speak(UnitGlance.Group.Tempo));
@@ -149,6 +150,8 @@ namespace GuildrunAccess.Module
             Glance("glance.tempo.detail", "Unit attack speed, crit, range and move speed, with breakdown", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.Speak(UnitGlance.Group.Tempo, detail: true), shift: true);
             Glance("glance.sustain.detail", "Unit regen, omnivamp and resistances, with breakdown", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.Speak(UnitGlance.Group.Sustain, detail: true), shift: true);
             InputManager.Register("run.shards", "Shards", InputCategory.UI, RunGlance.Shards).AddBinding(new KeyboardBinding(KeyCode.S, ctrl: true));
+            InputManager.Register("run.position", "Board position", InputCategory.UI, RunGlance.Position).AddBinding(new KeyboardBinding(KeyCode.C, ctrl: true));
+            InputManager.Register("run.timer", "Battle timer", InputCategory.UI, RunGlance.Timer).AddBinding(new KeyboardBinding(KeyCode.T, ctrl: true));
             // The shop's reroll and freeze, answered by the shop screen's own actions (ShopScreen) and
             // by nothing else: no handler here.
             InputManager.Register("shop.reroll", "Shop reroll", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.R, ctrl: true));

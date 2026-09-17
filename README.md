@@ -33,6 +33,8 @@ Shift with the same letter moves the focused hero there, speaking its new coordi
 between units instead: Up to the enemy nearest ahead, Down back to a hero, Left and Right round the
 units of that side, Home and End to its first and last. During a fight the arrows work the same way over
 the fighting units.
+Ctrl+C speaks the board position of the focused cell or unit, column then row, and Ctrl+T the battle
+timer as the top panel shows it.
 Ctrl+Shift+M opens the mod menu with its settings and key help.
 
 Everything a control carries beyond its focus line waits in the buffers: Ctrl+Right and Ctrl+Left

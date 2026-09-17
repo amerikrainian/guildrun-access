@@ -102,8 +102,9 @@ namespace GuildrunAccess.Module.GameRun
             return null;
         }
 
-        // The cell under focus, from the focused node's key; false off the grid.
-        private static bool TryFocusedCell(out Vector2Int cell)
+        /// <summary>The grid cell under focus, from the focused node's key; false off the grid (a
+        /// fight's unit nodes included).</summary>
+        internal static bool TryFocusedCell(out Vector2Int cell)
         {
             cell = default;
             var node = Navigation.FocusedNode;

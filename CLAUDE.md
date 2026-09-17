@@ -236,7 +236,10 @@ target; Shift+2/3/4 add each stat's breakdown. Live from the simulation entity a
 unit stands on the board, else the registry sheet, else a data-less card's own panels (shop, picker).
 Read stats as the `CharacterStat` struct off `CharacterStatsComponent`'s properties, NEVER through
 the `IReadOnlyCharacterStat` proxy `GetStat` returns (it misreads the boxed struct: the value carries
-the type ordinal, base 0, IsIntValue false). Ctrl+S the shards (`RunGlance`); Ctrl+R/Ctrl+F reroll
+the type ordinal, base 0, IsIntValue false). Ctrl+S the shards, Ctrl+C the focused cell's or unit's
+board coordinates (a unit's by the board grid's `WorldToCell` of its view's position:
+`CharacterViewController._cellPosition` is never written), Ctrl+T the battle timer's text as the top
+panel draws it (`RunGlance`); Ctrl+R/Ctrl+F reroll
 and freeze from anywhere on the shop (the shop section's `GetActions`; feedback deferred a few frames
 through `UI/Later`). Digits and Ctrl chords never clash with type-ahead; bare letters do. The battle board is a
 pointy-top hex grid (Unity's hexagon `Grid`, odd rows half a cell to the right, no cell straight up

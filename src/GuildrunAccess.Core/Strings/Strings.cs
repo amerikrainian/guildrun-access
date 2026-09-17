@@ -124,6 +124,8 @@ namespace GuildrunAccess.Core.Strings
             D("bind.glance.tempo.detail", "Unit attack speed, crit, range and move speed, with breakdown"),
             D("bind.glance.sustain.detail", "Unit regen, omnivamp and resistances, with breakdown"),
             D("bind.run.shards", "Shards"),
+            D("bind.run.position", "Board position"),
+            D("bind.run.timer", "Battle timer"),
             D("bind.shop.reroll", "Shop reroll"),
             D("bind.shop.freeze", "Shop freeze"),
             D("bind.mod.reload", "Reload mod code"),
