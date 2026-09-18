@@ -418,8 +418,21 @@ namespace GuildrunAccess.Module.GameRun
                 var card = ShownEnemyCard(u);
                 if (card != null) lines.AddRange(SidebarNodes.EnemyDetails(card));
             }
-            lines.AddRange(ItemNodes.ItemTooltips(u.Bar._itemSlotViews));
+            lines.AddRange(ItemNodes.ItemTooltips(UnitSlots(u)));
             return lines;
+        }
+
+        // A fighting unit's item slots. The game hides a bar's own item slots while the fight runs
+        // (HealthBarView.HideItemSlotsBars), so a hero's are read off its party slot, which keeps
+        // showing them; an enemy has the bar's alone.
+        private static IEnumerable<Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView> UnitSlots(Unit u)
+        {
+            if (u.IsHero && u.View != null && Nullables.TryGet(() => u.View.HeroId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId hero))
+            {
+                var view = RunData.ViewOf(hero);
+                if (view != null && view._itemSlotViews != null) return view._itemSlotViews;
+            }
+            return u.Bar._itemSlotViews;
         }
 
         // The sidebar's enemy card when it shows this unit (matched by enemy id: a nameless enemy has no
@@ -587,7 +600,7 @@ namespace GuildrunAccess.Module.GameRun
                     Announcements = new List<NodeAnnouncement>
                     {
                         // "Pimenta, wearing Freezing Tome, hero, health 650": the hero named as on the board.
-                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Label, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))), kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Label, UnitSlots(u)), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))), kind: AnnouncementKinds.Label),
                         new NodeAnnouncement(() => Shield(u.Bar), kind: AnnouncementKinds.Value),
                         new NodeAnnouncement(() => Mana(u.Bar), kind: AnnouncementKinds.Value),
                         // "2 of 3" within its side, under the same setting as a stamped position.
@@ -599,7 +612,7 @@ namespace GuildrunAccess.Module.GameRun
                     OnFocus = () => Peek(u.View),
                     Details = () => UnitDetails(u),
                     Subject = () => u.View,
-                    SideLines = HeroLines.SideOfSlots(() => UnitHeroLines(u), () => u.Bar._itemSlotViews),
+                    SideLines = HeroLines.SideOfSlots(() => UnitHeroLines(u), () => UnitSlots(u)),
                 });
             }
             b.SetRegion(null);
@@ -703,7 +716,7 @@ namespace GuildrunAccess.Module.GameRun
         // buffer key), its status icons last.
         private static string UnitLine(Unit u)
         {
-            var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Label, u.Bar._itemSlotViews), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))) };
+            var parts = new List<string> { Strings.RunUnit(u.IsHero, RunLabels.WithItems(u.Label, UnitSlots(u)), Strings.HeroStat(Strings.HeroHealth, Health(u.Bar))) };
             string shield = Shield(u.Bar);
             if (shield != null) parts.Add(shield);
             string mana = Mana(u.Bar);
