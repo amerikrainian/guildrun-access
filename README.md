@@ -35,6 +35,11 @@ units of that side, Home and End to its first and last. During a fight the arrow
 the fighting units.
 Ctrl+C speaks the board position of the focused cell or unit, column then row, and Ctrl+T the battle
 timer as the top panel shows it.
+While placing, Ctrl+N lists the units near the focused cell, or near the focused hero's cell from its
+party slot or card, each with its distance in hexes, nearest first and by name within a distance
+("Mushroom Tank 2, Slime 3"); Ctrl+H lists the hostile ones alone: the enemies from a hero, your
+heroes from an enemy, and nothing from an empty cell, where only Ctrl+N answers. Both are silent during
+a fight.
 Ctrl+Shift+M opens the mod menu with its settings and key help.
 
 Everything a control carries beyond its focus line waits in the buffers: Ctrl+Right and Ctrl+Left

@@ -4,6 +4,7 @@ using Ember.Scopes.Battle.UI;
 using Ember.Scopes.GameRun.UI;
 using GuildrunAccess.Core;
 using GuildrunAccess.Core.Strings;
+using GuildrunAccess.Core.UI;
 using GuildrunAccess.Module.Interop;
 using GuildrunAccess.Module.UI;
 using TMPro;
@@ -17,8 +18,10 @@ namespace GuildrunAccess.Module.GameRun
     /// grid cell's while placing, empty or not, else the cell the focused control's unit stands on (a
     /// fighting unit's as it moves; a slot's or card's hero while it is on the board). Ctrl+T the
     /// battle timer as the top panel draws it ("00:42"): the top panel stays up over the shop, the
-    /// crossroads and the events, so the last fight's time is spoken there too. Each is silent where
-    /// its fact is not on screen: outside a run, off the board, the timer's text hidden.</summary>
+    /// crossroads and the events, so the last fight's time is spoken there too. Ctrl+N the units
+    /// near the focused cell or hero while placing, Ctrl+H the hostile ones (see
+    /// <see cref="Nearby"/>). Each is silent where its fact is not on screen: outside a run, off the
+    /// board, the timer's text hidden.</summary>
     internal static class RunGlance
     {
         public static void Shards()
@@ -42,6 +45,46 @@ namespace GuildrunAccess.Module.GameRun
                 UnitGlance.Speak(UnitGlance.Group.Position);
             }
             catch (Exception e) { CoreLog.Warning("RunGlance: position failed: " + e.Message); }
+        }
+
+        /// <summary>Ctrl+N / Ctrl+H: the units round the focused cell, or round the cell the focused
+        /// control's hero stands on, each with its distance in hex steps, nearest first and by name
+        /// within a distance ("Mushroom Tank 2, Slime 3"); every unit, or the hostile ones alone.
+        /// Hostile is the origin's unit's word: the enemies from a hero, the heroes from an enemy,
+        /// and from an empty cell, where nobody stands to have any, silence (Ctrl+N answers there).
+        /// The origin's own occupant is left out. Placement only: a fight moves its units off the
+        /// registry's cells, and there the keys are silent, as they are off the board.</summary>
+        public static void Nearby(bool hostilesOnly)
+        {
+            try
+            {
+                if (!RunData.Placing()) return;
+                if (!BoardSection.TryFocusedCell(out var from) && !UnitGlance.TryFocusedUnitCell(out from)) return;
+                var board = RunData.Board();
+                if (board == null) return;
+                int w = board.BoardWidth, h = board.BoardHeight;
+                bool heroes = !hostilesOnly || RunData.TryEnemyAt(from, out _);
+                bool enemies = !hostilesOnly || RunData.TryHeroAt(from, out _);
+                if (!heroes && !enemies) return;
+                var units = new List<KeyValuePair<int, string>>();
+                for (int y = 0; y < h; y++)
+                    for (int x = 0; x < w; x++)
+                    {
+                        if (x == from.x && y == from.y) continue;
+                        var cell = new UnityEngine.Vector2Int(x, y);
+                        string name;
+                        if (enemies && RunData.TryEnemyAt(cell, out var enemy)) name = RunData.EnemyName(enemy) ?? Strings.RunBoard;
+                        else if (heroes && RunData.TryHeroAt(cell, out var hero)) name = RunData.HeroName(hero) ?? Strings.RunParty;
+                        else continue;
+                        units.Add(new KeyValuePair<int, string>(HexGrid.Distance(from.x, from.y, x, y), name));
+                    }
+                if (units.Count == 0) return;
+                units.Sort((a, b) => a.Key != b.Key ? a.Key.CompareTo(b.Key) : string.Compare(a.Value, b.Value, StringComparison.CurrentCultureIgnoreCase));
+                var parts = new List<string>();
+                foreach (var unit in units) parts.Add(Strings.GlanceNearby(unit.Value, unit.Key));
+                Speech.Say(string.Join(", ", parts), interrupt: true);
+            }
+            catch (Exception e) { CoreLog.Warning("RunGlance: nearby failed: " + e.Message); }
         }
 
         public static void Timer()

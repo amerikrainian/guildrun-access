@@ -239,7 +239,11 @@ the `IReadOnlyCharacterStat` proxy `GetStat` returns (it misreads the boxed stru
 the type ordinal, base 0, IsIntValue false). Ctrl+S the shards, Ctrl+C the focused cell's or unit's
 board coordinates (a unit's by the board grid's `WorldToCell` of its view's position:
 `CharacterViewController._cellPosition` is never written), Ctrl+T the battle timer's text as the top
-panel draws it (`RunGlance`); Ctrl+R/Ctrl+F reroll
+panel draws it, Ctrl+N the units near the focused cell (or near the cell of the hero a slot or card
+concerns) with their hex distances (`HexGrid.Distance`), nearest first then by name ("Pollen 1,
+Slime 4"), Ctrl+H the hostile ones alone (the origin's unit's hostiles: the heroes from an enemy, the
+enemies from a hero, silent on an empty cell), both placement-only (`RunData.Placing`) and silent in a
+fight (`RunGlance`); Ctrl+R/Ctrl+F reroll
 and freeze from anywhere on the shop (the shop section's `GetActions`; feedback deferred a few frames
 through `UI/Later`). Digits and Ctrl chords never clash with type-ahead; bare letters do. The battle board is a
 pointy-top hex grid (Unity's hexagon `Grid`, odd rows half a cell to the right, no cell straight up

@@ -174,17 +174,30 @@ namespace GuildrunAccess.Module.GameRun
         // cell field is never written, at placement or in a fight; the view's world position is where
         // the game draws the unit, and a fight moves it). Silent for a unit off the board: a reserve
         // hero's view is parked offscreen, far outside the grid's bounds.
-        private static string Cell(Target t)
+        private static string Cell(Target t) => TryCell(t, out var cell) ? RunLabels.CellName(cell) : null;
+
+        private static bool TryCell(Target t, out UnityEngine.Vector2Int cell)
         {
+            cell = default;
             var view = t.View;
-            if (view == null || !view.gameObject.activeInHierarchy) return null;
+            if (view == null || !view.gameObject.activeInHierarchy) return false;
             var board = RunData.BoardController;
             var grid = board != null ? board.PlacementGrid : null;
             var tiles = board != null ? board._boardDataReader : null;
-            if (grid == null || tiles == null) return null;
+            if (grid == null || tiles == null) return false;
             var at = grid.WorldToCell(view.transform.position);
-            var cell = new UnityEngine.Vector2Int(at.x, at.y);
-            return tiles.IsInBounds(cell) ? RunLabels.CellName(cell) : null;
+            cell = new UnityEngine.Vector2Int(at.x, at.y);
+            return tiles.IsInBounds(cell);
+        }
+
+        /// <summary>The board cell the focused control's unit stands on (a slot's or a card's hero as
+        /// much as a board unit); false when the control concerns no unit or the unit is off the
+        /// board.</summary>
+        internal static bool TryFocusedUnitCell(out UnityEngine.Vector2Int cell)
+        {
+            cell = default;
+            var subject = Navigation.FocusedNode?.Vtable?.Subject;
+            return subject != null && Resolve(subject(), out var target) && TryCell(target, out cell);
         }
 
         // "health 450/650, shield 40, mana 30/85": the bar's numbers in a fight (what the game draws),

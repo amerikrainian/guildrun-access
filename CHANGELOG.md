@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.0.7
+
+- Added ctrl+n for who's nearby and ctrl+h for hostiles nearby. Only works in setup phase.
+
 ## V0.0.6
 
 - More glance keys: ctrl+c to check unit position on the board and ctrl+t for time elapsed in combat.

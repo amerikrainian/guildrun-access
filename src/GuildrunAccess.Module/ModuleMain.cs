@@ -138,7 +138,8 @@ namespace GuildrunAccess.Module
             // The glance keys: a digit speaks one fact group of the unit the focused control concerns,
             // in place (UnitGlance); Shift+2, 3, 4 the same group with each stat's breakdown; Ctrl+S
             // the run's shards, Ctrl+C the focused cell's or unit's board coordinates, Ctrl+T the
-            // battle timer (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
+            // battle timer, Ctrl+N the units near the focused cell or hero while placing, Ctrl+H the
+            // hostile ones (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
             // which owns the bare letters.
             Glance("glance.vitals", "Unit health, shield and mana", KeyCode.Alpha1, KeyCode.Keypad1, () => UnitGlance.Speak(UnitGlance.Group.Vitals));
             Glance("glance.attack", "Unit attack, magic and defense", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.Speak(UnitGlance.Group.Attack));
@@ -152,6 +153,8 @@ namespace GuildrunAccess.Module
             InputManager.Register("run.shards", "Shards", InputCategory.UI, RunGlance.Shards).AddBinding(new KeyboardBinding(KeyCode.S, ctrl: true));
             InputManager.Register("run.position", "Board position", InputCategory.UI, RunGlance.Position).AddBinding(new KeyboardBinding(KeyCode.C, ctrl: true));
             InputManager.Register("run.timer", "Battle timer", InputCategory.UI, RunGlance.Timer).AddBinding(new KeyboardBinding(KeyCode.T, ctrl: true));
+            InputManager.Register("run.nearby", "Nearby units", InputCategory.UI, () => RunGlance.Nearby(hostilesOnly: false)).AddBinding(new KeyboardBinding(KeyCode.N, ctrl: true));
+            InputManager.Register("run.hostiles", "Nearby hostiles", InputCategory.UI, () => RunGlance.Nearby(hostilesOnly: true)).AddBinding(new KeyboardBinding(KeyCode.H, ctrl: true));
             // The shop's reroll and freeze, answered by the shop screen's own actions (ShopScreen) and
             // by nothing else: no handler here.
             InputManager.Register("shop.reroll", "Shop reroll", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.R, ctrl: true));

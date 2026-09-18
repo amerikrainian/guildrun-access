@@ -30,5 +30,19 @@ namespace GuildrunAccess.Core.UI
         /// <summary>A cell's horizontal position in cell widths, the odd rows' half-cell shift included:
         /// which cell of another row stands nearest straight ahead.</summary>
         public static float Column(int x, int y) => x + ((y & 1) != 0 ? 0.5f : 0f);
+
+        /// <summary>How many hex steps lie between two cells (a neighbour is 1 away): the offset
+        /// coordinates turned axial (the odd rows' shift taken out of the column), where the distance
+        /// is half the sum of the three axis differences.</summary>
+        public static int Distance(int x1, int y1, int x2, int y2)
+        {
+            int dq = Axial(x2, y2) - Axial(x1, y1);
+            int dr = y2 - y1;
+            return (System.Math.Abs(dq) + System.Math.Abs(dr) + System.Math.Abs(dq + dr)) / 2;
+        }
+
+        // The axial column of an odd-r cell. (y - (y & 1)) is even for a negative row too, so the
+        // division never rounds.
+        private static int Axial(int x, int y) => x - (y - (y & 1)) / 2;
     }
 }
