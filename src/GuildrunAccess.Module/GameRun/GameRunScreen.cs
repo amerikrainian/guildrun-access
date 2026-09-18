@@ -70,9 +70,12 @@ namespace GuildrunAccess.Module.GameRun
             yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
             {
                 if (_actions.Moves.Pending) { _actions.Moves.Cancel(); return; }
+                // The HUD's own Settings button when it is up (its click is the game's handler), else
+                // what the game's Escape calls itself, which asks for no button.
                 var nav = GameScopes.Controller<NavigationUIController>();
                 if (nav != null && GameNodes.IsShown(nav._settingsButton) && nav._settingsButton.interactable)
                     nav._settingsButton.onClick.Invoke();
+                else RunSettingsScreen.Open();
             });
         }
     }

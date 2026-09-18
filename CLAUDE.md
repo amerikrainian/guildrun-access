@@ -344,7 +344,7 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    (`NodeVtable.QuietVanish`). Between fights the shop, crossroads and event panels carry the HUD
    sections the game keeps interactable under them (`RunPanelScreen`), with Sell in the shop. The
    campfire is an event (Train, Study, Recharge, Rest), not a screen: the game's Campfire scope has
-   no scene in the demo. Open: Escape on the run HUD only cancels a pending move; a milestone's
+   no scene in the demo. Open: a milestone's
    hero and token-slot rewards are icons without tooltips (its title names them).
    The Red Rift (the difficulty screen's eighth tier, `DifficultyUIController._playRiftButton`, the
    game's challenge mode: `ChallengeReader.IsChallengeRun`) adds a relic, the Rift Seal (a Unique
@@ -359,8 +359,7 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    restore the `Profile` save afterwards. `IGameRegistryService.SetPermanentGlobalCustomData(key,
    FP)` moves a Seal charge, `ChallengeInstance.State.Value` a mission's state, and
    `reg.CreateItem(BalancingRef<IItemEntry>.From(entry))` drops a quest item (26 of the demo's 174
-   items have `HasQuestEffect`) into the reserve. The first hero picker has no way to the pause
-   menu: from `/eval`, the scene `SettingsPanelView.QuitToMenuButton.onClick.Invoke()`.
+   items have `HasQuestEffect`) into the reserve.
 7. **(done)** Nameless enemies: 295 of the 644 enemy entries have no name key (the scaled variants),
    and the game draws them blank on the bar, the sidebar card and the result's portraits.
    `GameRun/EnemyNames` names one after a named sibling (same id family "Enemy_1018xx", else the
@@ -386,8 +385,16 @@ focus mode is on, `FocusMode` disables the keyboard as an Input System DEVICE
 legacy input path, which is unaffected. `InputSystem.onDeviceChange` (a managed delegate converted
 with `DelegateSupport`) re-disables a keyboard the moment anything enables it again (window focus,
 a reload's old generation, a new device), so there is no scanning. Turning focus mode off re-enables
-it. Anything a game hotkey did must be offered through our screens instead (the run HUD's Escape
-opens the game's settings, Heroes is in the menu).
+it. Anything a game hotkey did must be offered through our screens instead (Heroes is in the menu).
+The game's Escape (`NavigationUIController.UpdateInput`, its back action) closes whatever is open, the
+compendium, a dialog, the feedback, settings and hero panels, and with nothing open calls
+`SetSettingsPanelActive(true)`: the pause menu, anywhere in a run, whether or not the HUD shows its
+Settings button (the first hero picker shows none, and no HUD at all). So a run screen with nothing of
+its own for Escape opens the pause menu through `RunSettingsScreen.Open()`: the hero picker, the
+crossroads, the run HUD (after cancelling a pending move; by the HUD's own Settings button when it
+is up). Where Escape already has a meaning it keeps it: Proceed on the shop, an event and a result,
+Continue or Back on the pickers (the shop and the events keep the pause menu a Tab away, in the
+menu stop they carry).
 
 ## Click-only widgets
 The comics' click-anywhere polls the pointer through the game's own input service instead of

@@ -46,6 +46,8 @@ the run's missions from anywhere, each marked complete or failed once it is.
 Enemies that share a name are numbered, "Slime 1" and "Slime 2", counted left to right from the row
 farthest from you, the order Left and Right cycle them in. The number stays with the enemy from
 placement through the fight, in the board, the buffers, the battle events log and the glance keys.
+Escape opens the game's pause menu (settings, compendium, abandon run, quit to menu) wherever a run
+screen has no other use for it: the first hero picker, the crossroads, the run itself.
 Ctrl+Shift+M opens the mod menu with its settings and key help.
 
 Everything a control carries beyond its focus line waits in the buffers: Ctrl+Right and Ctrl+Left

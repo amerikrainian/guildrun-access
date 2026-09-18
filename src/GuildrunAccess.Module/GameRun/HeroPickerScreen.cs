@@ -17,7 +17,8 @@ namespace GuildrunAccess.Module.GameRun
     /// cards as the shared hero grid (<see cref="HeroCardNodes.AddGrid"/>), each hero's line naming the
     /// relic bundled with it before the stats (the offer is the pair), with an extra relic row in the
     /// buffers for its description and tooltip, Enter recruiting through the card's own selection
-    /// button, and the reroll button (when offered) as the last stop.
+    /// button, and the reroll button (when offered) as the last stop. The game shows nothing else
+    /// here, no HUD and no Settings button, but its Escape still opens the pause menu: so does ours.
     /// </summary>
     public sealed class HeroPickerScreen : Screen
     {
@@ -79,6 +80,13 @@ namespace GuildrunAccess.Module.GameRun
             }
 
             b.PopContext();
+        }
+
+        public override IEnumerable<GuildrunAccess.Core.UI.ElementAction> GetActions()
+        {
+            // Escape: the pause menu (Continue, Settings, Compendium, Abandon Run, Quit to Menu), the
+            // only way out of a run that has just begun.
+            yield return new GuildrunAccess.Core.UI.ElementAction(GuildrunAccess.Core.UI.ActionIds.Back, Strings.Get("bind.ui.back"), _ => RunSettingsScreen.Open());
         }
 
         private static InitialHeroChoiceView ChoiceOf(List<InitialHeroChoiceView> choices, HeroCardView card)

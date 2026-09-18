@@ -46,7 +46,8 @@ namespace GuildrunAccess.Module.GameRun
             return c != null && c.gameObject.activeInHierarchy && Gates(c).Count > 0;
         }
 
-        protected override void PanelBack() { }
+        // The crossroads has nothing to go back to: Escape is the game's own there, the pause menu.
+        protected override void PanelBack() => RunSettingsScreen.Open();
 
         private sealed class PathsSection : ScreenSection
         {

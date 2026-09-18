@@ -35,6 +35,20 @@ namespace GuildrunAccess.Module.GameRun
 
         public override bool IsActive() => Panel() != null;
 
+        /// <summary>Open the pause menu the way the game's own Escape does: its back action, with
+        /// nothing else open, calls <c>NavigationUIController.SetSettingsPanelActive(true)</c>, anywhere
+        /// in a run, whether or not the HUD shows its Settings button (the first hero picker shows
+        /// none, and no HUD at all). Focus mode mutes that hotkey, so a run screen with nothing of its own
+        /// for Escape offers this instead. False outside a run; true when the menu is up.</summary>
+        public static bool Open()
+        {
+            var nav = Nav;
+            var panel = nav != null ? nav._settingsPanelView : null;
+            if (panel == null) return false;
+            if (!panel.gameObject.activeInHierarchy) nav.SetSettingsPanelActive(true);
+            return true;
+        }
+
         public override void Build(GraphBuilder b)
         {
             var panel = Panel();
