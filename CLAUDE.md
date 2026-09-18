@@ -390,7 +390,16 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    the compendium's copies of the card (`SpecializationCompendium*`), which the compendium screen
    reads by every visible text. For a path no hero at hand has, `/eval` can fill a live card for
    display: `view.SetChoiceFromEntry(spec, heroEntry)`, the entries from
-   `CompendiumUIController._specializationsByHeroId` / `_allHeroes`. `IGameRegistryService.RankUpHero(heroId)`
+   `CompendiumUIController._specializationsByHeroId` / `_allHeroes`. The pickers are the one panel
+   the game lets a player HIDE: `NavigationUIController._choiceNavigationButton` (a sibling of the
+   picker, caption `_choiceNavigationLabel`: "Hide", then "Show") runs `ToggleChoiceVisibility`,
+   which turns the picker and its modal backdrop off, uncovers the shop (`ShopUIController.SetCovered`)
+   and flips `_isChoiceHidden`, leaving the run HUD, or the shop a duplicate was bought in, fully
+   live with the choice still owed. The picker lists it last (`MenuSection.AddChoiceButton`); the
+   screen underneath takes over by itself (the picker object is inactive) and its menu stop
+   carries the same button, where `MenuSection.OnUpdate` lands focus the moment a choice is hidden
+   ("Run, menu, list, Show, button"). The game drops the button once the choice is made.
+   `IGameRegistryService.RankUpHero(heroId)`
    in `/eval` brings a picker up, the ids from `GameRegistryService.Data.Heroes.Keys.CopyTo`), the
    relic reward picker
    (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes

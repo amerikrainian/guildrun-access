@@ -113,6 +113,11 @@ namespace GuildrunAccess.Module.GameRun
             else if (n == 0)
                 b.AddItem(ControlId.Structural("picker:none"), GameNodes.Text(() => Strings.PickerNoChoices));
 
+            // Hide: the game's way to look at the party, the board or the shop under the picker before
+            // choosing. The picker's object goes inactive, so the screen beneath takes over, and its
+            // menu stop carries the same button, by then captioned "Show".
+            MenuSection.AddChoiceButton(b, Nav, "picker:hide");
+
             b.PopContext();
         }
 
