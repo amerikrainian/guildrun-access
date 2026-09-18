@@ -28,6 +28,56 @@ namespace GuildrunAccess.Tests
         }
 
         [Fact]
+        public void AVanishedNodeSendsFocusWhereItNames()
+        {
+            var state = new GraphState();
+            var items = new List<string> { "tab", "loading", "reset" };
+            string successor = "entry1";
+            var g = new KeyGraph(() =>
+            {
+                var b = new GraphBuilder();
+                foreach (var i in items)
+                    b.AddItem(Id(i), new NodeVtable
+                    {
+                        Announcements = new[] { NodeAnnouncement.Static(i) },
+                        VanishTo = i == "loading" ? () => successor != null ? Id(successor) : null : (System.Func<ControlId>)null,
+                    });
+                return b.Build();
+            }, state);
+
+            Assert.True(g.Rerender());
+            g.Move(GraphDir.Down); // on the loading line
+            Assert.Equal(Id("loading"), state.CurKey);
+
+            // The list loads: the line goes, the entries stand where it stood. Focus goes to the first
+            // entry, not back to the tab, which is what the nearest-survivor walk would pick.
+            items.Remove("loading");
+            items.InsertRange(1, new[] { "entry1", "entry2" });
+            Assert.True(g.Rerender());
+            Assert.Equal(Id("entry1"), state.CurKey);
+
+            // A successor that is not in the render (the list came back empty) is no landing: the
+            // plain walk back decides.
+            items.Clear(); items.AddRange(new[] { "tab", "loading", "reset" });
+            state.CurKey = null;
+            Assert.True(g.Rerender());
+            g.Move(GraphDir.Down);
+            successor = "nothing";
+            items.Remove("loading");
+            Assert.True(g.Rerender());
+            Assert.Equal(Id("tab"), state.CurKey);
+
+            // Nor does it act while the node is still there, or when it goes unfocused.
+            items.Clear(); items.AddRange(new[] { "tab", "loading", "reset" });
+            successor = "reset";
+            Assert.True(g.Rerender());
+            Assert.Equal(Id("tab"), state.CurKey);
+            items.Remove("loading");
+            Assert.True(g.Rerender());
+            Assert.Equal(Id("tab"), state.CurKey);
+        }
+
+        [Fact]
         public void QuietVanishFlagsTheLandingOnlyWhenTheFocusedQuietNodeIsGone()
         {
             var state = new GraphState();

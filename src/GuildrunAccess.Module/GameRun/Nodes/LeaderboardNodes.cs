@@ -36,7 +36,16 @@ namespace GuildrunAccess.Module.GameRun
                 b.EndRow();
             }
             AddLine(b, keyPrefix + ":streak", lb._currentStreakText);
-            AddLine(b, keyPrefix + ":load", lb._loadText);
+            // "Loading...", while a tab's list is fetched (the friends' takes a moment). A player who
+            // steps onto it and waits lands on what it loaded, the first entry, when it goes: the
+            // nearest survivor would be the tab that started the load.
+            var load = lb._loadText;
+            if (load != null && load.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(load.text))
+            {
+                var line = GameNodes.Text(() => load.text);
+                line.VanishTo = () => FirstEntryId(lb, keyPrefix);
+                b.AddItem(ControlId.Structural(keyPrefix + ":load"), line);
+            }
 
             var entries = lb._entries;
             if (entries != null)
@@ -46,7 +55,7 @@ namespace GuildrunAccess.Module.GameRun
                 {
                     if (entry == null || !entry.gameObject.activeInHierarchy) continue;
                     var e = entry;
-                    b.AddItem(ControlId.Structural(keyPrefix + ":" + e.GetInstanceID()), GameNodes.Text(() => Strings.ResultEntry(
+                    b.AddItem(EntryId(keyPrefix, e), GameNodes.Text(() => Strings.ResultEntry(
                         e.RankText != null ? e.RankText.text : "", e.NameText != null ? e.NameText.text : "", e.FloorText != null ? e.FloorText.text : "")));
                 }
                 b.PopContext();
@@ -59,6 +68,19 @@ namespace GuildrunAccess.Module.GameRun
                     Details = () => TooltipReader.Lines(lb._resetTooltipRaycastTarget),
                 });
             b.PopContext();
+        }
+
+        private static ControlId EntryId(string keyPrefix, LeaderboardEntryView entry)
+            => ControlId.Structural(keyPrefix + ":" + entry.GetInstanceID());
+
+        // The first entry on show, read when asked (the entries a load brings are not there before it).
+        private static ControlId FirstEntryId(LeaderboardController lb, string keyPrefix)
+        {
+            var entries = lb != null ? lb._entries : null;
+            if (entries == null) return null;
+            foreach (var entry in entries)
+                if (entry != null && entry.gameObject.activeInHierarchy) return EntryId(keyPrefix, entry);
+            return null;
         }
 
         // The board's shown title ("Endless Mode Leaderboard", or the challenge one), else our word.

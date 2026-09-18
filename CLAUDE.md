@@ -453,7 +453,10 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    and is NOT used), the compendium, the mod menu (Ctrl+Shift+M: settings, key help), comics. The run
    HUD is active only while placing or fighting (`GameRunScreen.IsActive`), so no landing is spoken
    at a battle's end or between panels; a unit falling under focus moves focus silently
-   (`NodeVtable.QuietVanish`). Between fights the shop, crossroads and event panels carry the HUD
+   (`NodeVtable.QuietVanish`). A focused node that vanishes lands on the nearest survivor, which is
+   the control BEFORE it; a placeholder names its successor instead (`NodeVtable.VanishTo`, asked at
+   that rebuild and honoured when the node is in the new render): the leaderboard's "Loading..."
+   line names the first entry, so waiting on it lands on the loaded list, not back on the tab. Between fights the shop, crossroads and event panels carry the HUD
    sections the game keeps interactable under them (`RunPanelScreen`), with Sell in the shop. The
    campfire is an event (Train, Study, Recharge, Rest), not a screen: the game's Campfire scope has
    no scene in the demo. Open: a milestone's

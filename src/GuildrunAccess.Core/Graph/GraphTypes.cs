@@ -113,6 +113,13 @@ namespace GuildrunAccess.Core.Graph
         /// at every death is noise, not information.</summary>
         public bool QuietVanish;
 
+        /// <summary>Optional. Where focus goes when this node vanishes on a rebuild while focused,
+        /// instead of the nearest survivor (which is the control BEFORE it): asked at that rebuild,
+        /// honoured when the node it names is in the new render. For a placeholder standing where
+        /// content is about to be, a list's "Loading...": the player who waited on it lands on what
+        /// it loaded, the first entry, not back on the tab that started the load.</summary>
+        public Func<ControlId> VanishTo;
+
         /// <summary>Optional. While this node is focused, its whole readout is spoken again whenever
         /// any part's text changes (the parts read live game state at speak time), interrupting so the
         /// latest value wins; changes within a short window coalesce into one re-read. For a unit in a

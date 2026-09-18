@@ -60,6 +60,14 @@ namespace GuildrunAccess.Core.Graph
                 _current = null;
                 return false;
             }
+            // The focused node is gone and named its successor: suggest it (Reconcile honours a
+            // suggestion first, when its target is in the render).
+            if (focused != null && focused.Vtable != null && focused.Vtable.VanishTo != null
+                && !_current.Nodes.ContainsKey(focused.Id) && _state.NextSuggestedMove == null)
+            {
+                try { _state.NextSuggestedMove = focused.Vtable.VanishTo(); }
+                catch (Exception e) { CoreLog.Warning("KeyGraph: a node's VanishTo failed: " + e.Message); }
+            }
             Reconcile(_current, _state);
             // A quiet node vanished from under focus: the landing it caused is not to be spoken.
             if (focused != null && focused.Vtable != null && focused.Vtable.QuietVanish
