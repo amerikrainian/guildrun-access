@@ -124,7 +124,11 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(text) ? Strings.ScreenPicker : text;
         }
 
-        // A specialization: "The Unstoppable, Passive Ability, <description>", Enter picks it.
+        // A specialization: "The Conduit, Passive Ability, Mystic, Backup, Stealth, Gain the Mystic
+        // class and 6 Mana Regen. <description>", Enter picks it. The tags are the card's banners, icons
+        // alone (the class the path adds, its archetypes); the sentence before the description is the
+        // card's additional-class panel, which only a path that adds a class shows, and which carries
+        // that path's stat gains too.
         private static NodeVtable Specialization(SpecializationChoiceView choice)
         {
             var subtitle = choice._subtitleText != null ? choice._subtitleText.GetComponent<TMP_Text>() : null;
@@ -135,19 +139,42 @@ namespace GuildrunAccess.Module.GameRun
                 {
                     GameNodes.LabelPart(() => choice._nameText != null ? choice._nameText.text : null),
                     new NodeAnnouncement(() => subtitle != null ? subtitle.text : null, kind: AnnouncementKinds.Value),
+                    new NodeAnnouncement(() => Tags(choice), kind: AnnouncementKinds.Value),
+                    GameNodes.TooltipPart(() => AdditionalClass(choice)),
                     GameNodes.TooltipPart(() => choice._descriptionText != null ? choice._descriptionText.text : null),
                 },
                 SearchText = () => choice._nameText != null ? choice._nameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                Details = () => DetailsOf(choice._tooltipRaycastTarget, choice._descriptionText),
+                Details = () => DetailsOf(choice, choice._tooltipRaycastTarget, choice._descriptionText),
             };
         }
 
-        // The tooltip as lines, else the shown description as the one line.
-        private static IEnumerable<string> DetailsOf(TooltipRaycastTarget target, TMPro.TMP_Text description)
+        // "Mystic, Backup, Stealth", or null for a card without banners.
+        private static string Tags(Component choice)
+        {
+            var names = HeroCardNodes.TagNames(choice);
+            return names.Count > 0 ? string.Join(", ", names) : null;
+        }
+
+        // The additional-class panel's sentence while the card shows it (a hidden one keeps the
+        // prefab's "Become a Duelist").
+        private static string AdditionalClass(SpecializationChoiceView choice)
+        {
+            var container = choice._additionalClassContainer;
+            if (container == null || !container.activeInHierarchy) return null;
+            var view = choice._additionalClassView;
+            var text = view != null ? view._additionalClassText : null;
+            return text != null && text.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(text.text) ? text.text : null;
+        }
+
+        // The tooltip as lines, else the shown description as the one line; then the banners' tooltips
+        // (what the added class plays like, what an archetype stands for).
+        private static IEnumerable<string> DetailsOf(Component choice, TooltipRaycastTarget target, TMPro.TMP_Text description)
         {
             var lines = TooltipReader.Lines(target);
-            return lines.Count > 0 ? lines : GameNodes.Lines(description != null ? description.text : null);
+            if (lines.Count == 0) lines.AddRange(GameNodes.Lines(description != null ? description.text : null));
+            lines.AddRange(HeroCardNodes.TagsTooltips(choice));
+            return lines;
         }
 
         // A rank modifier: "<name>, Class Upgrade, <description>", Enter picks it. The kind is the card's
@@ -165,11 +192,12 @@ namespace GuildrunAccess.Module.GameRun
                     GameNodes.LabelPart(() => choice._itemNameText != null && !string.IsNullOrWhiteSpace(choice._itemNameText.text)
                         ? choice._itemNameText.text : TooltipReader.Title(choice._tooltipRaycastTarget)),
                     new NodeAnnouncement(() => subtitle != null && subtitle.isActiveAndEnabled ? subtitle.text : null, kind: AnnouncementKinds.Value),
+                    new NodeAnnouncement(() => Tags(choice), kind: AnnouncementKinds.Value),
                     GameNodes.TooltipPart(() => choice._modifierDescriptionText != null ? choice._modifierDescriptionText.text : null),
                 },
                 SearchText = () => choice._itemNameText != null ? choice._itemNameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                Details = () => DetailsOf(choice._tooltipRaycastTarget, choice._modifierDescriptionText),
+                Details = () => DetailsOf(choice, choice._tooltipRaycastTarget, choice._modifierDescriptionText),
             };
         }
 

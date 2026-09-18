@@ -30,10 +30,8 @@ namespace GuildrunAccess.Module.GameRun
             if (card == null) return null;
             var sb = new StringBuilder();
             if (card._nameText != null) sb.Append(card._nameText.text);
-            foreach (var tag in card.GetComponentsInChildren<HeroTagView>(false))
+            foreach (var name in TagNames(card))
             {
-                string name = TagName(tag);
-                if (string.IsNullOrWhiteSpace(name)) continue;
                 if (sb.Length > 0) sb.Append(", ");
                 sb.Append(name);
             }
@@ -58,17 +56,40 @@ namespace GuildrunAccess.Module.GameRun
             return name != null && name.StartsWith(RankSpritePrefix, StringComparison.Ordinal) ? name.Substring(RankSpritePrefix.Length) : null;
         }
 
-        // A class tag carries its localized caption; an archetype tag (under the card's HeroArchetypes
-        // holder) is icon-only with a placeholder caption ("assassindadsadsad", the hover's too), so
+        /// <summary>The class and archetype tags shown under <paramref name="root"/>, named, the
+        /// classes first as a hero card has them: a hero card's, or a rank-up choice's banners (the
+        /// class a path adds and its archetypes, which its hierarchy holds the other way round).</summary>
+        public static List<string> TagNames(UnityEngine.Component root)
+        {
+            var names = new List<string>();
+            if (root == null) return names;
+            int classes = 0;
+            foreach (var tag in root.GetComponentsInChildren<HeroTagView>(false))
+            {
+                string name = TagName(tag);
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                if (IsArchetype(tag)) names.Add(name);
+                else names.Insert(classes++, name);
+            }
+            return names;
+        }
+
+        // An archetype tag sits under a hero card's HeroArchetypes holder, a rank-up choice's StatsBanner.
+        private static bool IsArchetype(HeroTagView tag)
+        {
+            var parent = tag.transform.parent;
+            return parent != null && (parent.name == "HeroArchetypes" || parent.name == "StatsBanner");
+        }
+
+        // A class tag carries its localized caption; an archetype tag is icon-only with a placeholder
+        // caption ("assassindadsadsad", the hover's too), so
         // it is named by the title the game gives its tooltip ("Shard", "Crit", "Omnivamp": the
         // archetype's localized name). Its icon sprite is named for the art, not the archetype (the
         // Shard archetype's is "Economy"), and is only the fallback.
         private static string TagName(HeroTagView tag)
         {
             if (tag == null) return null;
-            var parent = tag.transform.parent;
-            bool archetype = parent != null && parent.name == "HeroArchetypes";
-            if (archetype)
+            if (IsArchetype(tag))
             {
                 string title = TooltipReader.Title(tag._tooltipObject);
                 if (title != null) return title;
@@ -82,7 +103,7 @@ namespace GuildrunAccess.Module.GameRun
         /// class plays like ("Assassins use Crit to deal bursts of damage...", its mechanics and their
         /// keyword definitions) and what an archetype stands for ("Shards: The currency used to
         /// purchase upgrades from the shop."). The game fills them on the tag's own tooltip object.</summary>
-        public static List<string> TagsTooltips(HeroCardView card)
+        public static List<string> TagsTooltips(UnityEngine.Component card)
         {
             var lines = new List<string>();
             if (card == null) return lines;

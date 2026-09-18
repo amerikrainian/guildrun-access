@@ -347,7 +347,13 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    one stop, `GraphBuilder.StartColumn`: Up/Down within one, Right/Left across, an empty container
    dropped; the shop's heroes, items and relics for sale are one such stop too), info, speed, menu),
    battle result (all forms), shop,
-   crossroads, events (campfire included), rank-up pickers, the relic reward picker
+   crossroads, events (campfire included), rank-up pickers (a choice card is more than its name
+   and description: its banners are `HeroTagView` icons, the class a path adds under `ClassBanner`
+   and its archetypes under `StatsBanner`, read by `HeroCardNodes.TagNames`, and a B-rank path that
+   adds a class says so, with its stat gains, in `SpecializationChoiceView._additionalClassView`,
+   live only while `_additionalClassContainer` is active; `IGameRegistryService.RankUpHero(heroId)`
+   in `/eval` brings a picker up, the ids from `GameRegistryService.Data.Heroes.Keys.CopyTo`), the
+   relic reward picker
    (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes
    panel, tooltips through the game's own tooltip pipeline. A hero card's class and archetype tags
    (`HeroTagView`) are the exception: they carry no tooltip source but the tooltip asset's own
