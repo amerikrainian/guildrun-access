@@ -11,8 +11,10 @@ namespace GuildrunAccess.Module.GameRun
     /// <summary>
     /// The hero and item buffers' lines for a control that concerns a hero: a card (the shop, the
     /// picker, the Heroes panel, the sidebar's inspect card), a party or reserve slot, a board cell,
-    /// a unit in a fight. The hero buffer is the hero at a glance (name and class, stats, one line per
-    /// ability); the item buffer is one line per item worn, each its tooltip. Every line is read live.
+    /// a unit in a fight. The hero buffer is the whole hero: name and class, stats, the abilities line,
+    /// then every tooltip the card carries, so nothing about the hero has to be looked for in the
+    /// control buffer; the item buffer is one line per item worn, each its tooltip. Every line is
+    /// read live.
     /// </summary>
     internal static class HeroLines
     {
@@ -29,14 +31,16 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         /// <summary>A hero card, the rows of the hero buffer everywhere: "Karsu, Duelist, Frost", its
-        /// stats line, then its abilities line ("Killshot, Active Ability; ..."). The tooltips behind
-        /// them are the control buffer's.</summary>
+        /// stats line, its abilities line ("Killshot, Active Ability; ..."), then the tooltips behind
+        /// them: every ability's, every class and archetype tag's (what "Shard" or "Assassin" means),
+        /// every stat's.</summary>
         public static IEnumerable<string> ForCard(HeroCardView card)
         {
             if (card == null) yield break;
             yield return HeroCardNodes.NameAndClass(card);
             yield return HeroCardNodes.StatsLine(card);
             yield return HeroCardNodes.AbilitiesLine(card);
+            foreach (var line in HeroCardNodes.Tooltips(card)) yield return line;
         }
 
         /// <summary>A party or reserve slot's hero in the same rows: its name, its vitals when it stands

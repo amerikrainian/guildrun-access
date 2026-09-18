@@ -59,8 +59,10 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         // A class tag carries its localized caption; an archetype tag (under the card's HeroArchetypes
-        // holder) is icon-only with a placeholder caption, and its icon sprite is named for the
-        // archetype ("Shield", "Fire", "Stall").
+        // holder) is icon-only with a placeholder caption ("assassindadsadsad", the hover's too), so
+        // it is named by the title the game gives its tooltip ("Shard", "Crit", "Omnivamp": the
+        // archetype's localized name). Its icon sprite is named for the art, not the archetype (the
+        // Shard archetype's is "Economy"), and is only the fallback.
         private static string TagName(HeroTagView tag)
         {
             if (tag == null) return null;
@@ -68,10 +70,42 @@ namespace GuildrunAccess.Module.GameRun
             bool archetype = parent != null && parent.name == "HeroArchetypes";
             if (archetype)
             {
+                string title = TooltipReader.Title(tag._tooltipObject);
+                if (title != null) return title;
                 var sprite = tag._icon != null ? tag._icon.sprite : null;
                 return sprite != null ? sprite.name.Replace("_NoFrame", "").Replace('_', ' ') : null;
             }
             return tag._name != null ? tag._name.text : null;
+        }
+
+        /// <summary>The class and archetype tags' tooltips as buffer lines, in the card's order: what a
+        /// class plays like ("Assassins use Crit to deal bursts of damage...", its mechanics and their
+        /// keyword definitions) and what an archetype stands for ("Shards: The currency used to
+        /// purchase upgrades from the shop."). The game fills them on the tag's own tooltip object.</summary>
+        public static List<string> TagsTooltips(HeroCardView card)
+        {
+            var lines = new List<string>();
+            if (card == null) return lines;
+            foreach (var tag in card.GetComponentsInChildren<HeroTagView>(false))
+                if (tag != null) lines.AddRange(TooltipReader.Lines(tag._tooltipObject));
+            return lines;
+        }
+
+        /// <summary>Every tooltip of the card as buffer lines: its abilities', its tags', its stats'.
+        /// A keyword's definition is given once: an ability that makes Shards, the Assassin class
+        /// and the Shard archetype each define "Shards", and the later ones are folded. The stats'
+        /// lines are left whole: two stats may well share a "Value: 0 (Base: 0 + Bonus: 0)".</summary>
+        public static List<string> Tooltips(HeroCardView card)
+        {
+            var lines = new List<string>();
+            if (card == null) return lines;
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var line in AbilitiesTooltips(card))
+                if (seen.Add(GuildrunAccess.Contracts.TextFilter.Clean(line))) lines.Add(line);
+            foreach (var line in TagsTooltips(card))
+                if (seen.Add(GuildrunAccess.Contracts.TextFilter.Clean(line))) lines.Add(line);
+            lines.AddRange(StatsTooltips(card));
+            return lines;
         }
 
         /// <summary>The shop price shown on the card, or null when it carries none.</summary>
@@ -244,9 +278,10 @@ namespace GuildrunAccess.Module.GameRun
         /// Declare hero cards as one vertical list inside the current Tab-stop, one control per hero:
         /// "Sal, Mage, Frost, cost Shard 15, health 725, mana 100, Magic 25, Crit 15, ..." (the
         /// <paramref name="nameSuffix"/>, a price, before the stats; only the non-zero stats). The rest
-        /// waits in the buffers: the control buffer reads the full stats line, then every ability's and
-        /// stat's tooltip lines (then the extras' tooltips); the hero buffer name, stats, abilities (then
-        /// any <paramref name="extras"/>); the items buffer the items worn. Enter runs <paramref name="activate"/> for that card; the control is a button
+        /// waits in the buffers: the control buffer reads the full stats line, then every ability's,
+        /// tag's and stat's tooltip lines (then the extras' tooltips); the hero buffer the whole hero
+        /// (<see cref="HeroLines.ForCard"/>: name, stats, abilities, the same tooltips), then any
+        /// <paramref name="extras"/> with their tooltips; the items buffer the items worn. Enter runs <paramref name="activate"/> for that card; the control is a button
         /// only when it has an action (a picker), plain text otherwise (an inspected card).
         /// </summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
@@ -289,7 +324,8 @@ namespace GuildrunAccess.Module.GameRun
             };
         }
 
-        // The hero buffer: name, stats, abilities, then each extra as "caption, text".
+        // The hero buffer: the whole hero (name, stats, abilities, every tooltip), then each extra as
+        // "caption, text" with its tooltip lines under it.
         private static IEnumerable<string> CardRows(HeroCardView card, GridRow[] extras)
         {
             foreach (var line in HeroLines.ForCard(card)) yield return line;
@@ -301,18 +337,20 @@ namespace GuildrunAccess.Module.GameRun
                 if (string.IsNullOrWhiteSpace(text)) continue;
                 string caption = r.Caption != null ? r.Caption() : null;
                 yield return string.IsNullOrEmpty(caption) ? text : caption + ", " + text;
+                var more = r.Tooltip != null ? r.Tooltip(card) : null;
+                if (more != null)
+                    foreach (var line in more) yield return line;
             }
         }
 
-        // The control buffer: the full stats line, every ability's, then every stat's tooltip lines, then
+        // The control buffer: the full stats line, every ability's, tag's and stat's tooltip lines, then
         // the extras' tooltips.
         private static List<string> CardDetails(HeroCardView card, GridRow[] extras)
         {
             var lines = new List<string>();
             string stats = StatsLine(card);
             if (!string.IsNullOrEmpty(stats)) lines.Add(stats);
-            lines.AddRange(AbilitiesTooltips(card));
-            lines.AddRange(StatsTooltips(card));
+            lines.AddRange(Tooltips(card));
             if (extras != null)
                 foreach (var r in extras)
                 {

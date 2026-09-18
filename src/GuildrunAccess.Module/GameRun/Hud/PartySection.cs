@@ -12,7 +12,7 @@ namespace GuildrunAccess.Module.GameRun
     internal sealed class PartySection : ScreenSection
     {
         // The control buffer: the full stats line (the card the landing showed, else the bar vitals),
-        // the abilities and items tooltips, then the stat tooltips.
+        // the abilities and items tooltips, then the card's tag and stat tooltips.
         private static IEnumerable<string> SlotDetails(BottomHeroView view)
         {
             var lines = new List<string>();
@@ -20,7 +20,7 @@ namespace GuildrunAccess.Module.GameRun
             string stats = card != null ? HeroCardNodes.StatsLine(card) : BoardSection.VitalsOf(view);
             if (!string.IsNullOrEmpty(stats)) lines.Add(stats);
             lines.AddRange(RunLabels.SlotTooltips(view));
-            if (card != null) lines.AddRange(HeroCardNodes.StatsTooltips(card));
+            if (card != null) { lines.AddRange(HeroCardNodes.TagsTooltips(card)); lines.AddRange(HeroCardNodes.StatsTooltips(card)); }
             return lines;
         }
 

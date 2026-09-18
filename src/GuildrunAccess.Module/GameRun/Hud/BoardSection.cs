@@ -411,7 +411,7 @@ namespace GuildrunAccess.Module.GameRun
             if (u.IsHero)
             {
                 var card = HeroActions.ShownHeroCard(u.Name);
-                if (card != null) { lines.AddRange(HeroCardNodes.AbilitiesTooltips(card)); lines.AddRange(HeroCardNodes.StatsTooltips(card)); }
+                if (card != null) lines.AddRange(HeroCardNodes.Tooltips(card));
             }
             else
             {
@@ -432,7 +432,8 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         // The control buffer: the full stats line from the card the landing showed, then a hero's
-        // abilities and items (its slot) and the card's stat tooltips; an enemy's abilities and stats.
+        // abilities and items (its slot) and the card's tag and stat tooltips; an enemy's abilities
+        // and stats.
         private static IEnumerable<string> CellDetails(Vector2Int cell)
         {
             if (RunData.TryHeroAt(cell, out var id))
@@ -443,7 +444,7 @@ namespace GuildrunAccess.Module.GameRun
                 if (!string.IsNullOrEmpty(stats)) lines.Add(stats);
                 var view = RunData.ViewOf(id);
                 if (view != null) lines.AddRange(RunLabels.SlotTooltips(view));
-                if (card != null) lines.AddRange(HeroCardNodes.StatsTooltips(card));
+                if (card != null) { lines.AddRange(HeroCardNodes.TagsTooltips(card)); lines.AddRange(HeroCardNodes.StatsTooltips(card)); }
                 return lines;
             }
             if (RunData.TryEnemyAt(cell, out var enemy))
@@ -473,16 +474,15 @@ namespace GuildrunAccess.Module.GameRun
             return null;
         }
 
-        // The hero buffer: the card's rows as the sidebar reads them (name with health and mana, the
-        // abilities line, the stats line); a hero without its card shown falls back to its slot, an
-        // enemy to its unit line.
+        // The hero buffer: the card's rows as every hero card reads (name, stats, abilities, then its
+        // tooltips: HeroLines.ForCard); a hero without its card shown falls back to its slot, an enemy
+        // to its unit line.
         private static IEnumerable<string> CellHeroLines(Vector2Int cell)
         {
             if (RunData.TryHeroAt(cell, out var id))
             {
                 var card = HeroActions.ShownHeroCard(RunData.HeroName(id));
-                if (card != null)
-                    return GameNodes.Lines(HeroCardNodes.NameAndClass(card), HeroCardNodes.StatsLine(card), HeroCardNodes.AbilitiesLine(card));
+                if (card != null) return HeroLines.ForCard(card);
                 var view = RunData.ViewOf(id);
                 return view != null ? HeroLines.ForSlot(view, VitalsOf(id)) : null;
             }

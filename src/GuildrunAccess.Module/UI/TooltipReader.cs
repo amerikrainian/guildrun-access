@@ -96,6 +96,65 @@ namespace GuildrunAccess.Module.UI
             return lines;
         }
 
+        // ---- flexible tooltip objects ----
+
+        // A few widgets carry no tooltip source but the tooltip asset's own object, filled by the game
+        // with a title and a description (TooltipHelper.PopulateTitleDescriptionTooltipObject: a hero
+        // card's class and archetype tags). Its information is a list of texts by identifier.
+        private const string FlexTitle = "tooltip_title";
+        private const string FlexDescription = "tooltip_description";
+        private const string FlexDetails = "tooltip_details";
+        private const string FlexExtra = "tooltip_extra_information";
+
+        /// <summary>A flexible tooltip object's title ("Shard", an archetype tag's name), or null.</summary>
+        public static string Title(TRavljen.Tooltip.TooltipObject tooltip)
+        {
+            string title = FlexText(tooltip, FlexTitle);
+            return string.IsNullOrWhiteSpace(title) ? null : title.Trim();
+        }
+
+        /// <summary>A flexible tooltip object as buffer lines, what the game shows with Shift held: the
+        /// title, the details (the description when it has none), then the keyword definitions, each
+        /// paragraph a line, a repeat dropped ("Shards: The currency..." is an archetype's description
+        /// and its own keyword definition at once). The title is left out when the text opens with it
+        /// ("Crit" over "Crit: The percent chance..."). Empty when the object holds nothing.</summary>
+        public static List<string> Lines(TRavljen.Tooltip.TooltipObject tooltip)
+        {
+            var lines = new List<string>();
+            string details = FlexText(tooltip, FlexDetails);
+            AddLines(lines, string.IsNullOrWhiteSpace(details) ? FlexText(tooltip, FlexDescription) : details);
+            AddLines(lines, FlexText(tooltip, FlexExtra));
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            lines.RemoveAll(line => !seen.Add(AnyTag.Replace(line, "").Trim()));
+            string title = Title(tooltip);
+            if (title != null && (lines.Count == 0 || !AnyTag.Replace(lines[0], "").TrimStart().StartsWith(title, StringComparison.OrdinalIgnoreCase)))
+                lines.Insert(0, title);
+            return lines;
+        }
+
+        private static string FlexText(TRavljen.Tooltip.TooltipObject tooltip, string identifier)
+        {
+            try
+            {
+                var info = tooltip != null ? tooltip.information : null;
+                var flexible = info != null ? info.TryCast<TRavljen.Tooltip.Flexible.FlexibleTooltipInformation>() : null;
+                var data = flexible != null ? flexible.data : null;
+                if (data == null) return null;
+                for (int i = 0; i < data.Count; i++)
+                {
+                    var value = data[i];
+                    if (value == null || value.identifier != identifier) continue;
+                    var text = value.TryCast<TRavljen.Tooltip.Flexible.TextDataValue>();
+                    return text != null ? text.text : null;
+                }
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("TooltipReader: flexible tooltip: " + e.Message);
+            }
+            return null;
+        }
+
         /// <summary>The definitions of the keywords a raw game text uses ("Omnivamp: Restores Health...",
         /// one per line), through the game's own keyword parser: what a tooltip's keyword section would
         /// hold for it. The text must be the raw localized string with its keyword tags

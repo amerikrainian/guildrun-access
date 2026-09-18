@@ -265,7 +265,11 @@ re-read). Empty buffers are skipped; a focus change re-homes review to the contr
 roster, in cycling order: **control** (the focused node's head line: label, value, state, never the
 role word or the position, then one line per description part and per `NodeVtable.Details` tooltip,
 repeats folded: `Core/Buffers/NodeLines`), **hero** and **items** (`NodeVtable.SideLines`: the hero a
-slot, cell, unit or card concerns and the items it carries: `GameRun/Nodes/HeroLines`), **relics**
+slot, cell, unit or card concerns and the items it carries: `GameRun/Nodes/HeroLines`; the hero buffer
+is the WHOLE hero, `HeroLines.ForCard`: name with tags and rank, the full stats line, the abilities
+line, then every tooltip of the card, `HeroCardNodes.Tooltips`: abilities, class and archetype tags,
+stats, a keyword's definition given once across the abilities and tags; the control buffer of a hero
+control holds the same tooltips, so neither buffer sends the player to the other), **relics**
 (the run's, one line each), **party** and **enemies** (one line per unit, placement and fights),
 **combat** (the battle events log, following its latest line). Conventions: a tooltip is ONE line,
 never joined with others; helpers return `List<string>` (`ItemTooltips`, `AbilitiesTooltips`,
@@ -304,7 +308,14 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    battle result (all forms), shop,
    crossroads, events (campfire included), rank-up pickers, the relic reward picker
    (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes
-   panel, tooltips through the game's own tooltip pipeline. Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
+   panel, tooltips through the game's own tooltip pipeline. A hero card's class and archetype tags
+   (`HeroTagView`) are the exception: they carry no tooltip source but the tooltip asset's own
+   `TooltipObject`, which the game fills with a title and a description
+   (`TooltipHelper.PopulateTitleDescriptionTooltipObject`: a `FlexibleTooltipInformation` of
+   `TextDataValue`s by identifier, `tooltip_title` / `tooltip_details` / `tooltip_extra_information`),
+   read by `TooltipReader.Title/Lines(TooltipObject)`. An archetype tag is icon-only and its caption
+   and hover text are a leftover placeholder ("assassindadsadsad"): it is NAMED by that tooltip's
+   title ("Shard"), never by its icon sprite, which is named for the art ("Economy"). Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
    `LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `GameRun/RunData`.
 6. **(done)** End screen (a boss victory shows it in the game's short form, `Show(_, true)` from the
    flow controller's OnStart timer: every navigation button hidden, one caption-less click-anywhere

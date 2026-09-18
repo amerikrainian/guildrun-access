@@ -4,6 +4,8 @@
 
 - Added ctrl+n for who's nearby and ctrl+h for hostiles nearby. Only works in setup phase.
 - Added enemy numbers, so you can finally tell things like spiders and slimes apart from each other.
+- Hero archetypes now read by the game's own names and are explained in the buffers, along with the hero's classes.
+- The hero buffer now holds the whole hero: name, stats and abilities, then what every ability, class, archetype and stat means. No more hopping to the control buffer for half of it.
 
 ## V0.0.6
 

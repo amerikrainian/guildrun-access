@@ -47,8 +47,9 @@ Ctrl+Shift+M opens the mod menu with its settings and key help.
 
 Everything a control carries beyond its focus line waits in the buffers: Ctrl+Right and Ctrl+Left
 switch buffers, Ctrl+Up and Ctrl+Down step through the current one. The control buffer holds the
-focused control's own line and one line per tooltip; the hero and items buffers describe the hero a
-slot, card or unit concerns and what it wears; relics lists the run's relics; party and enemies
+focused control's own line and one line per tooltip; the hero buffer holds the whole hero a slot,
+card or unit concerns (its name, classes and archetypes, its stats and abilities, then what each
+ability, class, archetype and stat means) and the items buffer what it wears; relics lists the run's relics; party and enemies
 list every unit on the board; combat is the battle events log, newest line first.
 
 ## Building from source
