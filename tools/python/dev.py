@@ -99,6 +99,10 @@ def cmd_click(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
+    # Game text is any script (leaderboard names, localized strings): a Windows console or a pipe
+    # in the ANSI codepage must not crash a print.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("health", "reload", "module", "nav", "actions", "launch", "kill"):

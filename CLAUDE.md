@@ -84,7 +84,8 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   sites proves nothing (`TileInfo.set_EnemyId` shows none; `BoardService.InitializeBoard` shows `Init`).
 - `dev.py <cmd>` — the dev server from the command line: `launch`, `kill`, `reload`, `nav`, `input
   ui.down ui.activate`, `speech --tail 20`, `log --grep X`, `gui --grep RE --context 3`, `eval file.cs`,
-  `wait "<bool expr>"`, `typeinfo Name`, `actions`, `module`, `screenshot out.png`, `click [x y]`
+  `wait "<bool expr>"`, `typeinfo Name`, `actions`, `module`, `screenshot out.png` (its
+  output is UTF-8 whatever the console's codepage: leaderboard names are any script), `click [x y]`
   (an OS click at Unity screen coordinates, the fallback for prompts the mod does not cover yet).
 - `run_driver.py [--until placement|result|shop|crossroads|event|picker|heroes|end] [--buy]` — plays
   a run forward through the mod's own navigation and stops at the stage you want or at any screen it
