@@ -20,7 +20,7 @@ namespace GuildrunAccess.Module.GameRun
     /// battle timer as the top panel draws it ("00:42"): the top panel stays up over the shop, the
     /// crossroads and the events, so the last fight's time is spoken there too. Ctrl+N the units
     /// near the focused cell or hero while placing, Ctrl+H the hostile ones (see
-    /// <see cref="Nearby"/>). Each is silent where its fact is not on screen: outside a run, off the
+    /// <see cref="Nearby"/>). Ctrl+Q the quests of the focused hero, item or relic. Each is silent where its fact is not on screen: outside a run, off the
     /// board, the timer's text hidden.</summary>
     internal static class RunGlance
     {
@@ -86,6 +86,21 @@ namespace GuildrunAccess.Module.GameRun
                 Speech.Say(string.Join(", ", parts), interrupt: true);
             }
             catch (Exception e) { CoreLog.Warning("RunGlance: nearby failed: " + e.Message); }
+        }
+
+        /// <summary>Ctrl+Q: the quests of what is focused, in place: a hero's (the quests of the items
+        /// it wears, a slot's, a card's, a cell's or a fighting unit's alike: "Rift Seal: Tank or
+        /// Vanguard, 1 / 3. Rift Seal: ..."), or the focused item's or relic's own. The count is the
+        /// game's progress bar text, read at the keypress. The rewards stay in the quests buffer.
+        /// Silent when nothing focused has a quest.</summary>
+        public static void Quests()
+        {
+            try
+            {
+                var lines = new List<string>(Core.Buffers.NodeLines.SideLines(Core.UI.Navigation.FocusedNode, Core.Buffers.BufferKeys.QuestBrief));
+                if (lines.Count > 0) Speech.Say(string.Join(". ", lines), interrupt: true);
+            }
+            catch (Exception e) { CoreLog.Warning("RunGlance: quests failed: " + e.Message); }
         }
 
         public static void Timer()

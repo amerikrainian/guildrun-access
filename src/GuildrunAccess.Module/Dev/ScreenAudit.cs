@@ -50,6 +50,7 @@ namespace GuildrunAccess.Module.Dev
                         sb.Append(ReferenceEquals(n, focused) ? "  > " : "    ").Append(n.Id.StructuralKey).Append(": ").Append(readout).Append('\n');
                         AppendLines(sb, spoken, "control", NodeLines.Lines(n));
                         AppendLines(sb, spoken, "hero", NodeLines.SideLines(n, BufferKeys.Hero));
+                        AppendLines(sb, spoken, "quests", NodeLines.SideLines(n, BufferKeys.Quest));
                         AppendLines(sb, spoken, "items", NodeLines.SideLines(n, BufferKeys.Item));
                     }
                 }
@@ -58,7 +59,7 @@ namespace GuildrunAccess.Module.Dev
                 {
                     foreach (var buffer in manager.Buffers)
                     {
-                        if (buffer.Key == BufferKeys.Ui || buffer.Key == BufferKeys.Hero || buffer.Key == BufferKeys.Item) continue;
+                        if (buffer.Key == BufferKeys.Ui || buffer.Key == BufferKeys.Hero || buffer.Key == BufferKeys.Quest || buffer.Key == BufferKeys.Item) continue;
                         var lines = buffer.Lines;
                         if (lines.Count == 0) continue;
                         sb.Append("buffer ").Append(buffer.Key).Append(" (").Append(lines.Count).Append("):\n");

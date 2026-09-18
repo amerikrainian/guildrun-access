@@ -320,7 +320,7 @@ namespace GuildrunAccess.Module.GameRun
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => CardDetails(card, extras),
                 Subject = () => card,
-                SideLines = HeroLines.Side(() => CardRows(card, extras), () => ItemNodes.ItemTooltips(Slots(card))),
+                SideLines = HeroLines.SideOfSlots(() => CardRows(card, extras), () => Slots(card)),
             };
         }
 
@@ -386,7 +386,7 @@ namespace GuildrunAccess.Module.GameRun
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => tooltip != null ? tooltip() : null,
                 Subject = () => card,
-                SideLines = HeroLines.Side(() => HeroLines.ForCard(card), () => ItemNodes.ItemTooltips(Slots(card))),
+                SideLines = HeroLines.SideOfSlots(() => HeroLines.ForCard(card), () => Slots(card)),
             };
         }
     }

@@ -80,20 +80,124 @@ namespace GuildrunAccess.Module.UI
             // others inactive; that flag is the filter. (The section tuple's mode field does not read
             // back reliably through the interop value tuple.)
             view.SetDetailsMode(details);
-            var sections = view._sections;
-            if (sections != null)
+            foreach (var section in Sections(view))
             {
-                for (int i = 0; i < sections.Count; i++)
-                {
-                    var go = sections[i].Item1;
-                    if (go == null || !go.activeSelf) continue;
-                    foreach (var tmp in go.GetComponentsInChildren<TMP_Text>(true))
-                        if (tmp != null) AddLines(lines, tmp.text);
-                }
+                // A quest's sections are one line: its label with its count and its state ("Tank or
+                // Vanguard, 0 / 3"). Read apart, the counts are bare numbers, and equal ones fold
+                // into one in a buffer (the Rift Seal's three "0 / 3").
+                if (section.Kind == SectionKind.Separator) continue;
+                if (section.Kind == SectionKind.Bonus) lines.Add(QuestLabel(section));
+                else AddLines(lines, section.Text);
             }
             view.Clear();
             if (details) AddStatDefinitions(lines, target);
             return lines;
+        }
+
+        // ---- quests ----
+
+        /// <summary>A quest a tooltip shows: an item's or a relic's ("Quest: Inflict 100 Poison.", its
+        /// reward, "0 / 100"), or one of the Rift Seal's three charges ("Tank or Vanguard", "0 / 3").
+        /// The game draws each as a conditional-bonus section (a text with a locked or an unlocked
+        /// icon) and a progress bar after it; an ordinary quest's requirement is the description
+        /// section just before.</summary>
+        public sealed class Quest
+        {
+            /// <summary>What must be done ("Quest: Inflict 100 Poison."), when the game says it apart
+            /// from the label; null for a charge of the Rift Seal, whose label says it.</summary>
+            public string Requirement;
+            /// <summary>The conditional bonus' text: the reward of an ordinary quest, the classes of a
+            /// Rift Seal charge.</summary>
+            public string Label;
+            /// <summary>The progress bar's text ("0 / 100"), or null when the game draws none.</summary>
+            public string Progress;
+            /// <summary>Whether the game shows the bonus unlocked.</summary>
+            public bool Complete;
+
+            /// <summary>The quest in a line: what to do (else the label), the count, the state. A
+            /// requirement's own full stop goes, so the count does not follow ".,".</summary>
+            public string Line => Strings.QuestLine((Requirement ?? Label ?? "").TrimEnd('.', ' '), Progress, Complete);
+        }
+
+        /// <summary>The quests the control's tooltip shows, in its order; empty when it has none.</summary>
+        public static List<Quest> Quests(TooltipRaycastTarget target)
+        {
+            var quests = new List<Quest>();
+            var view = Populate(target);
+            if (view == null) return quests;
+            view.SetDetailsMode(true);
+            var sections = Sections(view);
+            view.Clear();
+            for (int i = 0; i < sections.Count; i++)
+            {
+                if (sections[i].Kind != SectionKind.Bonus) continue;
+                var quest = new Quest { Label = sections[i].Text, Progress = sections[i].Progress, Complete = sections[i].Complete };
+                // The requirement stands right before the bonus, as a description of its own.
+                if (i > 0 && sections[i - 1].Kind == SectionKind.Text) quest.Requirement = sections[i - 1].Text;
+                quests.Add(quest);
+            }
+            return quests;
+        }
+
+        private static string QuestLabel(Section bonus) => Strings.QuestLine(bonus.Text, bonus.Progress, bonus.Complete);
+
+        private enum SectionKind { Text, Bonus, Progress, Separator }
+
+        private sealed class Section
+        {
+            public SectionKind Kind;
+            public string Text;
+            public string Progress;
+            public bool Complete;
+        }
+
+        // The sections the view's mode shows, in order, by what the game built each from. The view
+        // itself activates the ones its mode shows (summary or details) and leaves the others
+        // inactive; that flag is the filter. (The section tuple's mode field does not read back
+        // reliably through the interop value tuple.) A progress bar is folded into the bonus before it.
+        private static List<Section> Sections(TooltipView view)
+        {
+            var list = new List<Section>();
+            var sections = view._sections;
+            if (sections == null) return list;
+            for (int i = 0; i < sections.Count; i++)
+            {
+                var go = sections[i].Item1;
+                if (go == null || !go.activeSelf) continue;
+                var progress = go.GetComponent<QuestProgressView>();
+                if (progress != null)
+                {
+                    string count = progress._progressBarText != null ? progress._progressBarText.text : null;
+                    if (string.IsNullOrWhiteSpace(count)) continue;
+                    var last = list.Count > 0 ? list[list.Count - 1] : null;
+                    if (last != null && last.Kind == SectionKind.Bonus && last.Progress == null) last.Progress = count.Trim();
+                    else list.Add(new Section { Kind = SectionKind.Progress, Text = count.Trim() });
+                    continue;
+                }
+                var bonus = go.GetComponent<ConditionalBonusView>();
+                if (bonus != null)
+                {
+                    string text = bonus._bonusText != null ? bonus._bonusText.text : null;
+                    if (string.IsNullOrWhiteSpace(text)) continue;
+                    var unlocked = bonus._unlockedIcon;
+                    list.Add(new Section { Kind = SectionKind.Bonus, Text = text.Trim(), Complete = unlocked != null && unlocked.gameObject.activeSelf });
+                    continue;
+                }
+                var sb = new StringBuilder();
+                foreach (var tmp in go.GetComponentsInChildren<TMP_Text>(true))
+                {
+                    if (tmp == null || string.IsNullOrWhiteSpace(tmp.text)) continue;
+                    if (sb.Length > 0) sb.Append('\n');
+                    sb.Append(tmp.text);
+                }
+                // A section without text is a separator: kept, since it parts a description from a
+                // quest that is not its requirement (the Rift Seal's charges stand under one).
+                list.Add(sb.Length > 0 ? new Section { Kind = SectionKind.Text, Text = sb.ToString() } : new Section { Kind = SectionKind.Separator });
+            }
+            // A progress bar with no bonus before it is a line of its own.
+            for (int i = 0; i < list.Count; i++)
+                if (list[i].Kind == SectionKind.Progress) list[i] = new Section { Kind = SectionKind.Text, Text = Strings.QuestProgressAlone(list[i].Text) };
+            return list;
         }
 
         // ---- flexible tooltip objects ----
@@ -242,6 +346,9 @@ namespace GuildrunAccess.Module.UI
         private static void AddLines(List<string> lines, string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
+            // TextMesh Pro draws a written-out "\n" as a line break (the Rift Seal's description has
+            // two): it is one here too, not a backslash and an n for speech to stumble on.
+            text = text.Replace("\\n", "\n");
             foreach (var raw in text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 string line = raw.Trim();

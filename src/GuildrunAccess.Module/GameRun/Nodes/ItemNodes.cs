@@ -76,6 +76,56 @@ namespace GuildrunAccess.Module.GameRun
             return lines;
         }
 
+        /// <summary>The quests of the items in a set of slots, for the quest buffer and its glance key:
+        /// one line per quest, opened by the item that carries it ("Hourglass: Quest: Trigger Stall 5
+        /// times from any source., 0 / 5"; "Rift Seal: Tank or Vanguard, 1 / 3", one per charge), an
+        /// ordinary quest's reward on the line after it when <paramref name="rewards"/>. Empty when
+        /// nothing worn has a quest.</summary>
+        public static List<string> QuestLines(IEnumerable<PlaceholderSlotView> slots, bool rewards = true)
+        {
+            var lines = new List<string>();
+            if (slots == null) return lines;
+            foreach (var slot in slots)
+                if (HasItem(slot)) AddQuestLines(lines, ItemName(slot), slot._tooltipRaycastTarget, rewards);
+            return lines;
+        }
+
+        /// <summary>A relic's quests, in the same lines.</summary>
+        public static List<string> QuestLines(RelicView relic, bool rewards = true)
+        {
+            var lines = new List<string>();
+            if (relic != null && relic.gameObject.activeInHierarchy) AddQuestLines(lines, RelicName(relic), relic._tooltipRaycastTarget, rewards);
+            return lines;
+        }
+
+        private static void AddQuestLines(List<string> lines, string owner, Ember.Scopes.Application.UI.Tooltips.TooltipRaycastTarget target, bool rewards)
+        {
+            var quests = TooltipReader.Quests(target);
+            if (quests.Count == 0) return;
+            if (!rewards)
+            {
+                // The glance: the item named once, its quests after it ("Rift Seal: Tank or Vanguard,
+                // 0 / 3; Assassin, Duelist, or Warrior, 1 / 3; Mystic or Mage, 0 / 3").
+                var parts = new List<string>();
+                foreach (var quest in quests) parts.Add(quest.Line);
+                string all = string.Join("; ", parts);
+                lines.Add(string.IsNullOrWhiteSpace(owner) ? all : Strings.QuestOfItem(owner, all));
+                return;
+            }
+            // The buffer: a line per quest, each naming its item, so a line stands on its own.
+            foreach (var quest in quests)
+            {
+                lines.Add(string.IsNullOrWhiteSpace(owner) ? quest.Line : Strings.QuestOfItem(owner, quest.Line));
+                // The label of a quest that states its requirement apart is its reward.
+                if (quest.Requirement != null && !string.IsNullOrWhiteSpace(quest.Label)) lines.Add(quest.Label);
+            }
+        }
+
+        // An item's or a relic's own quests, for the quest buffer when the control is the item itself.
+        private static Func<string, IEnumerable<string>> QuestSide(Func<bool, List<string>> quests)
+            => key => key == GuildrunAccess.Core.Buffers.BufferKeys.Quest ? quests(true)
+                : key == GuildrunAccess.Core.Buffers.BufferKeys.QuestBrief ? quests(false) : null;
+
         /// <summary>An item slot as a control: its name (no role word: the list's context already says
         /// items); its tooltip is its buffer line; Enter runs <paramref name="activate"/> when given.</summary>
         public static NodeVtable Slot(PlaceholderSlotView slot, Action activate = null)
@@ -86,6 +136,7 @@ namespace GuildrunAccess.Module.GameRun
                 SearchText = () => ItemName(slot),
                 OnActivate = activate,
                 Details = () => TooltipReader.Lines(slot._tooltipRaycastTarget),
+                SideLines = QuestSide(rewards => QuestLines(new[] { slot }, rewards)),
             };
         }
 
@@ -107,6 +158,7 @@ namespace GuildrunAccess.Module.GameRun
                 SearchText = () => RelicName(relic),
                 OnActivate = activate,
                 Details = () => TooltipReader.Lines(relic._tooltipRaycastTarget),
+                SideLines = QuestSide(rewards => QuestLines(relic, rewards)),
             };
         }
     }

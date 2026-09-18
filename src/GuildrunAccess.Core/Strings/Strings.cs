@@ -64,6 +64,7 @@ namespace GuildrunAccess.Core.Strings
             D("buffer.ui", "control"),
             D("buffer.hero", "hero"),
             D("buffer.item", "items"),
+            D("buffer.quest", "quests"),
             D("buffer.relic", "relics"),
             D("buffer.party", "party"),
             D("buffer.enemies", "enemies"),
@@ -128,6 +129,7 @@ namespace GuildrunAccess.Core.Strings
             D("bind.run.timer", "Battle timer"),
             D("bind.run.nearby", "Nearby units"),
             D("bind.run.hostiles", "Nearby hostiles"),
+            D("bind.run.quests", "Quests of the focused hero or item"),
             D("bind.shop.reroll", "Shop reroll"),
             D("bind.shop.freeze", "Shop freeze"),
             D("bind.mod.reload", "Reload mod code"),
@@ -304,6 +306,16 @@ namespace GuildrunAccess.Core.Strings
             D("run.sidebar", "sidebar"),
             D("run.damage_tracker", "Damage tracker"),
             D("run.challenge", "Challenge"),
+            // A quest an item or a relic carries, or a charge of the Rift Seal, as the game's tooltip
+            // draws it: {0} = what to do (or the charge's classes), {1} = the progress bar's own text
+            // ("0 / 100").
+            D("quest.progress", "{0}, {1}"),
+            // {0} = the quest so far; the game shows its bonus unlocked.
+            D("quest.complete", "{0}, complete"),
+            // A progress bar the game draws under no quest text. {0} = its text.
+            D("quest.progress_alone", "progress {0}"),
+            // A hero's quests, one line each: {0} = the item that carries it, {1} = the quest.
+            D("quest.of_item", "{0}: {1}"),
             // The battle HUD's events, as the game shows them (floating numbers, status icons, deaths, casts).
             D("run.events", "battle events"),
             // {0} = the unit, {1} = the number shown.
@@ -507,6 +519,7 @@ namespace GuildrunAccess.Core.Strings
         public static string BufferUi => Get("buffer.ui");
         public static string BufferHero => Get("buffer.hero");
         public static string BufferItem => Get("buffer.item");
+        public static string BufferQuest => Get("buffer.quest");
         public static string BufferRelic => Get("buffer.relic");
         public static string BufferParty => Get("buffer.party");
         public static string BufferEnemies => Get("buffer.enemies");
@@ -667,6 +680,16 @@ namespace GuildrunAccess.Core.Strings
         public static string RunSidebar => Get("run.sidebar");
         public static string RunDamageTracker => Get("run.damage_tracker");
         public static string RunChallenge => Get("run.challenge");
+
+        /// <summary>A quest in a line: its text, its count when it has one, "complete" when done.</summary>
+        public static string QuestLine(string text, string progress, bool complete)
+        {
+            string line = string.IsNullOrWhiteSpace(progress) ? text : F("quest.progress", text, progress);
+            return complete ? F("quest.complete", line) : line;
+        }
+
+        public static string QuestProgressAlone(string progress) => F("quest.progress_alone", progress);
+        public static string QuestOfItem(string item, string quest) => F("quest.of_item", item, quest);
         public static string RunEvents => Get("run.events");
         public static string BattleDamage(string unit, int amount) => F("battle.damage", unit, amount);
         public static string BattleCrit(string unit, int amount) => F("battle.crit", unit, amount);

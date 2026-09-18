@@ -21,13 +21,27 @@ namespace GuildrunAccess.Module.GameRun
         /// <summary>A side-lines provider: the hero lines under <see cref="BufferKeys.Hero"/>, the item
         /// lines under <see cref="BufferKeys.Item"/>, nothing for any other buffer.</summary>
         public static Func<string, IEnumerable<string>> Side(Func<IEnumerable<string>> hero, Func<IEnumerable<string>> items)
+            => Side(hero, items, null);
+
+        /// <summary>The same with the hero's quests under <see cref="BufferKeys.Quest"/>.</summary>
+        public static Func<string, IEnumerable<string>> Side(Func<IEnumerable<string>> hero, Func<IEnumerable<string>> items, Func<IEnumerable<string>> quests)
         {
             return key =>
             {
                 if (key == BufferKeys.Hero) return hero != null ? hero() : null;
                 if (key == BufferKeys.Item) return items != null ? items() : null;
+                if (key == BufferKeys.Quest) return quests != null ? quests() : null;
                 return null;
             };
+        }
+
+        /// <summary>A hero whose items stand in slots (a card, a party slot, a health bar): the item
+        /// buffer is their tooltips and the quest buffer their quests, the Rift Seal's charges
+        /// among them.</summary>
+        public static Func<string, IEnumerable<string>> SideOfSlots(Func<IEnumerable<string>> hero, Func<IEnumerable<PlaceholderSlotView>> slots)
+        {
+            var side = Side(hero, () => ItemNodes.ItemTooltips(slots()), () => ItemNodes.QuestLines(slots()));
+            return key => key == BufferKeys.QuestBrief ? ItemNodes.QuestLines(slots(), rewards: false) : side(key);
         }
 
         /// <summary>A hero card, the rows of the hero buffer everywhere: "Karsu, Duelist, Frost", its

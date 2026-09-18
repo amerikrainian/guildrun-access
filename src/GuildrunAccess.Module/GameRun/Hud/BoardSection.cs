@@ -370,8 +370,8 @@ namespace GuildrunAccess.Module.GameRun
                 OnFocus = () => Peek(cell),
                 Details = () => CellDetails(cell),
                 Subject = () => CellSubject(cell),
-                SideLines = HeroLines.Side(() => CellHeroLines(cell),
-                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? ItemNodes.ItemTooltips(view._itemSlotViews) : null; }),
+                SideLines = HeroLines.SideOfSlots(() => CellHeroLines(cell),
+                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? view._itemSlotViews : null; }),
             };
         }
 
@@ -599,7 +599,7 @@ namespace GuildrunAccess.Module.GameRun
                     OnFocus = () => Peek(u.View),
                     Details = () => UnitDetails(u),
                     Subject = () => u.View,
-                    SideLines = HeroLines.Side(() => UnitHeroLines(u), () => ItemNodes.ItemTooltips(u.Bar._itemSlotViews)),
+                    SideLines = HeroLines.SideOfSlots(() => UnitHeroLines(u), () => u.Bar._itemSlotViews),
                 });
             }
             b.SetRegion(null);

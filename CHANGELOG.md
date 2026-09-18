@@ -6,6 +6,8 @@
 - Added enemy numbers, so you can finally tell things like spiders and slimes apart from each other.
 - Hero archetypes now read by the game's own names and are explained in the buffers, along with the hero's classes.
 - The hero buffer now holds the whole hero: name, stats and abilities, then what every ability, class, archetype and stat means. No more hopping to the control buffer for half of it.
+- Added a quests buffer, right after the hero one, and ctrl+q to hear the quests of whatever hero, item or relic you're on: a quest item's progress, or the rift seal's charges. Thanks for the report!
+- Fixed the rift seal's charges being unreadable. Two of its three counts were getting swallowed as repeats; each class group now reads with its own count, and says complete once it's charged.
 
 ## V0.0.6
 

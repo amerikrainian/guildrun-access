@@ -16,7 +16,7 @@ namespace GuildrunAccess.Module.UI
     /// The mod's buffer roster and its review keys (Ctrl plus arrows), the Harkest Dungeon pattern:
     /// review lists for the information a focus announcement leaves out. In cycling order: the
     /// focused control's own lines (its head, then one line per tooltip), the hero it concerns, the
-    /// items it carries, the run's relics, the party and the enemies of a fight (one line per unit),
+    /// quests of its items, the items it carries, the run's relics, the party and the enemies of a fight (one line per unit),
     /// and the battle events log, which follows its latest line. Every buffer reads live on each
     /// keypress; a focus change re-homes review to the control's buffer and rewinds the control-fed
     /// ones, since a new control is new content. An empty buffer is skipped by the review keys.
@@ -26,7 +26,7 @@ namespace GuildrunAccess.Module.UI
         public static BufferManager Manager { get; private set; }
         public static BufferControls Controls { get; private set; }
 
-        private static Buffer _ui, _hero, _item;
+        private static Buffer _ui, _hero, _quest, _item;
         private static ControlId _homed;
 
         public static void Init()
@@ -38,6 +38,11 @@ namespace GuildrunAccess.Module.UI
             _ui.SetSource(() => NodeLines.Lines(Navigation.FocusedNode));
             _hero = Manager.Add(new Buffer(BufferKeys.Hero, () => Strings.BufferHero));
             _hero.SetSource(() => NodeLines.SideLines(Navigation.FocusedNode, BufferKeys.Hero));
+            // The quests of the hero's items (the Rift Seal's charges, a quest item's count), or of
+            // the focused item or relic itself: next to the hero, so they are one key away instead of
+            // deep in an item's tooltip. Empty, and so skipped, for a hero without any.
+            _quest = Manager.Add(new Buffer(BufferKeys.Quest, () => Strings.BufferQuest));
+            _quest.SetSource(() => NodeLines.SideLines(Navigation.FocusedNode, BufferKeys.Quest));
             _item = Manager.Add(new Buffer(BufferKeys.Item, () => Strings.BufferItem));
             _item.SetSource(() => NodeLines.SideLines(Navigation.FocusedNode, BufferKeys.Item));
 
@@ -59,6 +64,7 @@ namespace GuildrunAccess.Module.UI
             _homed = id;
             _ui.Reset();
             _hero.Reset();
+            _quest.Reset();
             _item.Reset();
             Manager.SetCurrent(BufferKeys.Ui);
         }
