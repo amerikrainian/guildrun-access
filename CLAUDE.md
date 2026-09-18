@@ -317,6 +317,35 @@ the game's own item tooltip defines none. The dev
 server drives them through the action keys: `POST /input` with `buffer.next`, `buffer.prev`,
 `buffer.line.next`, `buffer.line.prev`.
 
+## Languages (`Module/LanguageSync`, `Core/Strings`, `lang/`; the dd2a11y pattern)
+The mod's own words follow the GAME's language, never the system's: Unity Localization's selected
+locale (nine in the build: `zh-Hans zh-Hant en fr de ja pt-BR ru es`; the settings dropdown offers
+seven, no French or Japanese yet), which the dropdown sets through `SettingsService.SetLocale` ->
+`LocalizationSettings.SetSelectedLocale` and Unity's own `PlayerPrefLocaleSelector` (`selected-locale`)
+restores at boot. `lang/<locale code>.txt` beside the plugin (`de.txt`, `pt-BR.txt`, `zh-Hans.txt`;
+`LanguageFiles.Candidates`: the code, its lowercase, the bare language), English when there is none.
+Nothing is polled:
+- a switch arrives through `LocalizationSettings.SelectedLocaleChanged` (a managed delegate converted
+  with `DelegateSupport`, removed in Dispose), raised INSIDE the setter, so the table has changed
+  before the dropdown that committed it is read back ("Sprache, Kombinationsfeld, Deutsch");
+- the first read waits for the first game scope (`GameScopes.Registered`: the application scope's
+  build at boot, the seed on a reload). At plugin load there are no localization settings to ask,
+  and `get_SelectedLocale` forces their load.
+The launch line is the MODULE's (`ModuleMain.AnnounceLaunch`, once per launch through
+`IModHost.LaunchAnnounced`), spoken when that first language is in place, so a German game says
+"Guildrun Access 0.1.0 geladen"; the update line waits for it too. The host itself speaks only the
+module-failed line, in English (it has no strings table).
+`Strings.LoadTranslation` swaps the whole file (never a blend) and reports what it set aside, which
+`LanguageSync` logs: a line with no key, an unknown key, an empty value, a value with a `{n}` its
+English lacks. `lang/en.txt` is `Strings.DumpTemplate()`: after adding or rewording a string run the
+tests once with `GRA_WRITE_LANG_TEMPLATE=1`, then add the key to every other file
+(`LangFilesTests`: one file per game locale, complete, same slots as the English). The strings have
+no plural or gender machinery, so a template must hold for any count and any name ("продано: {0}",
+"{1} сек."). Game terms are the game's own: `/eval` can dump its `UI` string table for every locale
+(`LocalizationSettings.StringDatabase.GetTable("UI", locale)`, `SharedData.Entries`, `GetEntry(id)`).
+A module-only build deploys `lang/` too, and a reload reads the file again. Key names in the key
+help ("Ctrl+Shift+A", "Up Arrow") are not translated.
+
 ## Hard rules
 - **All speech through `Speech.Say`** (Core) -> the host `SpeechPipeline`; never call Prism directly.
   Navigation moves interrupt; screen entry and feedback queue.

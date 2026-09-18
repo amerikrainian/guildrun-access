@@ -25,14 +25,20 @@
   <!--
     Fast iteration deploy (Debug only): copy just the two reloadable DLLs (Core + Module) into the plugin
     folder. Both are overwrite-safe while the game runs (byte-loaded, never locked), so the day-to-day
-    loop is dotnet build on this project then POST /reload (or F6 in-game).
+    loop is dotnet build on this project then POST /reload (or F6 in-game). The lang files go along:
+    a reload reads the game language's file again, so a translation is tried the same way.
   -->
   <Target Name="DeployModule" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
     <PropertyGroup>
       <CoreDll>$(RepoRoot)src\GuildrunAccess.Core\bin\$(Configuration)\netstandard2.0\GuildrunAccess.Core.dll</CoreDll>
     </PropertyGroup>
+    <ItemGroup>
+      <_LangFile Include="$(RepoRoot)lang\*.txt" />
+    </ItemGroup>
     <MakeDir Directories="$(PluginDeployDir)" />
     <Copy SourceFiles="$(TargetPath);$(CoreDll)" DestinationFolder="$(PluginDeployDir)" ContinueOnError="true" />
+    <Copy SourceFiles="@(_LangFile)" DestinationFolder="$(PluginDeployDir)\lang"
+          SkipUnchangedFiles="true" ContinueOnError="true" Condition="'@(_LangFile)' != ''" />
     <Message Importance="high" Text="GuildrunAccess.Module + Core deployed -> $(PluginDeployDir)" />
   </Target>
 

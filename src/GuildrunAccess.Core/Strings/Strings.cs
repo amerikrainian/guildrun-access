@@ -98,6 +98,11 @@ namespace GuildrunAccess.Core.Strings
             D("bind.ui.regionPrev", "Previous section"),
             D("bind.ui.regionNext", "Next section"),
             D("bind.ui.readFocus", "Read current control"),
+            // Buffer review (Ctrl plus arrows): switch between the review lists, step through one.
+            D("bind.buffer.next", "Next buffer"),
+            D("bind.buffer.prev", "Previous buffer"),
+            D("bind.buffer.line.next", "Next buffer line"),
+            D("bind.buffer.line.prev", "Previous buffer line"),
             // The battle board's hex keys (Q E A D Z C, the hexagon's layout on the keyboard) and the
             // Shift+letter hero moves.
             D("bind.run.hex.upleft", "Cell up left"),
@@ -300,8 +305,12 @@ namespace GuildrunAccess.Core.Strings
             D("mod.close", "Close"),
             D("mod.speak_positions", "Speak list positions"),
             D("mod.focus_on_launch", "Keyboard navigation on at launch"),
-            // {0} = the key category (Global, UI, Game).
+            // {0} = the key category, one of the three names below.
             D("mod.key_category", "{0} keys"),
+            // The key categories of the "All keys" list: live everywhere, on the focused screen, in a run.
+            D("mod.category.global", "Global"),
+            D("mod.category.ui", "UI"),
+            D("mod.category.game", "Game"),
             D("bind.mod.menu", "Mod menu"),
             // The context-sensitive key help (F1): the keys that do something on this screen, on this
             // control. Enter on a row runs it.
@@ -482,28 +491,90 @@ namespace GuildrunAccess.Core.Strings
             catch (FormatException) { return template; }
         }
 
-        /// <summary>Install a translation: "key=value" lines ("#" comments and blanks ignored); missing
-        /// keys fall back to English. Pass null to return to the defaults.</summary>
-        public static void LoadTranslation(IEnumerable<string> lines)
+        /// <summary>Install a translation, replacing any previous one whole (a language switch never
+        /// blends two files): "key=value" lines split at the first '=' ("#" comments and blanks
+        /// ignored, a written-out "\n" a line break); missing keys fall back to English. Pass null to
+        /// return to the defaults. What the file got wrong is set aside, never applied, and comes
+        /// back in the report for the caller to log: a line without a key, a key this table does not
+        /// define (a typo, a file for a newer mod), an empty value (it would silence information), a
+        /// value with a slot its English has not ("{2}" where the code fills two: the line would be
+        /// spoken as the raw template).</summary>
+        public static TranslationReport LoadTranslation(IEnumerable<string> lines)
         {
+            var report = new TranslationReport();
             var map = new Dictionary<string, string>(StringComparer.Ordinal);
             if (lines != null)
+            {
+                int n = 0;
                 foreach (var raw in lines)
                 {
+                    n++;
                     if (raw == null) continue;
-                    string line = raw.Trim();
+                    string line = raw.Trim().TrimStart('\uFEFF');
                     if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal)) continue;
                     int eq = line.IndexOf('=');
-                    if (eq <= 0) continue;
-                    map[line.Substring(0, eq).Trim()] = line.Substring(eq + 1).Trim().Replace("\\n", "\n");
+                    if (eq <= 0) { report.Malformed.Add(n); continue; }
+                    string key = line.Substring(0, eq).Trim();
+                    string value = line.Substring(eq + 1).Trim().Replace("\\n", "\n");
+                    if (!_defaults.TryGetValue(key, out var english)) { report.UnknownKeys.Add(key); continue; }
+                    if (value.Length == 0) { report.EmptyKeys.Add(key); continue; }
+                    if (!SlotsFit(value, english)) { report.BadSlots.Add(key); continue; }
+                    map[key] = value;
                 }
+            }
             _overrides = map;
+            report.Applied = map.Count;
+            return report;
         }
 
-        /// <summary>The translator template: every key with its English default, one per line.</summary>
+        // Whether a translated template formats with the arguments its English takes: every "{n}" of
+        // it one the English has, and the braces well formed.
+        public static bool SlotsFit(string value, string english)
+        {
+            int max = -1;
+            foreach (int slot in Slots(english)) if (slot > max) max = slot;
+            try { string.Format(value, new object[Math.Max(max + 1, 0)]); }
+            catch (FormatException) { return false; }
+            return true;
+        }
+
+        /// <summary>The "{n}" slots a template uses, for the translation checks.</summary>
+        public static HashSet<int> Slots(string template)
+        {
+            var slots = new HashSet<int>();
+            if (template == null) return slots;
+            for (int i = 0; i < template.Length - 2; i++)
+            {
+                if (template[i] != '{' || !char.IsDigit(template[i + 1])) continue;
+                int j = i + 1, slot = 0;
+                while (j < template.Length && char.IsDigit(template[j])) slot = slot * 10 + (template[j++] - '0');
+                if (j < template.Length && (template[j] == '}' || template[j] == ':' || template[j] == ',')) slots.Add(slot);
+            }
+            return slots;
+        }
+
+        /// <summary>Every key of the table, in template order (the translation tests walk it).</summary>
+        public static IEnumerable<string> Keys
+        {
+            get { foreach (var kv in Defaults) yield return kv.Key; }
+        }
+
+        /// <summary>A key's English default, or null.</summary>
+        public static string Default(string key) => _defaults.TryGetValue(key, out var v) ? v : null;
+
+        private const string TemplateHeader =
+            "# Guildrun Access: the words the mod itself speaks (the game's own text is the game's).\n" +
+            "# This file is the template, generated from the mod's strings table: copy it to\n" +
+            "# <language>.txt, named for the game's language code (de, fr, es, ja, ru, pt-BR, zh-Hans,\n" +
+            "# zh-Hant), and translate the values. key=value, one per line; keep every {0} slot (their\n" +
+            "# order is free); a missing key is spoken in English. The mod follows the game's language.\n";
+
+        /// <summary>The translator template (lang/en.txt): every key with its English default, one per
+        /// line, under a header that tells a translator what to do with it.</summary>
         public static string DumpTemplate()
         {
             var sb = new StringBuilder();
+            sb.Append(TemplateHeader);
             foreach (var kv in Defaults)
                 sb.Append(kv.Key).Append('=').Append(kv.Value.Replace("\n", "\\n")).Append('\n');
             return sb.ToString();
@@ -698,7 +769,11 @@ namespace GuildrunAccess.Core.Strings
         public static string ModClose => Get("mod.close");
         public static string ModSpeakPositions => Get("mod.speak_positions");
         public static string ModFocusOnLaunch => Get("mod.focus_on_launch");
-        public static string ModKeyCategory(string category) => F("mod.key_category", category);
+        public static string ModKeyCategory(string category)
+        {
+            string name = "mod.category." + (category ?? "").ToLowerInvariant();
+            return F("mod.key_category", Has(name) ? Get(name) : category);
+        }
         public static string RunSidebar => Get("run.sidebar");
         public static string RunDamageTracker => Get("run.damage_tracker");
         public static string RunChallenge => Get("run.challenge");

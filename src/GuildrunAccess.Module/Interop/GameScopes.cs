@@ -144,6 +144,10 @@ namespace GuildrunAccess.Module.Interop
             _version++;
         }
 
+        /// <summary>Raised after a scope is registered (a build at runtime, the seed on a reload): the
+        /// first one is the sign that the engine is up (<see cref="LanguageSync"/> waits for it).</summary>
+        public static event Action Registered;
+
         private static void Register(LifetimeScope scope, string source)
         {
             try
@@ -162,6 +166,7 @@ namespace GuildrunAccess.Module.Interop
                 _version++;
                 CoreLog.Info("GameScopes: + " + entry.Name + " [" + source + "]"
                     + (entry.Bootstrapped != null ? ", " + ControllerCount(entry) + " controllers" : ""));
+                Registered?.Invoke();
             }
             catch (Exception e)
             {

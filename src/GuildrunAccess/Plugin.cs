@@ -67,9 +67,9 @@ namespace GuildrunAccess
             _devServer.Start();
 #endif
 
-            speech.Speak(Name + " " + Version + " loaded", interrupt: true);
-
-            // The module carries every feature; if it fails to load the player would otherwise get
+            // The "loaded" line is the module's: it has the strings table, and says the line once the
+            // game's language is known (IModHost.LaunchAnnounced). The module carries every feature;
+            // if it fails to load the player would otherwise get
             // silence with no signal, so say so out loud (the cause is in the log).
             if (!_loader.Load())
                 speech.Speak(Name + " features failed to load", interrupt: false);

@@ -24,6 +24,11 @@ namespace GuildrunAccess.Contracts
         /// <summary>The plugin folder (where lang/ and assets/ deploy beside the DLLs).</summary>
         string PluginDir { get; }
 
+        /// <summary>Whether this launch's "loaded" line has been spoken. The module speaks it, once the
+        /// game's language is known, and sets this; the host holds it so a reloaded module does not
+        /// say it again.</summary>
+        bool LaunchAnnounced { get; set; }
+
         /// <summary>True while a module is being disposed because a newer generation has already loaded
         /// and taken over the game state it suppressed (the keyboard, the EventSystem): restore nothing
         /// then, only drop hooks. False on a shutdown, where everything must be given back.</summary>

@@ -56,7 +56,9 @@ namespace GuildrunAccess.Module
             GraphAnnouncer.PositionText = (i, n) => host.Settings.SpeakPositions ? Strings.Position(i, n) : null;
             GraphAnnouncer.ExpandedStateText = Strings.ExpandedState;
             InputBinding.RegisterType("keyboard", KeyboardBinding.Deserialize);
-            LoadLanguage(host.PluginDir);
+            // The strings follow the game's language from the first game scope on (the seed below, on a
+            // reload); until then, at boot, nothing is spoken that the table words.
+            LanguageSync.Start(host.PluginDir, AnnounceLaunch);
 
             // A per-load UNIQUE id so a reload's Dispose unpatches exactly this load's patches: the host
             // loads the new module (which patches) before disposing the old one, and UnpatchSelf removes
@@ -77,22 +79,14 @@ namespace GuildrunAccess.Module
             _updateCheck.Start(host.ModVersion);
         }
 
-        // The mod's authored strings follow lang/<language>.txt beside the plugin when one exists for the
-        // game language; English (the defaults) otherwise.
-        private static void LoadLanguage(string pluginDir)
+        // "Guildrun Access 0.1.0 loaded", once per launch, in the language the game came up in: the
+        // host leaves the line to the module, which has the strings, and LanguageSync calls this when
+        // the first language is in place. The host remembers it was said, so a reload stays quiet.
+        private void AnnounceLaunch()
         {
-            try
-            {
-                string code = Application.systemLanguage.ToString().ToLowerInvariant();
-                string path = Path.Combine(pluginDir, "lang", code + ".txt");
-                if (!File.Exists(path)) { Strings.LoadTranslation(null); return; }
-                Strings.LoadTranslation(File.ReadAllLines(path));
-                CoreLog.Info("Strings: loaded " + path);
-            }
-            catch (Exception e)
-            {
-                CoreLog.Warning("Strings: translation load failed: " + e.Message);
-            }
+            if (_host.LaunchAnnounced) return;
+            _host.LaunchAnnounced = true;
+            Speech.Say(Strings.ModLoaded(_host.ModVersion));
         }
 
         private static void RegisterInput()
@@ -229,7 +223,7 @@ namespace GuildrunAccess.Module
 
         public void Tick()
         {
-            if (!_updateAnnounced && _updateCheck.NewerVersion != null)
+            if (!_updateAnnounced && LanguageSync.Resolved && _updateCheck.NewerVersion != null)
             {
                 _updateAnnounced = true;
                 Speech.Say(Strings.UpdateAvailable(_updateCheck.NewerVersion));
@@ -264,6 +258,7 @@ namespace GuildrunAccess.Module
             try { FocusMode.Shutdown(restore); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
             try { ScreenManager.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] screens: " + e); }
             try { InputManager.Clear(); } catch (Exception e) { _host?.LogError("[dispose] input: " + e); }
+            try { LanguageSync.Stop(); } catch (Exception e) { _host?.LogError("[dispose] language: " + e); }
             try { GameScopes.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] scopes: " + e); }
             try { _harmony?.UnpatchSelf(); } catch (Exception e) { _host?.LogError("[dispose] harmony: " + e); }
             _harmony = null;
