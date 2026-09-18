@@ -505,7 +505,7 @@ namespace GuildrunAccess.Module.GameRun
                 var view = RunData.ViewOf(hero);
                 return view != null ? RunLabels.WithItems(name, view._itemSlotViews) : name;
             }
-            if (RunData.TryEnemyAt(cell, out var enemy)) return RunData.EnemyName(enemy) ?? Strings.RunBoard;
+            if (RunData.TryEnemyAt(cell, out var enemy)) return RunData.EnemyLabel(enemy) ?? Strings.RunBoard;
             return null;
         }
 
@@ -529,8 +529,9 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- the battlefield ----
 
-        // Name is the plain name (it matches the sidebar's card); Label opens the unit's readout (a hero's
-        // name with its classes and rank).
+        // Name is the plain name (a hero's matches the sidebar's card; an enemy's carries its number
+        // among its namesakes, "Slime 2", which also orders them within their side); Label opens the
+        // unit's readout (a hero's name with its classes and rank).
         private struct Unit { public string Name; public string Label; public HealthBarView Bar; public bool IsHero; public CharacterViewController View; }
 
         /// <summary>Whether any unit stands on the battlefield: a character view with a live health bar,
@@ -641,32 +642,35 @@ namespace GuildrunAccess.Module.GameRun
         {
             if (views == null) return;
             var bars = battle._healthBars;
+            // The enemies' numbers, read once for the side ("Slime 2": EnemyNumbers).
+            var numbers = isHero ? null : EnemyNumbers.Read();
             foreach (var c in views)
             {
                 if (c == null || !c.gameObject.activeInHierarchy) continue;
                 HealthBarView bar;
                 if (!bars.TryGetValue(c.EntityId, out bar) || bar == null || !bar.gameObject.activeInHierarchy) continue;
-                units.Add(new Unit { Name = UnitName(bar, c), Label = UnitLabel(bar, c), Bar = bar, IsHero = isHero, View = c });
+                units.Add(new Unit { Name = UnitName(bar, c, numbers), Label = UnitLabel(bar, c, numbers), Bar = bar, IsHero = isHero, View = c });
             }
         }
 
         // A unit's name as its bar shows it; a bar the game leaves blank (an enemy entry without a name)
-        // names the unit through the registry instead.
-        internal static string UnitName(HealthBarView bar, CharacterViewController unit)
+        // names the unit through the registry instead. An enemy that shares its name reads with its
+        // number either way ("Slime 2"), the same one its placement cell read with.
+        internal static string UnitName(HealthBarView bar, CharacterViewController unit, Dictionary<string, int> numbers = null)
         {
             string name = bar._characterNameText != null ? bar._characterNameText.text : null;
-            return string.IsNullOrWhiteSpace(name) ? RunData.UnitName(unit) : name;
+            return string.IsNullOrWhiteSpace(name) ? RunData.UnitName(unit, numbers) : EnemyNumbers.Numbered(name, unit, numbers);
         }
 
         // A hero's unit opens with its classes and rank ("Skorn, Warrior, rank C"); an enemy's with its name.
-        private static string UnitLabel(HealthBarView bar, CharacterViewController unit)
+        private static string UnitLabel(HealthBarView bar, CharacterViewController unit, Dictionary<string, int> numbers = null)
         {
             if (unit != null && Nullables.TryGet(() => unit.HeroId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId hero))
             {
                 string label = RunData.HeroLabel(hero);
                 if (!string.IsNullOrWhiteSpace(label)) return label;
             }
-            return UnitName(bar, unit);
+            return UnitName(bar, unit, numbers);
         }
 
         /// <summary>The unit whose bar this is (the board registries' views, matched by entity id), or
@@ -775,7 +779,8 @@ namespace GuildrunAccess.Module.GameRun
             if (views == null || !views.TryGetValue(enemy, out c) || c == null) return null;
             var bar = BarOf(c);
             if (bar == null) return null;
-            return UnitLine(new Unit { Name = UnitName(bar, c), Label = UnitLabel(bar, c), Bar = bar, IsHero = false, View = c });
+            string name = UnitName(bar, c);
+            return UnitLine(new Unit { Name = name, Label = name, Bar = bar, IsHero = false, View = c });
         }
 
         /// <summary>One line per unit of a side, heroes or enemies, in the battlefield's order; empty

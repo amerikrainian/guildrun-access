@@ -479,6 +479,12 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
+        /// <summary>The enemy as every control and line standing for it names it: its name, with its
+        /// number when another enemy on the board shares the name ("Slime 2", <see cref="EnemyNumbers"/>).
+        /// A caller naming several enemies reads the numbers once and passes them.</summary>
+        public static string EnemyLabel(EnemyId id, Dictionary<string, int> numbers = null)
+            => EnemyNumbers.Label(id, numbers);
+
         /// <summary>A character entry's (a hero's or an enemy's) localized name, an enemy entry without
         /// one named after its named sibling; null when nothing names it.</summary>
         public static string CharacterName(Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase entry)
@@ -489,8 +495,9 @@ namespace GuildrunAccess.Module.GameRun
         }
 
         /// <summary>The name of the unit a character view stands for, through the registry (a hero's
-        /// name, an enemy's with the nameless fallback), else its object's name; null for no view.</summary>
-        public static string UnitName(Ember.Scopes.Battle.Characters.CharacterViewController unit)
+        /// name, an enemy's with the nameless fallback and its number among its namesakes), else its
+        /// object's name; null for no view.</summary>
+        public static string UnitName(Ember.Scopes.Battle.Characters.CharacterViewController unit, Dictionary<string, int> numbers = null)
         {
             if (unit == null) return null;
             try
@@ -502,7 +509,7 @@ namespace GuildrunAccess.Module.GameRun
                 }
                 if (Nullables.TryGet(() => unit.EnemyId, out EnemyId enemy))
                 {
-                    string name = EnemyName(enemy);
+                    string name = EnemyLabel(enemy, numbers);
                     if (!string.IsNullOrWhiteSpace(name)) return name;
                 }
             }

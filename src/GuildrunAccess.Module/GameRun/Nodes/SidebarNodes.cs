@@ -128,13 +128,13 @@ namespace GuildrunAccess.Module.GameRun
         internal static string StatsBrief(EnemyCardView enemy) => HeroCardNodes.StatsBrief(enemy, null, null);
 
         /// <summary>The card's name text; an enemy the game draws nameless is named through the registry
-        /// (<see cref="RunData.EnemyName"/>).</summary>
+        /// (<see cref="RunData.EnemyName"/>). Either way with the enemy's number among its namesakes on
+        /// the board ("Slime 2"): the card is the one the board's focused enemy opened.</summary>
         internal static string EnemyName(EnemyCardView enemy)
         {
             string name = enemy._nameText != null ? enemy._nameText.text : null;
-            if (!string.IsNullOrWhiteSpace(name)) return name;
-            return Interop.Nullables.TryGet(() => enemy.EnemyId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId id)
-                ? RunData.EnemyName(id) : null;
+            if (!Interop.Nullables.TryGet(() => enemy.EnemyId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId id)) return name;
+            return string.IsNullOrWhiteSpace(name) ? RunData.EnemyLabel(id) : EnemyNumbers.Numbered(name, id);
         }
 
         internal static string EnemyLine(EnemyCardView enemy)

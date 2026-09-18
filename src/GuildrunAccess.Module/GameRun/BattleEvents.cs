@@ -66,13 +66,15 @@ namespace GuildrunAccess.Module.GameRun
         // placement opens), and those are not fight events: a hook drops its line rather than narrate
         // "battlefield casts ...". An enemy the game's data leaves nameless keeps a blank bar all fight
         // long, so a blank bar is named through the registry instead, while the fight itself runs.
+        // An enemy that shares its name is logged with its number ("Slime 2 takes 45"), the one it
+        // reads with on the board: the log is where telling two Slimes apart matters most.
         internal static string UnitName(HealthBarView bar) => UnitName(bar, null);
 
         internal static string UnitName(HealthBarView bar, CharacterViewController unit)
         {
             var text = bar != null ? bar._characterNameText : null;
             string name = text != null ? text.text : null;
-            if (!string.IsNullOrWhiteSpace(name)) return name;
+            if (!string.IsNullOrWhiteSpace(name)) return EnemyNumbers.Numbered(name, unit ?? BoardSection.UnitOf(bar));
             if (bar == null || RunData.FlowState() != Ember.Scopes.GameRun.RunSession.Data.BattleFlowState.Resolution) return null;
             if (unit == null) unit = BoardSection.UnitOf(bar);
             return unit != null ? RunData.UnitName(unit) : null;

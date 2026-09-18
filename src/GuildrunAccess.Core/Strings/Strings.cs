@@ -203,8 +203,12 @@ namespace GuildrunAccess.Core.Strings
             // {0} = the unit a fighting unit is attacking right now.
             D("glance.target", "attacking {0}"),
             D("glance.no_target", "no target"),
-            // One unit of the nearby-units list: {0} = its name, {1} = its distance in hex steps.
+            // One unit of the nearby-units list: {0} = its name, {1} = its distance in hex steps. A
+            // numbered enemy reads "Slime 1 4": Slime 1, 4 away.
             D("glance.nearby", "{0} {1}"),
+            // An enemy that shares its name with another on the board: {0} = the name, {1} = its
+            // number among them, in the grid's reading order.
+            D("run.enemy_numbered", "{0} {1}"),
             // {0} = slot number (1-based).
             D("run.party_slot", "party slot {0}"),
             D("run.reserve_slot", "reserve slot {0}"),
@@ -587,6 +591,7 @@ namespace GuildrunAccess.Core.Strings
         public static string GlanceTarget(string unit) => F("glance.target", unit);
         public static string GlanceNoTarget => Get("glance.no_target");
         public static string GlanceNearby(string unit, int distance) => F("glance.nearby", unit, distance);
+        public static string EnemyNumbered(string name, int number) => F("run.enemy_numbered", name, number);
         public static string RunShield(string amount) => F("run.shield", amount);
         public static string RunPartySlot(int index) => F("run.party_slot", index);
         public static string RunReserveSlot(int index) => F("run.reserve_slot", index);

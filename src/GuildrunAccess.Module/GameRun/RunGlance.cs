@@ -49,7 +49,7 @@ namespace GuildrunAccess.Module.GameRun
 
         /// <summary>Ctrl+N / Ctrl+H: the units round the focused cell, or round the cell the focused
         /// control's hero stands on, each with its distance in hex steps, nearest first and by name
-        /// within a distance ("Mushroom Tank 2, Slime 3"); every unit, or the hostile ones alone.
+        /// within a distance ("Mushroom Tank 2, Slime 1 3": the last number is the distance); every unit, or the hostile ones alone.
         /// Hostile is the origin's unit's word: the enemies from a hero, the heroes from an enemy,
         /// and from an empty cell, where nobody stands to have any, silence (Ctrl+N answers there).
         /// The origin's own occupant is left out. Placement only: a fight moves its units off the
@@ -66,6 +66,7 @@ namespace GuildrunAccess.Module.GameRun
                 bool heroes = !hostilesOnly || RunData.TryEnemyAt(from, out _);
                 bool enemies = !hostilesOnly || RunData.TryHeroAt(from, out _);
                 if (!heroes && !enemies) return;
+                var numbers = enemies ? EnemyNumbers.Read() : null;
                 var units = new List<KeyValuePair<int, string>>();
                 for (int y = 0; y < h; y++)
                     for (int x = 0; x < w; x++)
@@ -73,7 +74,7 @@ namespace GuildrunAccess.Module.GameRun
                         if (x == from.x && y == from.y) continue;
                         var cell = new UnityEngine.Vector2Int(x, y);
                         string name;
-                        if (enemies && RunData.TryEnemyAt(cell, out var enemy)) name = RunData.EnemyName(enemy) ?? Strings.RunBoard;
+                        if (enemies && RunData.TryEnemyAt(cell, out var enemy)) name = RunData.EnemyLabel(enemy, numbers) ?? Strings.RunBoard;
                         else if (heroes && RunData.TryHeroAt(cell, out var hero)) name = RunData.HeroName(hero) ?? Strings.RunParty;
                         else continue;
                         units.Add(new KeyValuePair<int, string>(HexGrid.Distance(from.x, from.y, x, y), name));

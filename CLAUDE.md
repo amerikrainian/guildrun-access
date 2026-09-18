@@ -244,7 +244,7 @@ board coordinates (a unit's by the board grid's `WorldToCell` of its view's posi
 `CharacterViewController._cellPosition` is never written), Ctrl+T the battle timer's text as the top
 panel draws it, Ctrl+N the units near the focused cell (or near the cell of the hero a slot or card
 concerns) with their hex distances (`HexGrid.Distance`), nearest first then by name ("Pollen 1,
-Slime 4"), Ctrl+H the hostile ones alone (the origin's unit's hostiles: the heroes from an enemy, the
+Slime 2 4": the last number is the distance, the one before it a numbered enemy's own), Ctrl+H the hostile ones alone (the origin's unit's hostiles: the heroes from an enemy, the
 enemies from a hero, silent on an empty cell), both placement-only (`RunData.Placing`) and silent in a
 fight (`RunGlance`); Ctrl+R/Ctrl+F reroll
 and freeze from anywhere on the shop (the shop section's `GetActions`; feedback deferred a few frames
@@ -327,7 +327,14 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    same visual config's majority name), read localized at speak time, through
    `RunData.CharacterName` / `EnemyName` / `UnitName`; the battle-event hooks resolve a blank bar's
    unit while the flow state is Resolution (`BoardSection.UnitOf`), and the sidebar's shown enemy
-   card is matched by `EnemyId`, never by name. The launch update check (`Module/UpdateChecker`,
+   card is matched by `EnemyId`, never by name. Enemies of one board that share a name are numbered
+   ("Slime 1", "Slime 2": `GameRun/EnemyNumbers`, through `RunData.EnemyLabel` / `UnitName`) in the
+   grid's reading order, read off the board data's tiles every time, never kept: `BoardService`
+   fills the enemy tiles once per battle (`Init`) and nothing in a fight rewrites them, so a number
+   means the same enemy from placement to the result, the fallen included. One read scans the enemy
+   rows (~1 ms): a caller naming several units reads once and passes the numbers
+   (`BoardSection.AddUnits`, `RunGlance.Nearby`). The result's portraits carry no enemy id and stay
+   unnumbered. The launch update check (`Module/UpdateChecker`,
    `Core/UpdateCheck`) speaks "update X available" when the newest GitHub release outranks the
    running build; anything else stays silent with a log line.
 

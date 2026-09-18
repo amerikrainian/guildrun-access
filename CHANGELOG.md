@@ -3,6 +3,7 @@
 ## V0.0.7
 
 - Added ctrl+n for who's nearby and ctrl+h for hostiles nearby. Only works in setup phase.
+- Added enemy numbers, so you can finally tell things like spiders and slimes apart from each other.
 
 ## V0.0.6
 
