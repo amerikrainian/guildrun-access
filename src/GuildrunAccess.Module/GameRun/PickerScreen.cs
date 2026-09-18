@@ -179,13 +179,24 @@ namespace GuildrunAccess.Module.GameRun
             return item != null && item.gameObject.activeInHierarchy ? item : null;
         }
 
-        // Its name only where the card writes it: the picker's card draws the icon alone (the
-        // description names the item), and a name text that is filled but hidden is not repeated.
+        // The item's name, unless the focus line has it already: the picker's card draws the icon alone
+        // and leaves the naming to the description ("Gain the unique quest item Zeus's Thunder."), so
+        // the name is said once. A card that writes the name, or a description that does not, gets
+        // "Zeus's Thunder, item" after the description.
         private static string ItemName(SpecializationChoiceView choice)
         {
             var item = ShownItem(choice);
             var text = item != null ? item._itemNameText : null;
-            return text != null && text.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(text.text) ? text.text : null;
+            string name = text != null ? text.text : null;
+            if (string.IsNullOrWhiteSpace(name)) return null;
+            if (!text.gameObject.activeInHierarchy)
+            {
+                string description = choice._descriptionText != null ? GuildrunAccess.Contracts.TextFilter.Clean(choice._descriptionText.text) : null;
+                string plain = GuildrunAccess.Contracts.TextFilter.Clean(name);
+                if (description != null && !string.IsNullOrWhiteSpace(plain)
+                    && description.IndexOf(plain.Trim(), System.StringComparison.OrdinalIgnoreCase) >= 0) return null;
+            }
+            return name.Trim() + ", " + Strings.Get("role.item");
         }
 
         // "Mystic, Backup, Stealth", or null for a card without banners.

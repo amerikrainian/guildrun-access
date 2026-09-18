@@ -3,8 +3,9 @@
 ## V0.0.8
 
 - Shift+q e a d z c now moves a hero from its party slot too, not just from its cell on the board.
-- The reroll on the first hero picker now says what it costs and puts you on the first new hero afterwards. It only shows up while you have a boss token.
+- The reroll on the first hero picker now says what it costs.
 - Rank up choices now say when a path gives the hero another class, and read the tags on each choice.
+- Rank up choices with an active ability now say their mana.
 - The mod now speaks the game's language. Translations are welcome, as this is Claude's labor of love.
 
 ## V0.0.7
