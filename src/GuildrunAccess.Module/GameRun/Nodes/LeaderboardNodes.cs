@@ -9,30 +9,35 @@ namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The endless-mode leaderboard (<see cref="LeaderboardController"/>), which the game shows on the
-    /// difficulty screen and on the run's final result panel: its Global / Friend List tabs, the
-    /// visibility toggle (the eye), the streak and loading lines, every entry as "rank, name, floor",
-    /// and the reset countdown (its tooltip a buffer line). Two Tab-stops of its own: the tabs and lines, then the entries, so a
-    /// player can skip the list without arrowing through it.
+    /// main menu, on the difficulty screen and on the run's final result panel, read the same way
+    /// everywhere as ONE Tab-stop, top to bottom: the visibility toggle (the eye), the Global / Friend
+    /// List tabs as a row (Left and Right between them, as they lie), the streak and loading lines,
+    /// every entry as "rank, name, floor", and the reset countdown (its tooltip a buffer line). Tab
+    /// skips the whole board; Down from the tabs is the first entry.
     /// </summary>
     internal static class LeaderboardNodes
     {
         public static void Add(GraphBuilder b, LeaderboardController lb, string keyPrefix)
         {
             if (lb == null || !lb.gameObject.activeInHierarchy) return;
-            b.BeginStop(keyPrefix + ":tabs");
+            b.BeginStop(keyPrefix);
             b.PushContext(Title(lb), null, positions: false);
             // The eye: shows or hides the board (its own view; the toggle inside it is the widget).
             var eye = lb._visibilityToggle != null ? lb._visibilityToggle._visibilityToggle : null;
             if (GameNodes.IsShown(eye))
                 b.AddItem(ControlId.Structural(keyPrefix + ":visible"), GameNodes.Toggle(eye, () => Strings.LeaderboardVisible));
-            if (GameNodes.IsShown(lb._globalTab))
-                b.AddItem(ControlId.Structural(keyPrefix + ":global"), GameNodes.Tab(lb._globalTab));
-            if (GameNodes.IsShown(lb._friendsTab))
-                b.AddItem(ControlId.Structural(keyPrefix + ":friends"), GameNodes.Tab(lb._friendsTab));
+            if (GameNodes.IsShown(lb._globalTab) || GameNodes.IsShown(lb._friendsTab))
+            {
+                b.StartRow();
+                if (GameNodes.IsShown(lb._globalTab))
+                    b.AddItem(ControlId.Structural(keyPrefix + ":global"), GameNodes.Tab(lb._globalTab));
+                if (GameNodes.IsShown(lb._friendsTab))
+                    b.AddItem(ControlId.Structural(keyPrefix + ":friends"), GameNodes.Tab(lb._friendsTab));
+                b.EndRow();
+            }
             AddLine(b, keyPrefix + ":streak", lb._currentStreakText);
             AddLine(b, keyPrefix + ":load", lb._loadText);
 
-            b.BeginStop(keyPrefix + ":entries");
             var entries = lb._entries;
             if (entries != null)
             {
