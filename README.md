@@ -39,16 +39,6 @@ stat means); the quests buffer the quests of what it wears, one line each with t
 the items buffer what it wears; relics lists the run's relics; party and enemies list every unit on
 the board; combat is the battle events log, newest line first.
 
-## Languages
-
-The mod speaks the game's language. Change it in the game's settings and the mod's own words change
-with it, at once; start the game in German and the mod comes up in German. The game's text is the
-game's own translation; the mod's words (button, party slot, cost, the key help) come from
-`BepInEx\plugins\GuildrunAccess\lang\<language>.txt`: German, Spanish, Brazilian Portuguese, Russian,
-Simplified and Traditional Chinese, plus French and Japanese for when the game offers them. The
-translations were machine-made against the game's own vocabulary; corrections are welcome. A line
-missing from a file is spoken in English, and `en.txt` is the template for a new language.
-
 ## Building from source
 
 ```
