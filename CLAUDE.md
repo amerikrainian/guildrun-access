@@ -380,7 +380,17 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    and description: its banners are `HeroTagView` icons, the class a path adds under `ClassBanner`
    and its archetypes under `StatsBanner`, read by `HeroCardNodes.TagNames`, and a B-rank path that
    adds a class says so, with its stat gains, in `SpecializationChoiceView._additionalClassView`,
-   live only while `_additionalClassContainer` is active; `IGameRegistryService.RankUpHero(heroId)`
+   live only while `_additionalClassContainer` is active; a path whose ability is an ACTIVE one
+   (nine in the demo, Nyx's The Wild) shows the mana it brings, `_activeAbilityView._mana`
+   "[20/50 Mana]", and the one path that comes with an item (Irini's The Olympic, found by
+   `ITooltipSource.TryGetAdditionalItem` over the ability's effects) shows `_itemView`, an icon
+   whose name text is filled but hidden, the description naming the item: its tooltip follows the
+   ability's in the control buffer. The picker's prefab has NO mastery markers
+   (`_masteryAvailableContainer` / `_masteryCompletedContainer` are null there): those belong to
+   the compendium's copies of the card (`SpecializationCompendium*`), which the compendium screen
+   reads by every visible text. For a path no hero at hand has, `/eval` can fill a live card for
+   display: `view.SetChoiceFromEntry(spec, heroEntry)`, the entries from
+   `CompendiumUIController._specializationsByHeroId` / `_allHeroes`. `IGameRegistryService.RankUpHero(heroId)`
    in `/eval` brings a picker up, the ids from `GameRegistryService.Data.Heroes.Keys.CopyTo`), the
    relic reward picker
    (`RelicPickerScreen`: `RelicPickerController._panelParent` after a challenge fight), the Heroes

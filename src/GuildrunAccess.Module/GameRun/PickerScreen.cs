@@ -128,7 +128,10 @@ namespace GuildrunAccess.Module.GameRun
         // class and 6 Mana Regen. <description>", Enter picks it. The tags are the card's banners, icons
         // alone (the class the path adds, its archetypes); the sentence before the description is the
         // card's additional-class panel, which only a path that adds a class shows, and which carries
-        // that path's stat gains too.
+        // that path's stat gains too. A path whose ability is an active one shows the mana it brings
+        // in the same place ("20/50 Mana": nine of the demo's paths), and a path that comes with an
+        // item shows it under the description (Irini's The Olympic, the demo's one: an icon, the
+        // description naming it), the item's own tooltip following the ability's in the control buffer.
         private static NodeVtable Specialization(SpecializationChoiceView choice)
         {
             var subtitle = choice._subtitleText != null ? choice._subtitleText.GetComponent<TMP_Text>() : null;
@@ -141,12 +144,48 @@ namespace GuildrunAccess.Module.GameRun
                     new NodeAnnouncement(() => subtitle != null ? subtitle.text : null, kind: AnnouncementKinds.Value),
                     new NodeAnnouncement(() => Tags(choice), kind: AnnouncementKinds.Value),
                     GameNodes.TooltipPart(() => AdditionalClass(choice)),
+                    GameNodes.TooltipPart(() => ActiveMana(choice)),
                     GameNodes.TooltipPart(() => choice._descriptionText != null ? choice._descriptionText.text : null),
+                    GameNodes.TooltipPart(() => ItemName(choice)),
                 },
                 SearchText = () => choice._nameText != null ? choice._nameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                Details = () => DetailsOf(choice, choice._tooltipRaycastTarget, choice._descriptionText),
+                Details = () =>
+                {
+                    var lines = new List<string>(DetailsOf(choice, choice._tooltipRaycastTarget, choice._descriptionText));
+                    var item = ShownItem(choice);
+                    if (item != null) lines.AddRange(TooltipReader.Lines(item.TooltipRaycastTarget));
+                    return lines;
+                },
             };
+        }
+
+        // The active-ability panel's one text while the card shows it, "[20/50 Mana]" (the mana the
+        // hero starts a fight with and the ability's cost), without the brackets it is drawn in.
+        private static string ActiveMana(SpecializationChoiceView choice)
+        {
+            var container = choice._activeAbilityContainer;
+            if (container == null || !container.activeInHierarchy) return null;
+            var view = choice._activeAbilityView;
+            var text = view != null ? view._mana : null;
+            if (text == null || !text.gameObject.activeInHierarchy || string.IsNullOrWhiteSpace(text.text)) return null;
+            return text.text.Trim().TrimStart('[').TrimEnd(']');
+        }
+
+        // The item a path comes with, while the card shows one (a hidden view keeps the prefab's).
+        private static Ember.Scopes.Application.UI.Common.ItemView ShownItem(SpecializationChoiceView choice)
+        {
+            var item = choice._itemView;
+            return item != null && item.gameObject.activeInHierarchy ? item : null;
+        }
+
+        // Its name only where the card writes it: the picker's card draws the icon alone (the
+        // description names the item), and a name text that is filled but hidden is not repeated.
+        private static string ItemName(SpecializationChoiceView choice)
+        {
+            var item = ShownItem(choice);
+            var text = item != null ? item._itemNameText : null;
+            return text != null && text.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(text.text) ? text.text : null;
         }
 
         // "Mystic, Backup, Stealth", or null for a card without banners.
