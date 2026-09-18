@@ -78,7 +78,10 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   field reads annotated; `--calls` is the dozen-line shape. The dump has no bodies: this is how a
   game rule (what Quit to Menu does, what gates a save) is read without guessing. Lambdas and
   coroutines by their dump names (`NavigationUIController.<OnStart>b__50_8`,
-  `RunSessionService.<GoBackToMenuAsync>d__39.MoveNext`).
+  `RunSessionService.<GoBackToMenuAsync>d__39.MoveNext`). `--callers` (no capstone needed) is the
+  reverse: every direct call/jump site of the method, named by its containing method (~9 s a scan).
+  It misses virtual, interface and delegate calls and inlined bodies, so a tiny accessor with no
+  sites proves nothing (`TileInfo.set_EnemyId` shows none; `BoardService.InitializeBoard` shows `Init`).
 - `dev.py <cmd>` — the dev server from the command line: `launch`, `kill`, `reload`, `nav`, `input
   ui.down ui.activate`, `speech --tail 20`, `log --grep X`, `gui --grep RE --context 3`, `eval file.cs`,
   `wait "<bool expr>"`, `typeinfo Name`, `actions`, `module`, `screenshot out.png`, `click [x y]`

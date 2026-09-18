@@ -1,6 +1,7 @@
 """Disassemble a game method's native body from GameAssembly.dll, by name.
 
     uv run --with capstone python tools/python/disasm.py Type.Method [Type.Method ...] [--calls] [--bytes N]
+    uv run python tools/python/disasm.py Type.Method [Type.Method ...] --callers
 
 The dump has no method bodies (IL2CPP), only each method's RVA and file offset; this reads the
 bytes at that offset and prints x64 assembly up to the first ret, with every direct call or jump
@@ -11,11 +12,20 @@ are the dump's: `MainMenuUIController.UpdateButtonStates`, a lambda
 --calls keeps only the resolved calls and field lines: the method's shape in a dozen lines. This is
 how "what does Quit to Menu actually do" gets answered without the live game (needs capstone, hence
 `uv run --with capstone`).
+
+--callers is the reverse question, who calls this method: every direct call or jump in
+GameAssembly.dll whose target is the method (an E8/E9 with the right relative offset), each site
+named by the method that contains it (the dump's nearest RVA at or below the site). No capstone
+needed. It misses what is not a direct call: a virtual or interface call, a delegate (an event
+subscription shows as its lambda, never as the subscribe call), and a body the C++ compiler inlined,
+so an empty answer for a tiny accessor proves little.
 """
 from __future__ import annotations
 
 import argparse
+import bisect
 import re
+import struct
 import sys
 from pathlib import Path
 
@@ -62,18 +72,38 @@ def index_dump(dump: Path, wanted: set[str]):
     return rva_to_name, targets, fields
 
 
+def callers(data: bytes, rva: int, offset: int, rva_to_name: dict[int, str]) -> list[tuple[int, str]]:
+    """(site RVA, containing method) for every E8/E9 whose rel32 lands on the method. Sites are
+    looked for in the method's own section: file offset and RVA differ by the same delta there."""
+    delta = rva - offset
+    starts = sorted(rva_to_name)
+    found = []
+    for opcode in (bytes([0xE8]), bytes([0xE9])):
+        at = data.find(opcode)
+        while at != -1 and at + 5 <= len(data):
+            site = at + delta
+            if site + 5 + struct.unpack_from("<i", data, at + 1)[0] == rva:
+                i = bisect.bisect_right(starts, site) - 1
+                found.append((site, rva_to_name[starts[i]] if i >= 0 else "?"))
+            at = data.find(opcode, at + 1)
+    return sorted(found)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("names", nargs="+", help="Type.Method names as dump.cs spells them")
     ap.add_argument("--calls", action="store_true", help="only the lines with a resolved call/jump or a field read")
+    ap.add_argument("--callers", action="store_true", help="who calls the method: every direct call/jump site, by containing method")
     ap.add_argument("--bytes", type=int, default=0x2000, help="bytes to read past the method start (default 8 KiB)")
     args = ap.parse_args()
 
-    try:
-        import capstone
-    except ImportError:
-        print("capstone is not installed: run with `uv run --with capstone python tools/python/disasm.py ...`", file=sys.stderr)
-        return 2
+    capstone = None
+    if not args.callers:
+        try:
+            import capstone
+        except ImportError:
+            print("capstone is not installed: run with `uv run --with capstone python tools/python/disasm.py ...`", file=sys.stderr)
+            return 2
 
     dump = gamelib.require_dump()
     assembly = gamelib.game_dir() / "GameAssembly.dll"
@@ -84,9 +114,22 @@ def main() -> int:
 
     wanted = set(args.names)
     rva_to_name, targets, fields = index_dump(dump, wanted)
+    status = 0
+    if args.callers:
+        for name in args.names:
+            if name not in targets:
+                print(f"not found in dump.cs: {name}")
+                status = 1
+                continue
+            rva, offset = targets[name]
+            sites = callers(data, rva, offset, rva_to_name)
+            print(f"=== callers of {name}  RVA 0x{rva:X}: {len(sites)} site(s)")
+            for site, owner in sites:
+                print(f"  {site:08X}  {owner}")
+        return status
+
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
 
-    status = 0
     for name in args.names:
         if name not in targets:
             print(f"not found in dump.cs: {name}")
