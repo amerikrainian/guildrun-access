@@ -7,6 +7,7 @@
 - Rank up choices now say when a path gives the hero another class, and read the tags on each choice.
 - Rank up choices with an active ability now say their mana.
 - You can now hide a rank up choice to check your party or the shop first.
+- Event choices that show a hero's portrait now say which hero, with their class and rank.
 - The mod now speaks the game's language. Translations are welcome, as this is Claude's labor of love.
 
 ## V0.0.7
