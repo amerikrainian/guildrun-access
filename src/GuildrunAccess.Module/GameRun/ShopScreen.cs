@@ -141,7 +141,9 @@ namespace GuildrunAccess.Module.GameRun
 
             // The game redraws the offers over the frames after a reroll (its template rows linger
             // for about six), so the feedback waits: the button's caption, which carries the new
-            // cost, then the focused control's line, since what stood under focus changed.
+            // cost, then the focused control's line, since what stood under focus changed. Two speech
+            // events, the second queued behind the first: they are two facts about two controls, and
+            // joined into one line the new offer read as if it were part of the reroll button.
             private static void Reroll()
             {
                 var shop = Open();
@@ -149,11 +151,10 @@ namespace GuildrunAccess.Module.GameRun
                 Later.Frames(12, () =>
                 {
                     var s = Open();
-                    var parts = new List<string> { s != null ? Caption(s._rerollShopButton, Strings.ShopReroll) : Strings.ShopReroll };
+                    Speech.Say(s != null ? Caption(s._rerollShopButton, Strings.ShopReroll) : Strings.ShopReroll, interrupt: true);
                     var node = Navigation.FocusedNode;
-                    if (node != null)
-                        foreach (var line in NodeLines.Lines(node)) { parts.Add(line); break; }
-                    Speech.Say(string.Join(", ", parts), interrupt: true);
+                    if (node == null) return;
+                    foreach (var line in NodeLines.Lines(node)) { Speech.Say(line); break; }
                 }, "shop reroll feedback");
             }
 
