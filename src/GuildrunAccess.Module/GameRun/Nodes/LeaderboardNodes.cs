@@ -28,7 +28,10 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(ControlId.Structural(keyPrefix + ":visible"), GameNodes.Toggle(eye, () => Strings.LeaderboardVisible));
             if (GameNodes.IsShown(lb._globalTab) || GameNodes.IsShown(lb._friendsTab))
             {
-                b.StartRow();
+                // A tab selects on landing, so the way into the row from the toggle above or the
+                // entries below is the tab whose list is on show: Up from the friends' entries is
+                // the Friend List tab, not Global and a reload of the other list.
+                b.StartRow(entry: () => GameNodes.IsShown(lb._globalTab) && GameNodes.IsShown(lb._friendsTab) && lb._friendsTab.isOn ? 1 : 0);
                 if (GameNodes.IsShown(lb._globalTab))
                     b.AddItem(ControlId.Structural(keyPrefix + ":global"), GameNodes.Tab(lb._globalTab));
                 if (GameNodes.IsShown(lb._friendsTab))
@@ -53,7 +56,7 @@ namespace GuildrunAccess.Module.GameRun
                 b.PushContext(Strings.ResultEntries, Strings.RoleList);
                 foreach (var entry in entries)
                 {
-                    if (entry == null || !entry.gameObject.activeInHierarchy) continue;
+                    if (!Filled(entry)) continue;
                     var e = entry;
                     b.AddItem(EntryId(keyPrefix, e), GameNodes.Text(() => Strings.ResultEntry(
                         e.RankText != null ? e.RankText.text : "", e.NameText != null ? e.NameText.text : "", e.FloorText != null ? e.FloorText.text : "")));
@@ -79,8 +82,17 @@ namespace GuildrunAccess.Module.GameRun
             var entries = lb != null ? lb._entries : null;
             if (entries == null) return null;
             foreach (var entry in entries)
-                if (entry != null && entry.gameObject.activeInHierarchy) return EntryId(keyPrefix, entry);
+                if (Filled(entry)) return EntryId(keyPrefix, entry);
             return null;
+        }
+
+        // A row with someone on it. The board keeps all its rows active and leaves the ones past the
+        // list's end blank (a friends' list of one is one row and eight empty ones).
+        private static bool Filled(LeaderboardEntryView entry)
+        {
+            if (entry == null || !entry.gameObject.activeInHierarchy) return false;
+            return (entry.RankText != null && !string.IsNullOrWhiteSpace(entry.RankText.text))
+                || (entry.NameText != null && !string.IsNullOrWhiteSpace(entry.NameText.text));
         }
 
         // The board's shown title ("Endless Mode Leaderboard", or the challenge one), else our word.

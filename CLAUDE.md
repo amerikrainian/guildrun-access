@@ -456,7 +456,14 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    (`NodeVtable.QuietVanish`). A focused node that vanishes lands on the nearest survivor, which is
    the control BEFORE it; a placeholder names its successor instead (`NodeVtable.VanishTo`, asked at
    that rebuild and honoured when the node is in the new render): the leaderboard's "Loading..."
-   line names the first entry, so waiting on it lands on the loaded list, not back on the tab. Between fights the shop, crossroads and event panels carry the HUD
+   line names the first entry, so waiting on it lands on the loaded list, not back on the tab.
+   A vertical move INTO a row lands on its first item unless the row names another
+   (`GraphBuilder.StartRow(entry:)`, asked when the render is wired): a row of tabs that sits
+   inside a stop, between a toggle and the content it switches, names its selected tab, since a tab
+   selects on landing and Up from the friends' entries would otherwise switch the board to Global.
+   The leaderboard (`LeaderboardNodes`, one reader for the main menu, the difficulty screen and the
+   final result) is that stop: toggle, tab row, lines, the filled entries (the board keeps its blank
+   rows active), the reset countdown. Between fights the shop, crossroads and event panels carry the HUD
    sections the game keeps interactable under them (`RunPanelScreen`), with Sell in the shop. The
    campfire is an event (Train, Study, Recharge, Rest), not a screen: the game's Campfire scope has
    no scene in the demo. Open: a milestone's

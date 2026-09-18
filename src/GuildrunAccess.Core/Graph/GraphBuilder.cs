@@ -38,6 +38,7 @@ namespace GuildrunAccess.Core.Graph
             public readonly List<GraphNode> Items = new List<GraphNode>();
             public object Key;
             public object StopKey;
+            public Func<int> Entry;
         }
 
         private sealed class RawEdge
@@ -205,13 +206,28 @@ namespace GuildrunAccess.Core.Graph
         // ---- menu mode ----
 
         /// <summary>Open a horizontal row. Rows sharing a non-null <paramref name="rowKey"/> with the row
-        /// above/below get column-preserving vertical navigation.</summary>
-        public GraphBuilder StartRow(object rowKey = null)
+        /// above/below get column-preserving vertical navigation. <paramref name="entry"/> is the index
+        /// of the item a vertical move INTO the row lands on when no column says otherwise (the first
+        /// by default): a row of tabs that select on landing names its selected one, so coming up from
+        /// the content under them does not switch tabs. Asked when the render is wired.</summary>
+        public GraphBuilder StartRow(object rowKey = null, Func<int> entry = null)
         {
             if (_currentRow != null) throw new InvalidOperationException("Cannot start a row while another is open");
             if (_currentColumn != null) throw new InvalidOperationException("Cannot start a row inside an open column");
-            _currentRow = new Row { Key = rowKey, StopKey = _stopKey };
+            _currentRow = new Row { Key = rowKey, StopKey = _stopKey, Entry = entry };
             return this;
+        }
+
+        // The item a vertical move into the row lands on: the one its Entry names, else the first.
+        private static GraphNode EntryOf(Row row)
+        {
+            int index = 0;
+            if (row.Entry != null)
+            {
+                try { index = row.Entry(); }
+                catch (Exception e) { CoreLog.Warning("GraphBuilder: a row's entry failed: " + e.Message); }
+            }
+            return row.Items[index >= 0 && index < row.Items.Count ? index : 0];
         }
 
         public GraphBuilder EndRow()
@@ -385,7 +401,7 @@ namespace GuildrunAccess.Core.Graph
                         foreach (var cell in row.Items)
                             if (!cell.Transitions.ContainsKey(GraphDir.Down))
                                 cell.Transitions[GraphDir.Down] = new Transition(cur.Id);
-                        cur.Transitions[GraphDir.Up] = new Transition(row.Items[0].Id);
+                        cur.Transitions[GraphDir.Up] = new Transition(EntryOf(row).Id);
                     }
                     else // raw content above a menu row: last raw node without a Down links to the row
                     {
@@ -395,7 +411,7 @@ namespace GuildrunAccess.Core.Graph
                         for (int j = i - 1; j >= 0 && !_rowOf.ContainsKey(nodes[j]); j--)
                             if (!nodes[j].Transitions.ContainsKey(GraphDir.Down)) { bottom = nodes[j]; break; }
                         if (bottom == null) continue;
-                        bottom.Transitions[GraphDir.Down] = new Transition(row.Items[0].Id);
+                        bottom.Transitions[GraphDir.Down] = new Transition(EntryOf(row).Id);
                         foreach (var cell in row.Items)
                             if (!cell.Transitions.ContainsKey(GraphDir.Up))
                                 cell.Transitions[GraphDir.Up] = new Transition(bottom.Id);
@@ -538,7 +554,7 @@ namespace GuildrunAccess.Core.Graph
         {
             if (from.Key != null && to.Key != null && Equals(from.Key, to.Key) && pos < to.Items.Count)
                 return to.Items[pos].Id;
-            return to.Items[0].Id;
+            return EntryOf(to).Id;
         }
     }
 }

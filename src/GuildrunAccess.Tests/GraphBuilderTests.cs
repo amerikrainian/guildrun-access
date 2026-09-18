@@ -373,5 +373,36 @@ namespace GuildrunAccess.Tests
             Assert.Throws<InvalidOperationException>(() => new GraphBuilder().StartColumn().AddItem(Id("a"), Vt("A")).Build());
             Assert.Throws<InvalidOperationException>(() => new GraphBuilder().EndColumn());
         }
+
+        // A row of tabs that select on landing sits between a toggle and the content it switches: a
+        // vertical move into it lands on the item the row names, not the first.
+        [Fact]
+        public void AVerticalMoveIntoARowLandsOnItsEntry()
+        {
+            int selected = 1;
+            GraphRender Render()
+            {
+                var b = new GraphBuilder();
+                b.AddItem(ControlId.Structural("toggle"), new NodeVtable { Announcements = new[] { NodeAnnouncement.Static("toggle") } });
+                b.StartRow(entry: () => selected);
+                b.AddItem(ControlId.Structural("global"), new NodeVtable { Announcements = new[] { NodeAnnouncement.Static("global") } });
+                b.AddItem(ControlId.Structural("friends"), new NodeVtable { Announcements = new[] { NodeAnnouncement.Static("friends") } });
+                b.EndRow();
+                b.AddItem(ControlId.Structural("entry"), new NodeVtable { Announcements = new[] { NodeAnnouncement.Static("entry") } });
+                return b.Build();
+            }
+
+            var render = Render();
+            Assert.Equal(ControlId.Structural("friends"), render.Nodes[ControlId.Structural("entry")].Transitions[GraphDir.Up].Destination);
+            Assert.Equal(ControlId.Structural("friends"), render.Nodes[ControlId.Structural("toggle")].Transitions[GraphDir.Down].Destination);
+
+            selected = 0;
+            render = Render();
+            Assert.Equal(ControlId.Structural("global"), render.Nodes[ControlId.Structural("entry")].Transitions[GraphDir.Up].Destination);
+
+            selected = 7; // out of range: the first, as without an entry
+            render = Render();
+            Assert.Equal(ControlId.Structural("global"), render.Nodes[ControlId.Structural("toggle")].Transitions[GraphDir.Down].Destination);
+        }
     }
 }
