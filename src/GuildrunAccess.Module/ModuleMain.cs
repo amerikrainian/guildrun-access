@@ -139,8 +139,8 @@ namespace GuildrunAccess.Module
             // in place (UnitGlance); Shift+2, 3, 4 the same group with each stat's breakdown; Ctrl+S
             // the run's shards, Ctrl+C the focused cell's or unit's board coordinates, Ctrl+T the
             // battle timer, Ctrl+N the units near the focused cell or hero while placing, Ctrl+H the
-            // hostile ones, Ctrl+Q the quests of the focused hero, item or relic
-            // (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
+            // hostile ones, Ctrl+Q the quests of the focused hero, item or relic, Ctrl+M a Red Rift
+            // run's missions (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
             // which owns the bare letters.
             Glance("glance.vitals", "Unit health, shield and mana", KeyCode.Alpha1, KeyCode.Keypad1, () => UnitGlance.Speak(UnitGlance.Group.Vitals));
             Glance("glance.attack", "Unit attack, magic and defense", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.Speak(UnitGlance.Group.Attack));
@@ -157,6 +157,7 @@ namespace GuildrunAccess.Module
             InputManager.Register("run.nearby", "Nearby units", InputCategory.UI, () => RunGlance.Nearby(hostilesOnly: false)).AddBinding(new KeyboardBinding(KeyCode.N, ctrl: true));
             InputManager.Register("run.hostiles", "Nearby hostiles", InputCategory.UI, () => RunGlance.Nearby(hostilesOnly: true)).AddBinding(new KeyboardBinding(KeyCode.H, ctrl: true));
             InputManager.Register("run.quests", "Quests of the focused hero or item", InputCategory.UI, RunGlance.Quests).AddBinding(new KeyboardBinding(KeyCode.Q, ctrl: true));
+            InputManager.Register("run.missions", "Red Rift missions", InputCategory.UI, RunGlance.Missions).AddBinding(new KeyboardBinding(KeyCode.M, ctrl: true));
             // The shop's reroll and freeze, answered by the shop screen's own actions (ShopScreen) and
             // by nothing else: no handler here.
             InputManager.Register("shop.reroll", "Shop reroll", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.R, ctrl: true));

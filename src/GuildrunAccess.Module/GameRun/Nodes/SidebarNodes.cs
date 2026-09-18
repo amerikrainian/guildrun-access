@@ -83,17 +83,22 @@ namespace GuildrunAccess.Module.GameRun
 
             if (trackerController != null) AddTrackerHeroes(b, trackerController, keyPrefix + ":dmg");
 
+            // The Red Rift's missions: the title with its count, then each mission with the state
+            // the game shows by icon alone (MissionNodes), then the failure text once they are lost.
             var challenge = sidebar._challengeModePanel;
-            if (challenge != null && challenge.activeInHierarchy)
+            var missions = challenge != null && challenge.activeInHierarchy ? MissionNodes.Controller() : null;
+            if (missions != null)
             {
                 b.PushContext(Strings.RunChallenge, null, positions: false);
                 int n = 0;
-                foreach (var tmp in challenge.GetComponentsInChildren<TMP_Text>(false))
+                b.AddItem(ControlId.Structural(keyPrefix + ":challenge:" + n++), GameNodes.Text(() => MissionNodes.Title(missions)));
+                foreach (var view in MissionNodes.Views(missions))
                 {
-                    if (tmp == null || string.IsNullOrWhiteSpace(tmp.text)) continue;
-                    var t = tmp;
-                    b.AddItem(ControlId.Structural(keyPrefix + ":challenge:" + n++), GameNodes.Text(() => t.text));
+                    var mission = view;
+                    b.AddItem(ControlId.Structural(keyPrefix + ":challenge:" + n++), GameNodes.Text(() => MissionNodes.Line(mission)));
                 }
+                if (MissionNodes.Failed(missions) != null)
+                    b.AddItem(ControlId.Structural(keyPrefix + ":challenge:failed"), GameNodes.Text(() => MissionNodes.Failed(missions)));
                 b.PopContext();
             }
 

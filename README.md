@@ -40,6 +40,9 @@ party slot or card, each with its distance in hexes, nearest first and by name w
 ("Mushroom Tank 2, Slime 1 3": the last number is the distance); Ctrl+H lists the hostile ones alone: the enemies from a hero, your
 heroes from an enemy, and nothing from an empty cell, where only Ctrl+N answers. Both are silent during
 a fight.
+Ctrl+Q speaks the quests of the focused hero, item or relic: a quest item's count ("Toxic Contract:
+Quest: Inflict 100 Poison, 12 / 100") or the Rift Seal's three charges. In a Red Rift run, Ctrl+M speaks
+the run's missions from anywhere, each marked complete or failed once it is.
 Enemies that share a name are numbered, "Slime 1" and "Slime 2", counted left to right from the row
 farthest from you, the order Left and Right cycle them in. The number stays with the enemy from
 placement through the fight, in the board, the buffers, the battle events log and the glance keys.
@@ -49,7 +52,8 @@ Everything a control carries beyond its focus line waits in the buffers: Ctrl+Ri
 switch buffers, Ctrl+Up and Ctrl+Down step through the current one. The control buffer holds the
 focused control's own line and one line per tooltip; the hero buffer holds the whole hero a slot,
 card or unit concerns (its name, classes and archetypes, its stats and abilities, then what each
-ability, class, archetype and stat means) and the items buffer what it wears; relics lists the run's relics; party and enemies
+ability, class, archetype and stat means), the quests buffer the quests of what it wears, one line
+each with the reward under it, and the items buffer what it wears; relics lists the run's relics; party and enemies
 list every unit on the board; combat is the battle events log, newest line first.
 
 ## Building from source

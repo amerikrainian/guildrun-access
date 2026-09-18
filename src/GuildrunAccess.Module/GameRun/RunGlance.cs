@@ -20,7 +20,8 @@ namespace GuildrunAccess.Module.GameRun
     /// battle timer as the top panel draws it ("00:42"): the top panel stays up over the shop, the
     /// crossroads and the events, so the last fight's time is spoken there too. Ctrl+N the units
     /// near the focused cell or hero while placing, Ctrl+H the hostile ones (see
-    /// <see cref="Nearby"/>). Ctrl+Q the quests of the focused hero, item or relic. Each is silent where its fact is not on screen: outside a run, off the
+    /// <see cref="Nearby"/>). Ctrl+Q the quests of the focused hero, item or relic, Ctrl+M a Red Rift
+    /// run's missions. Each is silent where its fact is not on screen: outside a run, off the
     /// board, the timer's text hidden.</summary>
     internal static class RunGlance
     {
@@ -101,6 +102,19 @@ namespace GuildrunAccess.Module.GameRun
                 if (lines.Count > 0) Speech.Say(string.Join(". ", lines), interrupt: true);
             }
             catch (Exception e) { CoreLog.Warning("RunGlance: quests failed: " + e.Message); }
+        }
+
+        /// <summary>Ctrl+M: a Red Rift run's missions from anywhere in the run, the sidebar's panel
+        /// shown or not: "Red Rift Missions - 2/6", then each mission with its state. Silent outside
+        /// a Red Rift run.</summary>
+        public static void Missions()
+        {
+            try
+            {
+                var lines = MissionNodes.Lines();
+                if (lines.Count > 0) Speech.Say(string.Join(". ", lines), interrupt: true);
+            }
+            catch (Exception e) { CoreLog.Warning("RunGlance: missions failed: " + e.Message); }
         }
 
         public static void Timer()

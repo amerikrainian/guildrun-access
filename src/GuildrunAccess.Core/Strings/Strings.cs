@@ -130,6 +130,7 @@ namespace GuildrunAccess.Core.Strings
             D("bind.run.nearby", "Nearby units"),
             D("bind.run.hostiles", "Nearby hostiles"),
             D("bind.run.quests", "Quests of the focused hero or item"),
+            D("bind.run.missions", "Red Rift missions"),
             D("bind.shop.reroll", "Shop reroll"),
             D("bind.shop.freeze", "Shop freeze"),
             D("bind.mod.reload", "Reload mod code"),
@@ -316,6 +317,10 @@ namespace GuildrunAccess.Core.Strings
             D("quest.progress_alone", "progress {0}"),
             // A hero's quests, one line each: {0} = the item that carries it, {1} = the quest.
             D("quest.of_item", "{0}: {1}"),
+            // A Red Rift mission the game marks done or failed (it shows an icon, no word). {0} = the
+            // mission's own text.
+            D("mission.complete", "{0}, complete"),
+            D("mission.failed", "{0}, failed"),
             // The battle HUD's events, as the game shows them (floating numbers, status icons, deaths, casts).
             D("run.events", "battle events"),
             // {0} = the unit, {1} = the number shown.
@@ -690,6 +695,8 @@ namespace GuildrunAccess.Core.Strings
 
         public static string QuestProgressAlone(string progress) => F("quest.progress_alone", progress);
         public static string QuestOfItem(string item, string quest) => F("quest.of_item", item, quest);
+        public static string MissionComplete(string mission) => F("mission.complete", mission);
+        public static string MissionFailed(string mission) => F("mission.failed", mission);
         public static string RunEvents => Get("run.events");
         public static string BattleDamage(string unit, int amount) => F("battle.damage", unit, amount);
         public static string BattleCrit(string unit, int amount) => F("battle.crit", unit, amount);

@@ -247,7 +247,9 @@ panel draws it, Ctrl+N the units near the focused cell (or near the cell of the 
 concerns) with their hex distances (`HexGrid.Distance`), nearest first then by name ("Pollen 1,
 Slime 2 4": the last number is the distance, the one before it a numbered enemy's own), Ctrl+H the hostile ones alone (the origin's unit's hostiles: the heroes from an enemy, the
 enemies from a hero, silent on an empty cell), both placement-only (`RunData.Placing`) and silent in a
-fight (`RunGlance`); Ctrl+R/Ctrl+F reroll
+fight, Ctrl+Q the quests of the focused hero, item or relic (the control's
+`BufferKeys.QuestBrief` side lines: the item named once, its quests after it, no rewards), Ctrl+M a
+Red Rift run's missions from anywhere (`GameRun/Nodes/MissionNodes`) (`RunGlance`); Ctrl+R/Ctrl+F reroll
 and freeze from anywhere on the shop (the shop section's `GetActions`; feedback deferred a few frames
 through `UI/Later`). Digits and Ctrl chords never clash with type-ahead; bare letters do. The battle board is a
 pointy-top hex grid (Unity's hexagon `Grid`, odd rows half a cell to the right, no cell straight up
@@ -270,7 +272,10 @@ slot, cell, unit or card concerns and the items it carries: `GameRun/Nodes/HeroL
 is the WHOLE hero, `HeroLines.ForCard`: name with tags and rank, the full stats line, the abilities
 line, then every tooltip of the card, `HeroCardNodes.Tooltips`: abilities, class and archetype tags,
 stats, a keyword's definition given once across the abilities and tags; the control buffer of a hero
-control holds the same tooltips, so neither buffer sends the player to the other), **relics**
+control holds the same tooltips, so neither buffer sends the player to the other), **quests**
+(right after hero, empty and so skipped for most controls: the quests of the items the hero wears, or
+of the focused item or relic, `ItemNodes.QuestLines`: "Rift Seal: Tank or Vanguard, 1 / 3", "Hourglass:
+Quest: Trigger Stall 5 times from any source, 0 / 5" with the reward on the line after), **relics**
 (the run's, one line each), **party** and **enemies** (one line per unit, placement and fights),
 **combat** (the battle events log, following its latest line). Conventions: a tooltip is ONE line,
 never joined with others; helpers return `List<string>` (`ItemTooltips`, `AbilitiesTooltips`,
@@ -316,7 +321,15 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    `TextDataValue`s by identifier, `tooltip_title` / `tooltip_details` / `tooltip_extra_information`),
    read by `TooltipReader.Title/Lines(TooltipObject)`. An archetype tag is icon-only and its caption
    and hover text are a leftover placeholder ("assassindadsadsad"): it is NAMED by that tooltip's
-   title ("Shard"), never by its icon sprite, which is named for the art ("Economy"). Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
+   title ("Shard"), never by its icon sprite, which is named for the art ("Economy"). A QUEST is
+   read by the tooltip's structure, never by its words (`TooltipReader.Quests` / `Sections`): the game
+   draws one as a `ConditionalBonusView` section (its text, a locked or an unlocked icon: done) and a
+   `QuestProgressView` after it (the bar's text, "0 / 100"), an ordinary quest's requirement being the
+   description section right before the bonus (a separator in between means it is not: the Rift
+   Seal's three charges stand under one). `TooltipReader.Lines` folds the pair into one line
+   ("Tank or Vanguard, 0 / 3, complete"): read apart, the counts are bare numbers, and equal ones
+   fold into one in a buffer. TextMesh Pro draws a written-out "\n" as a line break, so `AddLines`
+   splits on it too (the Rift Seal's description has two). Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,
    `LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `GameRun/RunData`.
 6. **(done)** End screen (a boss victory shows it in the game's short form, `Show(_, true)` from the
    flow controller's OnStart timer: every navigation button hidden, one caption-less click-anywhere
@@ -333,6 +346,21 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
    campfire is an event (Train, Study, Recharge, Rest), not a screen: the game's Campfire scope has
    no scene in the demo. Open: Escape on the run HUD only cancels a pending move; a milestone's
    hero and token-slot rewards are icons without tooltips (its title names them).
+   The Red Rift (the difficulty screen's eighth tier, `DifficultyUIController._playRiftButton`, the
+   game's challenge mode: `ChallengeReader.IsChallengeRun`) adds a relic, the Rift Seal (a Unique
+   Item whose tooltip is `ItemInstanceTooltipSource.PopulateRiftAnchorItem`: three class groups, each
+   a count in the registry's global custom data, `riftAnchorAssassinDuelistWarriorCount` and kin) and
+   six missions (`ChallengeModeController`: a title counting the done ones, a `ChallengeItemView` per
+   mission whose done and failed states are feedback OBJECTS, icons, never a word: `MissionNodes`
+   adds the word). It unlocks once `ProgressionData.HighestDifficultyBeaten` reaches a threshold
+   the game takes from its balancing (`ProgressionReader.IsChallengeModeUnlocked`; 7 unlocks it,
+   verified); for a test, set that in `/eval`, call the scene
+   `DifficultyUIController.FillProgressionInfo()` (the locks are filled once, in OnStart), and
+   restore the `Profile` save afterwards. `IGameRegistryService.SetPermanentGlobalCustomData(key,
+   FP)` moves a Seal charge, `ChallengeInstance.State.Value` a mission's state, and
+   `reg.CreateItem(BalancingRef<IItemEntry>.From(entry))` drops a quest item (26 of the demo's 174
+   items have `HasQuestEffect`) into the reserve. The first hero picker has no way to the pause
+   menu: from `/eval`, the scene `SettingsPanelView.QuitToMenuButton.onClick.Invoke()`.
 7. **(done)** Nameless enemies: 295 of the 644 enemy entries have no name key (the scaled variants),
    and the game draws them blank on the bar, the sidebar card and the result's portraits.
    `GameRun/EnemyNames` names one after a named sibling (same id family "Enemy_1018xx", else the
