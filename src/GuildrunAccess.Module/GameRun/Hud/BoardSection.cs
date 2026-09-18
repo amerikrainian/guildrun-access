@@ -150,7 +150,9 @@ namespace GuildrunAccess.Module.GameRun
                 // Shift+Q E A D Z C: the hero under focus steps one cell that way (trading places with a
                 // hero standing there, as a drag would), focus following it, the new cell's coordinates
                 // the whole announcement. Off the grid, into the enemy rows, or from an empty or enemy
-                // cell: nothing happens and nothing is said.
+                // cell: nothing happens and nothing is said. Offered only on a cell a hero stands on, so
+                // the key help lists the moves where there is a hero to move.
+                if (!RunData.TryHeroAt(cell, out _)) yield break;
                 yield return new ElementAction(MoveUpLeft, Strings.Get("bind.run.move.upleft"), _ => Nudge(cell, HexDir.UpLeft));
                 yield return new ElementAction(MoveUpRight, Strings.Get("bind.run.move.upright"), _ => Nudge(cell, HexDir.UpRight));
                 yield return new ElementAction(MoveLeft, Strings.Get("bind.run.move.left"), _ => Nudge(cell, HexDir.Left));

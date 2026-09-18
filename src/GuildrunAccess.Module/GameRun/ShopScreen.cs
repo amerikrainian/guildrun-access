@@ -54,6 +54,11 @@ namespace GuildrunAccess.Module.GameRun
 
         public override bool IsActive() => Open() != null;
 
+        protected override string PanelBackLabel
+        {
+            get { var shop = Shop; return shop != null ? GameNodes.LabelOf(shop._proceedButton) ?? base.PanelBackLabel : base.PanelBackLabel; }
+        }
+
         protected override void PanelBack()
         {
             var shop = Shop;

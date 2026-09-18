@@ -67,7 +67,7 @@ namespace GuildrunAccess.Module.GameRun
         protected override IEnumerable<ElementAction> OwnActions()
         {
             // Escape: cancel a pending move; otherwise the game's own Escape (its settings panel).
-            yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
+            yield return new ElementAction(ActionIds.Back, _actions.Moves.Pending ? Strings.HelpCancelMove : Strings.HelpPause, _ =>
             {
                 if (_actions.Moves.Pending) { _actions.Moves.Cancel(); return; }
                 // The HUD's own Settings button when it is up (its click is the game's handler), else

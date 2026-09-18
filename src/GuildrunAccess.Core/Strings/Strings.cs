@@ -295,13 +295,25 @@ namespace GuildrunAccess.Core.Strings
             D("comic.continue", "Continue"),
             D("screen.mod_menu", "Guildrun Access"),
             D("mod.settings", "Settings"),
-            D("mod.key_help", "Key help"),
+            // The mod menu's list of every key the mod binds, whatever the screen.
+            D("mod.key_help", "All keys"),
             D("mod.close", "Close"),
             D("mod.speak_positions", "Speak list positions"),
             D("mod.focus_on_launch", "Keyboard navigation on at launch"),
             // {0} = the key category (Global, UI, Game).
             D("mod.key_category", "{0} keys"),
             D("bind.mod.menu", "Mod menu"),
+            // The context-sensitive key help (F1): the keys that do something on this screen, on this
+            // control. Enter on a row runs it.
+            D("bind.mod.help", "Keys here"),
+            D("screen.help", "Keys here"),
+            D("help.none", "no keys here"),
+            // What Escape does where it opens the game's pause menu, for the key help.
+            D("help.pause", "Pause menu"),
+            // ...and while a hero is picked up for a keyboard move.
+            D("help.cancel_move", "Cancel move"),
+            // {0} = what the key does, {1} = the keys bound to it.
+            D("help.row", "{0}: {1}"),
 
             // The run's sidebar and the fight narration.
             D("run.sidebar", "sidebar"),
@@ -678,6 +690,11 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenModMenu => Get("screen.mod_menu");
         public static string ModSettings => Get("mod.settings");
         public static string ModKeyHelp => Get("mod.key_help");
+        public static string ScreenHelp => Get("screen.help");
+        public static string HelpNone => Get("help.none");
+        public static string HelpPause => Get("help.pause");
+        public static string HelpCancelMove => Get("help.cancel_move");
+        public static string HelpRow(string label, string keys) => F("help.row", label, keys);
         public static string ModClose => Get("mod.close");
         public static string ModSpeakPositions => Get("mod.speak_positions");
         public static string ModFocusOnLaunch => Get("mod.focus_on_launch");

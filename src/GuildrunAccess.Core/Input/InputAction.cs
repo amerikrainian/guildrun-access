@@ -77,5 +77,25 @@ namespace GuildrunAccess.Core.Input
         public InputAction Grouped(string group) { Group = group; return this; }
 
         public void InvokePerformed() => Performed?.Invoke();
+
+        /// <summary>Whether a handler listens: an action without one is a key a screen or the
+        /// navigator answers, or nothing.</summary>
+        public bool HasHandler => Performed != null;
+
+        /// <summary>Whether the handler would do anything right now, for the key help: a glance is
+        /// silent where its fact is not on screen, and is not listed there. Null = always.</summary>
+        public Func<bool> Available { get; private set; }
+
+        public InputAction When(Func<bool> available) { Available = available; return this; }
+
+        public bool IsAvailable
+        {
+            get
+            {
+                if (Available == null) return true;
+                try { return Available(); }
+                catch (Exception e) { CoreLog.Warning("input: availability of " + Key + " failed: " + e.Message); return false; }
+            }
+        }
     }
 }

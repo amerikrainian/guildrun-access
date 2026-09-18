@@ -11,6 +11,7 @@
 - Heroes now say what they're wearing during a fight, and their items and quests buffers work there too. They used to go blank the moment combat started.
 - Red rift missions now say when they're complete or failed, and ctrl+m reads them from anywhere in the run.
 - Escape now opens the pause menu from the first hero picker and from the crossroads.
+- Added a key help on f1. It only lists the keys that do something where you are, e.g. ctrl+r in the shop, and pressing enter on one runs it for you and rereads your focus.
 
 ## V0.0.6
 

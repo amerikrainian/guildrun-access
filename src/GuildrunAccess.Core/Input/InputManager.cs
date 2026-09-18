@@ -63,6 +63,15 @@ namespace GuildrunAccess.Core.Input
             return false;
         }
 
+        /// <summary>Whether a key of the action is live this frame: its category is active and the
+        /// chord is not shadowed by a deeper category's.</summary>
+        public static bool IsLive(InputAction a)
+        {
+            for (int i = 0; i < a.Bindings.Count; i++)
+                if (_live.Contains(a.Bindings[i])) return true;
+            return false;
+        }
+
         private static bool JustPressedLive(InputAction a)
         {
             for (int i = 0; i < a.Bindings.Count; i++)
@@ -178,6 +187,8 @@ namespace GuildrunAccess.Core.Input
                 if (!held) action.NextRepeatTime = 0f; // reset on release (disarms repeat until next press)
 
                 if (!fire) continue;
+                // A real key press ends a speech hold: what it says interrupts, as ever.
+                Speech.EndHold();
                 Fire(action);
             }
         }

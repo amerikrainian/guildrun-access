@@ -86,7 +86,7 @@ namespace GuildrunAccess.Module.GameRun
         {
             // Escape: the pause menu (Continue, Settings, Compendium, Abandon Run, Quit to Menu), the
             // only way out of a run that has just begun.
-            yield return new GuildrunAccess.Core.UI.ElementAction(GuildrunAccess.Core.UI.ActionIds.Back, Strings.Get("bind.ui.back"), _ => RunSettingsScreen.Open());
+            yield return new GuildrunAccess.Core.UI.ElementAction(GuildrunAccess.Core.UI.ActionIds.Back, Strings.HelpPause, _ => RunSettingsScreen.Open());
         }
 
         private static InitialHeroChoiceView ChoiceOf(List<InitialHeroChoiceView> choices, HeroCardView card)

@@ -25,28 +25,38 @@ namespace GuildrunAccess.Module.GameRun
     /// board, the timer's text hidden.</summary>
     internal static class RunGlance
     {
-        public static void Shards()
+        // Each glance is a LINE, read at the keypress: its key speaks the line (Say), and the key help
+        // lists the key only where there is a line to speak (Has). Null is the silence.
+
+        /// <summary>Speak a glance's line in place, interrupting. A failure is logged.</summary>
+        public static void Say(string name, Func<string> line)
         {
             try
             {
-                var info = GameScopes.Controller<BasicInfoUIPanelController>();
-                if (info == null || !info.gameObject.activeInHierarchy) return;
-                var parts = new List<string>();
-                Add(parts, TooltipReader.Title(info._currentGoldTooltip) ?? Strings.RunGold, info._currentGoldText);
-                if (parts.Count > 0) Speech.Say(string.Join(", ", parts), interrupt: true);
+                string text = line();
+                if (!string.IsNullOrEmpty(text)) Speech.Say(text, interrupt: true);
             }
-            catch (Exception e) { CoreLog.Warning("RunGlance: shards failed: " + e.Message); }
+            catch (Exception e) { CoreLog.Warning("RunGlance: " + name + " failed: " + e.Message); }
         }
 
-        public static void Position()
+        /// <summary>Whether the glance has anything to say right now.</summary>
+        public static bool Has(string name, Func<string> line)
         {
-            try
-            {
-                if (BoardSection.TryFocusedCell(out var cell)) { Speech.Say(RunLabels.CellName(cell), interrupt: true); return; }
-                UnitGlance.Speak(UnitGlance.Group.Position);
-            }
-            catch (Exception e) { CoreLog.Warning("RunGlance: position failed: " + e.Message); }
+            try { return !string.IsNullOrEmpty(line()); }
+            catch (Exception e) { CoreLog.Warning("RunGlance: " + name + " failed: " + e.Message); return false; }
         }
+
+        public static string ShardsLine()
+        {
+            var info = GameScopes.Controller<BasicInfoUIPanelController>();
+            if (info == null || !info.gameObject.activeInHierarchy) return null;
+            var parts = new List<string>();
+            Add(parts, TooltipReader.Title(info._currentGoldTooltip) ?? Strings.RunGold, info._currentGoldText);
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
+        }
+
+        public static string PositionLine()
+            => BoardSection.TryFocusedCell(out var cell) ? RunLabels.CellName(cell) : UnitGlance.LineFor(UnitGlance.Group.Position);
 
         /// <summary>Ctrl+N / Ctrl+H: the units round the focused cell, or round the cell the focused
         /// control's hero stands on, each with its distance in hex steps, nearest first and by name
@@ -55,78 +65,61 @@ namespace GuildrunAccess.Module.GameRun
         /// and from an empty cell, where nobody stands to have any, silence (Ctrl+N answers there).
         /// The origin's own occupant is left out. Placement only: a fight moves its units off the
         /// registry's cells, and there the keys are silent, as they are off the board.</summary>
-        public static void Nearby(bool hostilesOnly)
+        public static string NearbyLine(bool hostilesOnly)
         {
-            try
-            {
-                if (!RunData.Placing()) return;
-                if (!BoardSection.TryFocusedCell(out var from) && !UnitGlance.TryFocusedUnitCell(out from)) return;
-                var board = RunData.Board();
-                if (board == null) return;
-                int w = board.BoardWidth, h = board.BoardHeight;
-                bool heroes = !hostilesOnly || RunData.TryEnemyAt(from, out _);
-                bool enemies = !hostilesOnly || RunData.TryHeroAt(from, out _);
-                if (!heroes && !enemies) return;
-                var numbers = enemies ? EnemyNumbers.Read() : null;
-                var units = new List<KeyValuePair<int, string>>();
-                for (int y = 0; y < h; y++)
-                    for (int x = 0; x < w; x++)
-                    {
-                        if (x == from.x && y == from.y) continue;
-                        var cell = new UnityEngine.Vector2Int(x, y);
-                        string name;
-                        if (enemies && RunData.TryEnemyAt(cell, out var enemy)) name = RunData.EnemyLabel(enemy, numbers) ?? Strings.RunBoard;
-                        else if (heroes && RunData.TryHeroAt(cell, out var hero)) name = RunData.HeroName(hero) ?? Strings.RunParty;
-                        else continue;
-                        units.Add(new KeyValuePair<int, string>(HexGrid.Distance(from.x, from.y, x, y), name));
-                    }
-                if (units.Count == 0) return;
-                units.Sort((a, b) => a.Key != b.Key ? a.Key.CompareTo(b.Key) : string.Compare(a.Value, b.Value, StringComparison.CurrentCultureIgnoreCase));
-                var parts = new List<string>();
-                foreach (var unit in units) parts.Add(Strings.GlanceNearby(unit.Value, unit.Key));
-                Speech.Say(string.Join(", ", parts), interrupt: true);
-            }
-            catch (Exception e) { CoreLog.Warning("RunGlance: nearby failed: " + e.Message); }
+            if (!RunData.Placing()) return null;
+            if (!BoardSection.TryFocusedCell(out var from) && !UnitGlance.TryFocusedUnitCell(out from)) return null;
+            var board = RunData.Board();
+            if (board == null) return null;
+            int w = board.BoardWidth, h = board.BoardHeight;
+            bool heroes = !hostilesOnly || RunData.TryEnemyAt(from, out _);
+            bool enemies = !hostilesOnly || RunData.TryHeroAt(from, out _);
+            if (!heroes && !enemies) return null;
+            var numbers = enemies ? EnemyNumbers.Read() : null;
+            var units = new List<KeyValuePair<int, string>>();
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    if (x == from.x && y == from.y) continue;
+                    var cell = new UnityEngine.Vector2Int(x, y);
+                    string name;
+                    if (enemies && RunData.TryEnemyAt(cell, out var enemy)) name = RunData.EnemyLabel(enemy, numbers) ?? Strings.RunBoard;
+                    else if (heroes && RunData.TryHeroAt(cell, out var hero)) name = RunData.HeroName(hero) ?? Strings.RunParty;
+                    else continue;
+                    units.Add(new KeyValuePair<int, string>(HexGrid.Distance(from.x, from.y, x, y), name));
+                }
+            if (units.Count == 0) return null;
+            units.Sort((a, b) => a.Key != b.Key ? a.Key.CompareTo(b.Key) : string.Compare(a.Value, b.Value, StringComparison.CurrentCultureIgnoreCase));
+            var parts = new List<string>();
+            foreach (var unit in units) parts.Add(Strings.GlanceNearby(unit.Value, unit.Key));
+            return string.Join(", ", parts);
         }
 
         /// <summary>Ctrl+Q: the quests of what is focused, in place: a hero's (the quests of the items
         /// it wears, a slot's, a card's, a cell's or a fighting unit's alike: "Rift Seal: Tank or
-        /// Vanguard, 1 / 3. Rift Seal: ..."), or the focused item's or relic's own. The count is the
-        /// game's progress bar text, read at the keypress. The rewards stay in the quests buffer.
-        /// Silent when nothing focused has a quest.</summary>
-        public static void Quests()
+        /// Vanguard, 1 / 3; ..."), or the focused item's or relic's own. The count is the game's
+        /// progress bar text, read at the keypress. The rewards stay in the quests buffer. Silent
+        /// when nothing focused has a quest.</summary>
+        public static string QuestsLine()
         {
-            try
-            {
-                var lines = new List<string>(Core.Buffers.NodeLines.SideLines(Core.UI.Navigation.FocusedNode, Core.Buffers.BufferKeys.QuestBrief));
-                if (lines.Count > 0) Speech.Say(string.Join(". ", lines), interrupt: true);
-            }
-            catch (Exception e) { CoreLog.Warning("RunGlance: quests failed: " + e.Message); }
+            var lines = new List<string>(Core.Buffers.NodeLines.SideLines(Core.UI.Navigation.FocusedNode, Core.Buffers.BufferKeys.QuestBrief));
+            return lines.Count > 0 ? string.Join(". ", lines) : null;
         }
 
         /// <summary>Ctrl+M: a Red Rift run's missions from anywhere in the run, the sidebar's panel
         /// shown or not: "Red Rift Missions - 2/6", then each mission with its state. Silent outside
         /// a Red Rift run.</summary>
-        public static void Missions()
+        public static string MissionsLine()
         {
-            try
-            {
-                var lines = MissionNodes.Lines();
-                if (lines.Count > 0) Speech.Say(string.Join(". ", lines), interrupt: true);
-            }
-            catch (Exception e) { CoreLog.Warning("RunGlance: missions failed: " + e.Message); }
+            var lines = MissionNodes.Lines();
+            return lines.Count > 0 ? string.Join(". ", lines) : null;
         }
 
-        public static void Timer()
+        public static string TimerLine()
         {
-            try
-            {
-                var timer = GameScopes.Controller<BattleTimerController>();
-                var text = timer != null ? timer._timerText : null;
-                if (!Drawn(text) || string.IsNullOrWhiteSpace(text.text)) return;
-                Speech.Say(text.text, interrupt: true);
-            }
-            catch (Exception e) { CoreLog.Warning("RunGlance: timer failed: " + e.Message); }
+            var timer = GameScopes.Controller<BattleTimerController>();
+            var text = timer != null ? timer._timerText : null;
+            return Drawn(text) && !string.IsNullOrWhiteSpace(text.text) ? text.text : null;
         }
 
         // Whether the game draws a text right now: active, not transparent, and under no faded-out

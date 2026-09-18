@@ -57,8 +57,22 @@ namespace GuildrunAccess.Module.Input
                 if (Ctrl) s += "Ctrl+";
                 if (Shift) s += "Shift+";
                 if (Alt) s += "Alt+";
-                return s + Key;
+                return s + KeyName(Key);
             }
+        }
+
+        // A key as a player names it, for the key help: "1" for Alpha1, "Enter" for Return, "Keypad 1",
+        // "Up Arrow", "Keypad Enter" (Unity's names run the words together).
+        private static readonly System.Text.RegularExpressions.Regex WordSeam =
+            new System.Text.RegularExpressions.Regex("(?<=[a-z])(?=[A-Z])", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        private static string KeyName(KeyCode key)
+        {
+            string name = key.ToString();
+            if (key == KeyCode.Return) return "Enter";
+            if (name.Length == 6 && name.StartsWith("Alpha", System.StringComparison.Ordinal)) return name.Substring(5);
+            if (name.StartsWith("Keypad", System.StringComparison.Ordinal) && name.Length > 6) return "Keypad " + WordSeam.Replace(name.Substring(6), " ");
+            return WordSeam.Replace(name, " ");
         }
 
         public override string Type => "keyboard";

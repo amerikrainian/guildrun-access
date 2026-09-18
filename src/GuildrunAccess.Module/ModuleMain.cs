@@ -142,22 +142,22 @@ namespace GuildrunAccess.Module
             // hostile ones, Ctrl+Q the quests of the focused hero, item or relic, Ctrl+M a Red Rift
             // run's missions (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
             // which owns the bare letters.
-            Glance("glance.vitals", "Unit health, shield and mana", KeyCode.Alpha1, KeyCode.Keypad1, () => UnitGlance.Speak(UnitGlance.Group.Vitals));
-            Glance("glance.attack", "Unit attack, magic and defense", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.Speak(UnitGlance.Group.Attack));
-            Glance("glance.tempo", "Unit attack speed, crit, range and move speed", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.Speak(UnitGlance.Group.Tempo));
-            Glance("glance.sustain", "Unit regen, omnivamp and resistances", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.Speak(UnitGlance.Group.Sustain));
-            Glance("glance.statuses", "Unit statuses", KeyCode.Alpha5, KeyCode.Keypad5, () => UnitGlance.Speak(UnitGlance.Group.Statuses));
-            Glance("glance.target", "Unit target", KeyCode.Alpha6, KeyCode.Keypad6, () => UnitGlance.Speak(UnitGlance.Group.Target));
-            Glance("glance.attack.detail", "Unit attack, magic and defense, with breakdown", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.Speak(UnitGlance.Group.Attack, detail: true), shift: true);
-            Glance("glance.tempo.detail", "Unit attack speed, crit, range and move speed, with breakdown", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.Speak(UnitGlance.Group.Tempo, detail: true), shift: true);
-            Glance("glance.sustain.detail", "Unit regen, omnivamp and resistances, with breakdown", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.Speak(UnitGlance.Group.Sustain, detail: true), shift: true);
-            InputManager.Register("run.shards", "Shards", InputCategory.UI, RunGlance.Shards).AddBinding(new KeyboardBinding(KeyCode.S, ctrl: true));
-            InputManager.Register("run.position", "Board position", InputCategory.UI, RunGlance.Position).AddBinding(new KeyboardBinding(KeyCode.C, ctrl: true));
-            InputManager.Register("run.timer", "Battle timer", InputCategory.UI, RunGlance.Timer).AddBinding(new KeyboardBinding(KeyCode.T, ctrl: true));
-            InputManager.Register("run.nearby", "Nearby units", InputCategory.UI, () => RunGlance.Nearby(hostilesOnly: false)).AddBinding(new KeyboardBinding(KeyCode.N, ctrl: true));
-            InputManager.Register("run.hostiles", "Nearby hostiles", InputCategory.UI, () => RunGlance.Nearby(hostilesOnly: true)).AddBinding(new KeyboardBinding(KeyCode.H, ctrl: true));
-            InputManager.Register("run.quests", "Quests of the focused hero or item", InputCategory.UI, RunGlance.Quests).AddBinding(new KeyboardBinding(KeyCode.Q, ctrl: true));
-            InputManager.Register("run.missions", "Red Rift missions", InputCategory.UI, RunGlance.Missions).AddBinding(new KeyboardBinding(KeyCode.M, ctrl: true));
+            Glance("glance.vitals", "Unit health, shield and mana", KeyCode.Alpha1, KeyCode.Keypad1, () => UnitGlance.LineFor(UnitGlance.Group.Vitals));
+            Glance("glance.attack", "Unit attack, magic and defense", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.LineFor(UnitGlance.Group.Attack));
+            Glance("glance.tempo", "Unit attack speed, crit, range and move speed", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.LineFor(UnitGlance.Group.Tempo));
+            Glance("glance.sustain", "Unit regen, omnivamp and resistances", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.LineFor(UnitGlance.Group.Sustain));
+            Glance("glance.statuses", "Unit statuses", KeyCode.Alpha5, KeyCode.Keypad5, () => UnitGlance.LineFor(UnitGlance.Group.Statuses));
+            Glance("glance.target", "Unit target", KeyCode.Alpha6, KeyCode.Keypad6, () => UnitGlance.LineFor(UnitGlance.Group.Target));
+            Glance("glance.attack.detail", "Unit attack, magic and defense, with breakdown", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.LineFor(UnitGlance.Group.Attack, detail: true), shift: true);
+            Glance("glance.tempo.detail", "Unit attack speed, crit, range and move speed, with breakdown", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.LineFor(UnitGlance.Group.Tempo, detail: true), shift: true);
+            Glance("glance.sustain.detail", "Unit regen, omnivamp and resistances, with breakdown", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.LineFor(UnitGlance.Group.Sustain, detail: true), shift: true);
+            Glance("run.shards", "Shards", RunGlance.ShardsLine).AddBinding(new KeyboardBinding(KeyCode.S, ctrl: true));
+            Glance("run.position", "Board position", RunGlance.PositionLine).AddBinding(new KeyboardBinding(KeyCode.C, ctrl: true));
+            Glance("run.timer", "Battle timer", RunGlance.TimerLine).AddBinding(new KeyboardBinding(KeyCode.T, ctrl: true));
+            Glance("run.nearby", "Nearby units", () => RunGlance.NearbyLine(hostilesOnly: false)).AddBinding(new KeyboardBinding(KeyCode.N, ctrl: true));
+            Glance("run.hostiles", "Nearby hostiles", () => RunGlance.NearbyLine(hostilesOnly: true)).AddBinding(new KeyboardBinding(KeyCode.H, ctrl: true));
+            Glance("run.quests", "Quests of the focused hero or item", RunGlance.QuestsLine).AddBinding(new KeyboardBinding(KeyCode.Q, ctrl: true));
+            Glance("run.missions", "Red Rift missions", RunGlance.MissionsLine).AddBinding(new KeyboardBinding(KeyCode.M, ctrl: true));
             // The shop's reroll and freeze, answered by the shop screen's own actions (ShopScreen) and
             // by nothing else: no handler here.
             InputManager.Register("shop.reroll", "Shop reroll", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.R, ctrl: true));
@@ -168,6 +168,9 @@ namespace GuildrunAccess.Module
                 .AddBinding(new KeyboardBinding(KeyCode.A, ctrl: true, shift: true));
             InputManager.Register("mod.menu", "Mod menu", InputCategory.Global, ModMenuScreen.Toggle)
                 .AddBinding(new KeyboardBinding(KeyCode.M, ctrl: true, shift: true));
+            // The keys that do something here, each runnable from the list.
+            InputManager.Register(HelpScreen.ActionKey, "Keys here", InputCategory.Global, HelpScreen.Toggle)
+                .AddBinding(new KeyboardBinding(KeyCode.F1));
         }
 
         private static void ToggleFocus()
@@ -177,10 +180,15 @@ namespace GuildrunAccess.Module
             if (FocusMode.Active) Navigation.AnnounceCurrent();
         }
 
+        // A glance: a key that speaks one line in place. The line is its whole definition: the key
+        // speaks it, and the key help lists the key only where there is a line to speak.
+        private static InputAction Glance(string key, string label, Func<string> line)
+            => InputManager.Register(key, label, InputCategory.UI, () => RunGlance.Say(key, line)).When(() => RunGlance.Has(key, line));
+
         // A glance key on the digit row and the keypad alike.
-        private static void Glance(string key, string label, KeyCode digit, KeyCode keypad, Action speak, bool shift = false)
+        private static void Glance(string key, string label, KeyCode digit, KeyCode keypad, Func<string> line, bool shift = false)
         {
-            InputManager.Register(key, label, InputCategory.UI, speak)
+            Glance(key, label, line)
                 .AddBinding(new KeyboardBinding(digit, shift: shift))
                 .AddBinding(new KeyboardBinding(keypad, shift: shift));
         }
@@ -205,6 +213,7 @@ namespace GuildrunAccess.Module
             ScreenManager.Register(new ComicScreen());
             ScreenManager.Register(new CompendiumScreen());
             ScreenManager.Register(new ModMenuScreen());
+            ScreenManager.Register(new HelpScreen());
             // The tutorial's modal phase (its timed texts): exclusive, so a step's action prompt is
             // listening by the time the player acts.
             ScreenManager.Register(new TutorialPromptScreen());

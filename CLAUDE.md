@@ -229,8 +229,8 @@ runs; spoken text is still captured. The game already runs in the background whe
   in `/eval` and `SetActive(true)`; `SetActive(false)` afterwards. Never press a consent button for the player.
 
 ## Keys (focus mode on at launch; Ctrl+Shift+A toggles it)
-Arrows navigate, Tab/Shift+Tab cycle control groups, Enter activates, Backspace is the secondary
-action, Escape backs out, Home/End jump, Alt+Up/Down jump sections, typing letters searches the
+F1 is the key help (below). Arrows navigate, Tab/Shift+Tab cycle control groups, Enter activates,
+Backspace is the secondary action, Escape backs out, Home/End jump, Alt+Up/Down jump sections, typing letters searches the
 focused group. Ctrl+arrows review the buffers (below). Space is unbound: nothing is read on demand
 by a key; everything a control carries beyond its focus line waits in a buffer, except the glance
 keys: digits 1-6 speak one fact group of the unit the focused control concerns (`NodeVtable.Subject`,
@@ -260,6 +260,32 @@ fight), and type-ahead stands down while a cell is focused. The board's nodes ar
 a UI key the navigator has no meaning for, or an arrow/Home/End the graph has no edge for, is offered
 to the focused screen by its action key through `Screen.InvokeAction` before it falls through to the
 action's handler, and `Navigation.MoveTo` lands on and announces the answer as a move.
+
+**Key help (F1, `Module/Screens/HelpScreen`, `Core/UI/KeyHelp`)**: the keys that would do something
+RIGHT NOW, for the focused screen and control, nothing declared for it. An action is listed when a
+key of it is live (`InputManager.IsLive`: category active, chord unshadowed) and something answers
+it: the navigator asked without acting (`Navigator.WouldHandle`: an arrow with a transition that
+way, Enter on a node with `OnActivate`, any key the focused screen offers through `GetActions`,
+which screens already offer only where it applies), else its own handler when
+`InputAction.IsAvailable`. So a handler key that is silent somewhere must say so with `.When(...)`:
+every glance is registered as a LINE (`ModuleMain.Glance(key, label, Func<string> line)`: the key
+speaks the line, `RunGlance.Say`, and is available where the line is not null, `RunGlance.Has`), and
+a new glance must be one too. A key the screen offers reads by the SCREEN's label, so an action's
+label says what the key does here: Escape is `Strings.HelpPause` or `HelpCancelMove` on the run, the
+Proceed button's own caption in the shop and the events (`RunPanelScreen.PanelBackLabel`). Order:
+the screen's keys, the handler keys with a `When`, navigation, the always-on handlers (buffers),
+global. The list is taken when the help OPENS: once the overlay is up the focused node is its own.
+Enter on a row runs the key as a press would, and says nothing for the Enter itself (the player has
+just read the row): `Speech.BeginHold()` (the hold's first line interrupts, cutting the row's
+readout off, every later line queues, and all are remembered, until `EndHold`, the next real key
+press or 3 s), `Navigation.QuietNextLanding()` (the landing a closing overlay brings is recorded, not
+spoken), close, two frames on `InputManager.Dispatch(key)`, sixteen on (past the shop reroll's
+deferred feedback) read the focus as a leaf, unless the action moved focus, opened another screen,
+or already said the focused line (`Speech.Held`). A newly attached screen renders on its first
+frame (`GraphNavigator.Attach` resets the idle throttle): until a render there is no focused node
+for a dispatched key to act on. The help opens with "Keys here" alone, interrupting, and its rows sit in a context with no
+label and no role word, so the landing is the first row, not "Keys here, list" again. The mod menu's
+"All keys" is the unconditional list.
 
 ## Buffers (the Harkest Dungeon pattern: `Core/Buffers`, `Module/UI/Buffers`)
 Review lists for the information a focus announcement leaves out, read live on every keypress:

@@ -31,7 +31,7 @@ namespace GuildrunAccess.Module.GameRun
     /// target from the entity. Anywhere else the registry's sheet answers (a hero's or an enemy's
     /// data, a picker card's own), and the fight-only groups are silent. A control that concerns no
     /// unit is silent too: the absence is the answer. Position is Ctrl+C's group (see
-    /// <see cref="RunGlance.Position"/>): the cell the unit's view stands on, by the board's grid.
+    /// <see cref="RunGlance.PositionLine"/>): the cell the unit's view stands on, by the board's grid.
     /// <para>A stat is read as the <see cref="CharacterStat"/> struct off the unit's stats component,
     /// never through the <c>IReadOnlyCharacterStat</c> interface proxy <c>GetStat</c> returns: that
     /// proxy misreads the boxed struct (the value carries the stat type in its low bits, the base
@@ -71,17 +71,13 @@ namespace GuildrunAccess.Module.GameRun
             public int Mana;
         }
 
-        public static void Speak(Group group, bool detail = false)
+        /// <summary>The group's line for the unit the focused control concerns, or null: no unit, or a
+        /// group that has nothing to say of it (the statuses and the target outside a fight).</summary>
+        public static string LineFor(Group group, bool detail = false)
         {
-            try
-            {
-                var subject = Navigation.FocusedNode?.Vtable?.Subject;
-                if (subject == null) return;
-                if (!Resolve(subject(), out var target)) return;
-                string line = Line(target, group, detail);
-                if (!string.IsNullOrEmpty(line)) Speech.Say(line, interrupt: true);
-            }
-            catch (Exception e) { CoreLog.Warning("UnitGlance: " + group + " failed: " + e.Message); }
+            var subject = Navigation.FocusedNode?.Vtable?.Subject;
+            if (subject == null) return null;
+            return Resolve(subject(), out var target) ? Line(target, group, detail) : null;
         }
 
         private static bool Resolve(object subject, out Target t)

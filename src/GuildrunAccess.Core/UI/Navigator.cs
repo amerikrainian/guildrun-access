@@ -15,6 +15,9 @@ namespace GuildrunAccess.Core.UI
     {
         protected Screen Screen { get; set; }
 
+        /// <summary>The screen this navigator is bound to.</summary>
+        public Screen BoundScreen => Screen;
+
         /// <summary>True when the navigator owns the keys (something is focused): false in the unfocused
         /// state of a screen that starts unfocused.</summary>
         public abstract bool HasFocus { get; }
@@ -33,6 +36,14 @@ namespace GuildrunAccess.Core.UI
         public abstract void EnsureFocus();
 
         public abstract bool OnInputJustPressed(InputAction action);
+
+        /// <summary>Whether <see cref="OnInputJustPressed"/> would do something with the action right
+        /// now, without doing it: the key help lists a UI key only where it answers.</summary>
+        public virtual bool WouldHandle(InputAction action) => false;
+
+        /// <summary>Take the next landing as spoken: the key help closes to run an action and reads
+        /// the focus itself, after the action, instead of the landing a closing overlay brings.</summary>
+        public virtual void QuietNextLanding() { }
         public virtual bool OnInputHeld(InputAction action) => false;
         public virtual bool OnInputReleased(InputAction action) => false;
 
@@ -98,6 +109,13 @@ namespace GuildrunAccess.Core.UI
         public static void TickTypeahead() => Active?.TickTypeahead();
 
         public static void AnnounceCurrent() => Active?.AnnounceCurrent();
+
+        public static bool WouldHandle(InputAction action) => Active != null && Active.WouldHandle(action);
+
+        public static void QuietNextLanding() => Active?.QuietNextLanding();
+
+        /// <summary>The screen the navigator is bound to (the focused one), or null.</summary>
+        public static Screen BoundScreen => Active?.BoundScreen;
 
         /// <summary>Re-establish initial focus if the focused screen has focusable content but nothing is
         /// focused yet. Ticked each frame.</summary>

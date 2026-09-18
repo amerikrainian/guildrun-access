@@ -100,7 +100,8 @@ namespace GuildrunAccess.Module.Screens
         }
     }
 
-    /// <summary>Every key the mod binds, by category: "what it does: its keys".</summary>
+    /// <summary>Every key the mod binds, by category, whatever the screen: "what it does: its keys".
+    /// The keys that do something HERE are <see cref="HelpScreen"/>'s (F1).</summary>
     public sealed class KeyHelpScreen : Screen
     {
         public override string Key => "mod.keys";
@@ -120,7 +121,7 @@ namespace GuildrunAccess.Module.Screens
                 foreach (var action in actions)
                 {
                     var a = action;
-                    b.AddItem(ControlId.Structural("keys:" + a.Key), GameNodes.Text(() => a.DisplayLabel + ": " + a.BindingsDisplay));
+                    b.AddItem(ControlId.Structural("keys:" + a.Key), GameNodes.Text(() => Strings.HelpRow(a.DisplayLabel, a.BindingsDisplay)));
                 }
                 b.PopContext();
             }

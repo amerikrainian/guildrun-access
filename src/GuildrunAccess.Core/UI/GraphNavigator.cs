@@ -90,6 +90,9 @@ namespace GuildrunAccess.Core.UI
                     _lastSpokenNode = null;
                 }
                 _reannounce = childReturn;
+                // A newly bound screen renders on its first frame: the idle throttle is for a screen
+                // at rest, and until a render there is no focused node for a key to act on.
+                _lastIdleRender = int.MinValue / 2;
                 _returnTo = null;
                 _pendingFocus = null;
                 _pendingStop = null;
@@ -248,7 +251,8 @@ namespace GuildrunAccess.Core.UI
             {
                 // Queued (not interrupting): landings follow the screen name / preceding feedback. A
                 // return from a child re-reads the remembered node itself (its value may have changed).
-                if (Navigation.FocusActive()) Speak(ComposeMove(_lastSpokenNode, node, entry: _lastSpokenNode == null));
+                // A landing asked to be quiet is only recorded: its asker reads the focus itself.
+                if (!TakeQuietLanding() && Navigation.FocusActive()) Speak(ComposeMove(_lastSpokenNode, node, entry: _lastSpokenNode == null));
                 _lastSpokenKey = node.Id;
                 _lastSpokenNode = node;
                 _reannounce = false;
@@ -356,6 +360,7 @@ namespace GuildrunAccess.Core.UI
             if (!_graph.Rerender()) return;
             var node = _graph.CurrentNode;
             if (node == null) return;
+            _quietLandingUntil = int.MinValue / 2; // read in full here: no landing is owed quiet any more
             Speak(ComposeMove(null, node, entry: true));
             _lastSpokenKey = node.Id;
             _lastSpokenNode = node;
@@ -436,6 +441,86 @@ namespace GuildrunAccess.Core.UI
         }
 
         private bool ScreenAnswers(string actionKey) => Screen != null && Screen.InvokeAction(actionKey);
+
+        // ---- the dry run ----
+
+        /// <summary>The same decisions as <see cref="OnInputJustPressed"/>, made without acting: an
+        /// arrow where the focused node has a way that way (an edge, a value to adjust, a group to
+        /// open or leave) or the screen answers it, Enter and Backspace where the node has the
+        /// behavior, Escape and any other key where the screen offers it.</summary>
+        public override bool WouldHandle(InputAction action)
+        {
+            var node = _graph?.CurrentNode;
+            switch (action.Key)
+            {
+                case UiActions.Up: return HasWay(node, GraphDir.Up) || ScreenOffers(action.Key);
+                case UiActions.Down: return HasWay(node, GraphDir.Down) || ScreenOffers(action.Key);
+                case UiActions.Left:
+                case UiActions.Right:
+                    return node != null && (node.Vtable.OnAdjust != null || node.Expandable || KeyGraph.InTree(node)
+                        || HasWay(node, action.Key == UiActions.Left ? GraphDir.Left : GraphDir.Right)) || ScreenOffers(action.Key);
+                case UiActions.Next:
+                case UiActions.Prev: return StopCount() > 1;
+                case UiActions.Home:
+                case UiActions.End: return SiblingCount(node) > 1 || ScreenOffers(action.Key);
+                case UiActions.RegionPrev:
+                case UiActions.RegionNext: return node != null && node.RegionKey != null;
+                case UiActions.Activate: return node != null && node.Vtable.OnActivate != null;
+                case UiActions.Secondary: return node != null && node.Vtable.OnSecondary != null;
+                case UiActions.Back: return ScreenOffers(ActionIds.Back);
+                case UiActions.Drag: return node != null && node.Vtable.OnDrag != null;
+                case UiActions.Delete: return node != null && node.Vtable.OnDelete != null;
+                case UiActions.ReadFocus: return node != null;
+                default: return ScreenOffers(action.Key);
+            }
+        }
+
+        private static bool HasWay(GraphNode node, GraphDir dir) => node != null && node.Transitions.ContainsKey(dir);
+
+        private bool ScreenOffers(string actionId)
+        {
+            if (Screen == null) return false;
+            foreach (var a in Screen.GetActions())
+                if (a.Id == actionId) return true;
+            return false;
+        }
+
+        private int StopCount()
+        {
+            var render = _graph?.Current;
+            if (render == null) return 0;
+            var stops = new HashSet<object>();
+            foreach (var n in render.Order)
+                if (n.Focusable && n.StopKey != null) stops.Add(n.StopKey);
+            return stops.Count;
+        }
+
+        // The focusable nodes of the focused node's Tab-stop: what Home and End travel.
+        private int SiblingCount(GraphNode node)
+        {
+            var render = _graph?.Current;
+            if (render == null || node == null) return 0;
+            int count = 0;
+            foreach (var n in render.Order)
+                if (n.Focusable && Equals(n.StopKey, node.StopKey)) count++;
+            return count;
+        }
+
+        // ---- the quiet landing ----
+
+        // Good for a short while only: a request nothing consumed (the overlay never closed) must not
+        // swallow some later landing.
+        private const int QuietLandingFrames = 90;
+        private int _quietLandingUntil = int.MinValue / 2;
+
+        public override void QuietNextLanding() => _quietLandingUntil = NavInput.Current.FrameCount + QuietLandingFrames;
+
+        private bool TakeQuietLanding()
+        {
+            bool quiet = NavInput.Current.FrameCount <= _quietLandingUntil;
+            _quietLandingUntil = int.MinValue / 2;
+            return quiet;
+        }
 
         private static GraphDir ToDir(NavDirection dir)
         {

@@ -48,6 +48,11 @@ namespace GuildrunAccess.Module.GameRun
             return e != null && e.gameObject.activeInHierarchy && !e._isCovered;
         }
 
+        protected override string PanelBackLabel
+        {
+            get { var e = EventUI; return e != null ? GameNodes.LabelOf(e._proceedButton) ?? base.PanelBackLabel : base.PanelBackLabel; }
+        }
+
         protected override void PanelBack()
         {
             var e = EventUI;

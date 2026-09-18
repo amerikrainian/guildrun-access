@@ -42,9 +42,13 @@ namespace GuildrunAccess.Module.GameRun
         /// <summary>What Escape does on the panel itself (its Proceed, when it has one).</summary>
         protected abstract void PanelBack();
 
+        /// <summary>What Escape does on this panel, for the key help: the caption of the button it
+        /// presses (the shop's and an event's Proceed), the pause menu where it opens that.</summary>
+        protected virtual string PanelBackLabel => Strings.Get("bind.ui.back");
+
         protected override IEnumerable<ElementAction> OwnActions()
         {
-            yield return new ElementAction(ActionIds.Back, Strings.Get("bind.ui.back"), _ =>
+            yield return new ElementAction(ActionIds.Back, Actions.Moves.Pending ? Strings.HelpCancelMove : PanelBackLabel, _ =>
             {
                 if (Actions.Moves.Pending) { Actions.Moves.Cancel(); return; }
                 PanelBack();
