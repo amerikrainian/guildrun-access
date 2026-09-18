@@ -41,8 +41,9 @@ namespace GuildrunAccess.Module.GameRun
         public override string Key => "gamerun";
         public override int Layer => 0;
         // The letters are the board's own keys while a grid cell is focused (Q E A D Z C step to its
-        // neighbours), so the type-ahead search stands down there; every other stop keeps it.
-        public override bool AllowsTypeahead => !BoardSection.OwnsLetters();
+        // neighbours), so the type-ahead search stands down there; every other stop keeps it, but for
+        // Shift+a letter on a party slot, which moves that slot's hero.
+        public override bool AllowsTypeahead => !BoardSection.OwnsLetters() && !PartySection.OwnsShiftLetters();
         protected override string ContextLabel => Strings.ScreenRun;
 
         // The HUD is the player's place only while the board is editable (placement) or a fight is on

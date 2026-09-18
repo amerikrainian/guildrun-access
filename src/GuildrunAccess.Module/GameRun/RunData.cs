@@ -441,6 +441,32 @@ namespace GuildrunAccess.Module.GameRun
             return board != null && Nullables.TryGet(() => board.GetEnemyIdAtPosition(cell), out id);
         }
 
+        /// <summary>The cell a hero stands on, by the board's own tiles (the player's rows scanned for
+        /// its id: about half a millisecond, a keypress's cost, never a render's); false for a hero
+        /// in the reserve. The tiles, not the hero's view: they are what a move acts on, so a second
+        /// move starts from where the first one put the hero, whatever its view is doing.</summary>
+        public static bool TryCellOf(HeroId hero, out Vector2Int cell)
+        {
+            cell = default;
+            var board = Board();
+            if (board == null) return false;
+            try
+            {
+                int w = board.BoardWidth, h = board.BoardHeight;
+                for (int y = 0; y < h; y++)
+                {
+                    if (!board.IsInPlayableRange(new Vector2Int(0, y))) continue;
+                    for (int x = 0; x < w; x++)
+                    {
+                        var at = new Vector2Int(x, y);
+                        if (TryHeroAt(at, out var other) && other.Guid == hero.Guid) { cell = at; return true; }
+                    }
+                }
+            }
+            catch (Exception e) { CoreLog.Warning("RunData: hero cell lookup failed: " + e.Message); }
+            return false;
+        }
+
         /// <summary>Whether the cell is on the player's side (where heroes may be placed).</summary>
         public static bool IsPlayerCell(Vector2Int cell)
         {

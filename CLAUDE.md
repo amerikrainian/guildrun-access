@@ -254,7 +254,12 @@ and freeze from anywhere on the shop (the shop section's `GetActions`; feedback 
 through `UI/Later`). Digits and Ctrl chords never clash with type-ahead; bare letters do. The battle board is a
 pointy-top hex grid (Unity's hexagon `Grid`, odd rows half a cell to the right, no cell straight up
 or down): Q E A D Z C step focus to the focused cell's six neighbours (`Core/UI/HexGrid`), Shift+the
-same letter moves the focused hero there, the arrows jump between units (Up toward the enemies, Down
+same letter moves the focused hero there (from the hero's PARTY SLOT too while placing, focus staying
+on the slot: `PartySection.GetActions`, the hero's cell read off the board's tiles by id,
+`RunData.TryCellOf`: the tiles are what the move itself acts on, so a second press starts from where
+the first one put the hero, whatever its view is doing; type-ahead,
+which ignores Ctrl and Alt chords but not Shift, stands down there only while Shift is held,
+`PartySection.OwnsShiftLetters`), the arrows jump between units (Up toward the enemies, Down
 toward the heroes, Left/Right round a side, Home/End to its ends; the same over the units of a
 fight), and type-ahead stands down while a cell is focused. The board's nodes are raw, with no edges:
 a UI key the navigator has no meaning for, or an arrow/Home/End the graph has no edge for, is offered

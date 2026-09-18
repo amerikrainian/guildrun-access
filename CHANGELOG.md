@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.0.8
+
+- Shift+q e a d z c now moves a hero from its party slot too, not just from its cell on the board.
+
 ## V0.0.7
 
 - Added ctrl+n for who's nearby and ctrl+h for hostiles nearby. Only works in setup phase.

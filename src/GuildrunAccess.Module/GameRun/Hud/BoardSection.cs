@@ -185,14 +185,16 @@ namespace GuildrunAccess.Module.GameRun
             if (OnGrid(to)) Navigation.MoveTo(CellId(to));
         }
 
-        private static void Nudge(Vector2Int from, HexDir dir)
+        // The hero on a cell steps one cell that way, its new coordinates the whole announcement. On
+        // the board focus follows it; from the hero's party slot (the same keys there) focus stays.
+        internal static void Nudge(Vector2Int from, HexDir dir, bool focusFollows = true)
         {
             if (!RunData.TryHeroAt(from, out _)) return;
             HexGrid.Neighbor(from.x, from.y, dir, out int x, out int y);
             var to = new Vector2Int(x, y);
             if (!RunData.IsPlayerCell(to)) return;
             if (!RunData.SwapBoard(from, to)) { Speech.Say(Strings.RunMoveFailed, interrupt: true); return; }
-            Navigation.FocusNode(CellId(to), announce: false);
+            if (focusFollows) Navigation.FocusNode(CellId(to), announce: false);
             Speech.Say(RunLabels.CellName(to), interrupt: true);
         }
 
