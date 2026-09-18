@@ -25,6 +25,12 @@ namespace GuildrunAccess.Module.Screens
     /// </summary>
     public sealed class DifficultyScreen : Screen
     {
+        public DifficultyScreen()
+        {
+            // Tab past the actions comes round to the tiers, as on the settings and the run HUD.
+            Wrap = true;
+        }
+
         public override string Key => "app.difficulty";
         public override int Layer => 5;
         public override bool Exclusive => true;
