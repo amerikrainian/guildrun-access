@@ -179,7 +179,58 @@ namespace GuildrunAccess.Module.GameRun
             return list;
         }
 
-        // A choice: its caption, the offered item or relic (named, its tooltip a buffer line), disabled state.
+        // The heroes a choice shows as portraits, icons alone: the hero a rank-up, a stat bonus or a
+        // reroll would go to (sixteen of the game's event builders attach one). The portrait holds the
+        // hero's entry, the party has the hero.
+        private static List<Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroData> Heroes(ChoiceButtonView view)
+        {
+            var list = new List<Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroData>();
+            var heroes = view != null ? view.TryCast<HeroListChoiceButtonView>() : null;
+            var portraits = heroes != null ? heroes._heroPortraitViews : null;
+            if (portraits == null) return list;
+            for (int i = 0; i < portraits.Count; i++)
+            {
+                var portrait = portraits[i];
+                if (portrait == null || !portrait.gameObject.activeInHierarchy || portrait.IsEmpty) continue;
+                var hero = RunData.OwnedHero(portrait._characterEntry);
+                if (hero != null) list.Add(hero);
+            }
+            return list;
+        }
+
+        // "Duelist, rank C" after a caption that names the hero ("Rank up, Nyx"), the whole "Nyx,
+        // Duelist, rank C" after one that does not: which hero it is, and the class and rank a choice
+        // between heroes is made on.
+        private static string HeroesPart(ChoiceButtonView view)
+        {
+            var heroes = Heroes(view);
+            if (heroes.Count == 0) return null;
+            string caption = view._buttonText != null ? TextUtil.StripRichText(view._buttonText.text) : null;
+            var parts = new List<string>();
+            foreach (var hero in heroes)
+            {
+                string label = RunData.HeroLabel(hero);
+                string name = RunData.HeroName(hero);
+                if (label == null) continue;
+                bool named = !string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(caption)
+                    && caption.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0;
+                if (named && label.StartsWith(name + ", ", System.StringComparison.Ordinal)) label = label.Substring(name.Length + 2);
+                else if (named && label == name) continue;
+                parts.Add(label);
+            }
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
+        }
+
+        // The party or reserve slot of the (first) hero a choice shows: the hero and items buffers and
+        // the glance keys read it as they would on the slot itself.
+        private static Ember.Scopes.GameRun.UI.Slots.HeroPanel.BottomHeroView HeroSlot(ChoiceButtonView view)
+        {
+            var heroes = Heroes(view);
+            return heroes.Count > 0 ? RunData.ViewOf(heroes[0].HeroId) : null;
+        }
+
+        // A choice: its caption, the offered item or relic (named, its tooltip a buffer line), the hero
+        // it concerns, disabled state.
         private static NodeVtable Choice(ChoiceButtonView view)
         {
             var artifact = view.TryCast<ArtifactChoiceButtonView>();
@@ -193,12 +244,17 @@ namespace GuildrunAccess.Module.GameRun
                 {
                     GameNodes.LabelPart(() => view._buttonText != null ? view._buttonText.text : null),
                     new NodeAnnouncement(() => Unnamed(view._buttonText, item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null), kind: AnnouncementKinds.Value),
+                    new NodeAnnouncement(() => HeroesPart(view), kind: AnnouncementKinds.Value),
                     GameNodes.DisabledPart(() => button == null || button.interactable),
                 },
                 SearchText = () => view._buttonText != null ? view._buttonText.text : null,
                 OnActivate = () => { if (button != null && button.interactable) button.onClick.Invoke(); },
                 Details = () => item != null ? TooltipReader.Lines(item.TooltipRaycastTarget)
                     : relic != null ? TooltipReader.Lines(relic._tooltipRaycastTarget) : null,
+                Subject = () => HeroSlot(view),
+                SideLines = HeroLines.SideOfSlots(
+                    () => { var slot = HeroSlot(view); return slot != null ? HeroLines.ForSlot(slot, BoardSection.VitalsOf(slot)) : null; },
+                    () => { var slot = HeroSlot(view); return slot != null ? slot._itemSlotViews : null; }),
             };
         }
 
@@ -213,7 +269,23 @@ namespace GuildrunAccess.Module.GameRun
             return !string.IsNullOrEmpty(text) && text.IndexOf(plain, System.StringComparison.OrdinalIgnoreCase) >= 0 ? null : name;
         }
 
-        // The outcome summary: its text plus the item, relic or hero it shows.
+        // The hero an outcome summary shows as a portrait ("Nyx ranked up."), or null.
+        private static Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroData SummaryHero(ChoiceOutcomeSummaryView summary)
+        {
+            var portrait = summary._heroPortraitView;
+            if (portrait == null || !portrait.gameObject.activeInHierarchy || portrait.IsEmpty) return null;
+            return RunData.OwnedHero(portrait._characterEntry);
+        }
+
+        private static Ember.Scopes.GameRun.UI.Slots.HeroPanel.BottomHeroView SummaryHeroSlot(ChoiceOutcomeSummaryView summary)
+        {
+            var hero = SummaryHero(summary);
+            return hero != null ? RunData.ViewOf(hero.HeroId) : null;
+        }
+
+        // The outcome summary: its text plus the item, relic or hero it shows. The hero is named only
+        // when the text does not name it; its buffers and the glance keys read it either way, the
+        // hero as the outcome left it.
         private static NodeVtable Summary(ChoiceOutcomeSummaryView summary)
         {
             var item = summary._itemView != null && summary._itemView.gameObject.activeInHierarchy ? summary._itemView : null;
@@ -224,10 +296,15 @@ namespace GuildrunAccess.Module.GameRun
                 {
                     GameNodes.LabelPart(() => summary._text != null ? summary._text.text : null),
                     new NodeAnnouncement(() => Unnamed(summary._text, item != null ? ItemNodes.ItemName(item) : relic != null ? ItemNodes.RelicName(relic) : null), kind: AnnouncementKinds.Value),
+                    new NodeAnnouncement(() => Unnamed(summary._text, RunData.HeroName(SummaryHero(summary))), kind: AnnouncementKinds.Value),
                 },
                 SearchText = () => summary._text != null ? summary._text.text : null,
                 Details = () => item != null ? TooltipReader.Lines(item.TooltipRaycastTarget)
                     : relic != null ? TooltipReader.Lines(relic._tooltipRaycastTarget) : null,
+                Subject = () => SummaryHeroSlot(summary),
+                SideLines = HeroLines.SideOfSlots(
+                    () => { var slot = SummaryHeroSlot(summary); return slot != null ? HeroLines.ForSlot(slot, BoardSection.VitalsOf(slot)) : null; },
+                    () => { var slot = SummaryHeroSlot(summary); return slot != null ? slot._itemSlotViews : null; }),
             };
         }
     }

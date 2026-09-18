@@ -298,8 +298,9 @@ namespace GuildrunAccess.Module.GameRun
             return Strings.HeroTitle(name, HeroClasses(hero), null);
         }
 
-        // The party's or reserve's hero whose entry this is (the same balancing object), or null.
-        private static HeroData OwnedHero(Ember.Balancing.Sheets.Characters.ICharacterEntry entry)
+        /// <summary>The party's or reserve's hero whose entry this is (the same balancing object), or
+        /// null: what a portrait, which holds an entry and no id, stands for.</summary>
+        public static HeroData OwnedHero(Ember.Balancing.Sheets.Characters.ICharacterEntry entry)
         {
             var party = Party;
             if (entry == null || party == null) return null;

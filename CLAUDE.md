@@ -225,6 +225,19 @@ runs; spoken text is still captured. The game already runs in the background whe
   The game keeps whatever that skips. The game's `ScopeService.SwitchToScope` is NOT a shortcut: its
   Campfire scope config names a scene the demo does not ship (an error dialog, then a dead run); the
   campfire is an event (`FirstCampfireEvent`: Train, Study, Recharge, Rest) and reads as one.
+- `POST /input` with `dev.event:N` (`RunJump.Event`), while ANY event is on show (`dev.floor:1`, a
+  path): makes the event of that sequential id the active one (`EventService.ClearEvents`,
+  `AddActiveEvent`, `SetActiveEvent`) and has `EventUIController` show it (`ClearChoiceButtons`,
+  `OnStart`), so any of the 93 events is read without playing to it: the authored ones are 1001 to
+  1035 (1016 is the game's own untranslated stub), the rest are templates (items 800-806 / 871-877,
+  shards 809-812, stat bonuses 819-822 / 902-915, heroes 830-832, rerolls 780 / 2004, the campfires
+  600 / 601). The crossroads is bypassed, so the templates that take their numbers from it show the
+  game's own format errors; the authored events, the item and relic templates and every branch
+  behind a choice come up whole. `OnStart` subscribes Proceed a second time: leave through
+  `dev.floor`, never Proceed. An unresolved event blocks `dev.floor`: make a choice first. The
+  list of ids: `balancing.GetAll<IEventEntry>()` in `/eval` (the compendium controller's
+  `_heroInfoAdapter.Balancing`), cast to `IReadOnlyCollection` for the count and `IReadOnlyList`
+  for the index.
 - Re-show a dismissed panel for testing: find its scene instance with `Resources.FindObjectsOfTypeAll`
   in `/eval` and `SetActive(true)`; `SetActive(false)` afterwards. Never press a consent button for the player.
 
@@ -376,7 +389,17 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    one stop, `GraphBuilder.StartColumn`: Up/Down within one, Right/Left across, an empty container
    dropped; the shop's heroes, items and relics for sale are one such stop too), info, speed, menu),
    battle result (all forms), shop,
-   crossroads, events (campfire included), rank-up pickers (a choice card is more than its name
+   crossroads, events (campfire included; the event UI is one controller and four views: a choice
+   is its caption, title and text in ONE label split by a line break, which the audit's substring
+   match reports as unread and is not; an `ArtifactChoiceButtonView` adds an item or relic, named
+   when the caption does not name it, its tooltip in the buffer; a `HeroListChoiceButtonView` adds
+   hero PORTRAITS, icons alone, the hero a rank-up, a retrain or a stat bonus goes to, sixteen of
+   the game's builders, some captions naming the hero ("Rank up, Nyx") and some not ("Choose a
+   Hero. Retrain one of their upgrades."): `EventScreen.HeroesPart` says the hero's name unless the
+   caption has it, always its classes and rank, and the choice carries the hero's buffers and the
+   glance keys through the party slot, `RunData.OwnedHero(portrait._characterEntry)`; the outcome
+   summary's portrait likewise. A disabled choice has no reason but its own text
+   (`EventChoiceValidationResult`: Valid, NonInteractable, Hidden)), rank-up pickers (a choice card is more than its name
    and description: its banners are `HeroTagView` icons, the class a path adds under `ClassBanner`
    and its archetypes under `StatsBanner`, read by `HeroCardNodes.TagNames`, and a B-rank path that
    adds a class says so, with its stat gains, in `SpecializationChoiceView._additionalClassView`,

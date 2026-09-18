@@ -274,6 +274,7 @@ namespace GuildrunAccess.Module
             if (actionKey == "dev.audit") return Dev.ScreenAudit.Run();
             if (actionKey != null && actionKey.StartsWith("dev.floor:")) return Dev.RunJump.Floor(actionKey.Substring("dev.floor:".Length));
             if (actionKey == "dev.shop") return Dev.RunJump.Shop();
+            if (actionKey != null && actionKey.StartsWith("dev.event:")) return Dev.RunJump.Event(actionKey.Substring("dev.event:".Length));
             if (string.IsNullOrEmpty(actionKey) || InputManager.Find(actionKey) == null) return null;
             InputManager.Dispatch(actionKey);
             var nav = Navigation.Active as GraphNavigator;
