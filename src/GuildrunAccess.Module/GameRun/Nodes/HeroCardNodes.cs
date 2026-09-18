@@ -274,6 +274,9 @@ namespace GuildrunAccess.Module.GameRun
             return list;
         }
 
+        /// <summary>The id of a grid's <paramref name="index"/>th hero, for a screen that lands on one.</summary>
+        public static ControlId GridId(string keyPrefix, int index) => ControlId.Structural(keyPrefix + ":" + index + ":name");
+
         /// <summary>
         /// Declare hero cards as one vertical list inside the current Tab-stop, one control per hero:
         /// "Sal, Mage, Frost, cost Shard 15, health 725, mana 100, Magic 25, Crit 15, ..." (the
@@ -293,7 +296,7 @@ namespace GuildrunAccess.Module.GameRun
                 int index = i;
                 var card = cards[i];
                 var action = activate != null ? activate(index) : null;
-                b.AddItem(ControlId.Structural(keyPrefix + ":" + i + ":name"), HeroNode(card,
+                b.AddItem(GridId(keyPrefix, i), HeroNode(card,
                     () =>
                     {
                         var parts = new List<string> { NameAndClass(card) };

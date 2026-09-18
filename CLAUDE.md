@@ -335,7 +335,11 @@ server drives them through the action keys: `POST /input` with `buffer.next`, `b
 2. **(done)** Graph engine + navigator + input substrate in Core, 54 tests.
 3. **(done)** Main menu and the modal dialogs (privacy consent, confirm, error, exit, survey).
 4. **(done)** Settings (tabs, sliders, toggles, dropdowns) and the run-start flow (difficulty).
-5. **(done)** The game run: hero picker, run HUD (placement grid with keyboard moves, party/reserve
+5. **(done)** The game run: hero picker (its reroll, `ReRollPanelView`, shows only past the
+   tutorial's save point and while the profile holds a Boss Token: `ProgressionData.BonusTokens`,
+   a reactive int reached through `GameRegistryService._progressionReader._data`; set it in `/eval`
+   to see the panel, the press consumes one; "cost 1 Boss Token" with the game's tooltip in the
+   buffer, a press landing on the first new hero), run HUD (placement grid with keyboard moves, party/reserve
    with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
    `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
    of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is

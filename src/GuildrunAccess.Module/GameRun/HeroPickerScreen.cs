@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using GuildrunAccess.Module.Interop;
 using Screen = GuildrunAccess.Core.Screens.Screen;
+using Navigation = GuildrunAccess.Core.UI.Navigation;
 
 namespace GuildrunAccess.Module.GameRun
 {
@@ -70,13 +71,34 @@ namespace GuildrunAccess.Module.GameRun
 
             HeroCardNodes.AddGrid(b, "hero", cards, i => () => Select(choices[i]), i => RelicSuffix(choices[i]), rows.ToArray());
 
-            // The reroll offer, when the game shows one.
+            // The reroll offer, when the game shows one: only past the tutorial's save point and
+            // while the profile holds a Boss Token (ReRollPanelView.Initialize shows the panel off
+            // ProgressionReader.BonusTokens). Its cost is a number beside an icon, its tooltip says
+            // what the number is of.
             var reroll = c._reRollPanelView;
             if (reroll != null && GameNodes.IsShown(reroll._reRollButton))
             {
+                var button = reroll._reRollButton;
                 b.BeginStop("actions");
-                b.AddItem(ControlId.Structural("heropicker:reroll"),
-                    GameNodes.Button(reroll._reRollButton, () => Strings.HeroReroll));
+                var vt = GameNodes.Button(button, () => RerollCaption(button));
+                vt.Announcements = new List<NodeAnnouncement>
+                {
+                    GameNodes.LabelPart(() => RerollCaption(button)),
+                    new NodeAnnouncement(() => RerollCost(reroll), kind: AnnouncementKinds.Value),
+                    GameNodes.DisabledPart(() => button.interactable),
+                };
+                vt.Details = () => TooltipReader.Lines(reroll._tooltipRaycastTarget);
+                // The game swaps the offer within the click. The button outlives it while tokens
+                // remain, and focus with it, so nothing would say the heroes changed: land on the
+                // first new one either way (by id: once the last token hides the button, the stop
+                // remembers wherever the vanished focus fell).
+                vt.OnActivate = () =>
+                {
+                    if (!button.interactable) return;
+                    button.onClick.Invoke();
+                    Navigation.FocusNode(HeroCardNodes.GridId("hero", 0));
+                };
+                b.AddItem(ControlId.Structural("heropicker:reroll"), vt);
             }
 
             b.PopContext();
@@ -102,6 +124,36 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var button in buttons)
                 if (GameNodes.IsShown(button)) { button.onClick.Invoke(); return; }
         }
+
+        private static string RerollCaption(UnityEngine.UI.Button button)
+        {
+            string text = GameNodes.LabelOf(button);
+            return string.IsNullOrWhiteSpace(text) || text == button.gameObject.name ? Strings.HeroReroll : text;
+        }
+
+        // "cost 1 Boss Token": the panel's number, and the name of the icon beside it, which the game
+        // writes nowhere but as the one bold term of the reroll's tooltip ("Consume one <b>Boss
+        // Token</b> to reroll..."), its own word for it in the player's language. The number alone
+        // when the description has no such term.
+        private static string RerollCost(ReRollPanelView reroll)
+        {
+            string cost = null;
+            foreach (var tmp in reroll.GetComponentsInChildren<TMP_Text>(false))
+                if (tmp != null && tmp.gameObject.name == "CostText" && !string.IsNullOrWhiteSpace(tmp.text)) { cost = tmp.text.Trim(); break; }
+            if (cost == null) return null;
+            string token = null;
+            try
+            {
+                var description = reroll._tooltipDescription;
+                var m = description != null ? BoldTerm.Match(description.GetLocalizedString() ?? "") : null;
+                if (m != null && m.Success) token = m.Groups[1].Value.Trim();
+            }
+            catch (Exception e) { GuildrunAccess.Core.CoreLog.Warning("hero picker: the reroll's token name: " + e.Message); }
+            return Strings.ShopCost(string.IsNullOrEmpty(token) ? cost : cost + " " + token);
+        }
+
+        private static readonly System.Text.RegularExpressions.Regex BoldTerm =
+            new System.Text.RegularExpressions.Regex("<b>(.+?)</b>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         private static string PickerTitle(HeroPickerController c)
         {
