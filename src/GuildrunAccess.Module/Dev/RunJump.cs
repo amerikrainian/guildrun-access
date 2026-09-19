@@ -1,6 +1,6 @@
 using System;
-using Ember.Scopes.Battle.UI.BattleFlow;
 using Ember.Scopes.GameRun.RunSession;
+using Ember.Scopes.GameRun.RunSession.Data;
 using Ember.Scopes.GameRun.RunSession.Services;
 using GuildrunAccess.Core;
 using GuildrunAccess.Module.Interop;
@@ -23,12 +23,11 @@ namespace GuildrunAccess.Module.Dev
             if (!int.TryParse(arg, out floor)) return "dev.floor needs a floor index (dev.floor:4)";
             try
             {
-                var flow = GameScopes.Controller<BattleFlowUIStateController>();
-                var reader = flow != null ? flow._runSessionReader : null;
                 var service = Service();
-                if (reader == null || service == null) return "not in a run";
-                var data = reader.Data;
-                var chunk = reader.CurrentChunk;
+                var data = service != null ? service.Data : null;
+                if (data == null) return "not in a run";
+                if (!BattleSceneUp()) return NoBattleScene;
+                var chunk = CurrentChunk(data);
                 int count = chunk != null && chunk.Floors != null ? chunk.Floors.Length : 0;
                 if (floor < 0 || floor >= count) return "floor " + floor + " is outside this chunk (0-" + (count - 1) + ")";
                 data.CurrentFloorNodeIndex = floor;
@@ -63,7 +62,7 @@ namespace GuildrunAccess.Module.Dev
         /// read without playing to it. The crossroads is bypassed, so the template events that take
         /// their numbers from it (the stat bonuses, the hero rewards) show the game's own format
         /// errors; the authored ones (1001 to 1035) and the item and relic templates come up whole.
-        /// OnStart subscribes Proceed a second time: leave through <c>dev.floor</c>, not Proceed.</summary>
+        /// Leave through Proceed, as a player would.</summary>
         public static string Event(string arg)
         {
             int id;
@@ -72,18 +71,7 @@ namespace GuildrunAccess.Module.Dev
             {
                 var ui = GameScopes.Controller<Ember.Scopes.Event.UI.EventUIController>();
                 if (ui == null || !ui.gameObject.activeInHierarchy || ui._eventService == null) return "no event on show: enter one first (dev.floor:1, then a path)";
-                var compendium = GameScopes.Controller<Ember.Scopes.Application.Compendium.CompendiumUIController>();
-                var balancing = compendium != null && compendium._heroInfoAdapter != null ? compendium._heroInfoAdapter.Balancing : null;
-                if (balancing == null) return "no balancing to read the events from";
-                var all = balancing.GetAll<Ember.Balancing.Sheets.Events.IEventEntry>();
-                int count = all.Cast<Il2CppSystem.Collections.Generic.IReadOnlyCollection<Ember.Balancing.Sheets.Events.IEventEntry>>().Count;
-                var indexed = all.Cast<Il2CppSystem.Collections.Generic.IReadOnlyList<Ember.Balancing.Sheets.Events.IEventEntry>>();
-                Ember.Balancing.Sheets.Events.IEventEntry entry = null;
-                for (int i = 0; i < count && entry == null; i++)
-                {
-                    var e = indexed[i].TryCast<gg.leyline.balancing.Data.IBalancingEntry>();
-                    if (e != null && e.Id.SequentialId == id) entry = indexed[i];
-                }
+                var entry = Entry<Ember.Balancing.Sheets.Events.IEventEntry>(id);
                 if (entry == null) return "no event " + id;
 
                 var service = ui._eventService;
@@ -103,6 +91,11 @@ namespace GuildrunAccess.Module.Dev
                 ui._readyToChoose = false;
                 ui._isReadyToProceed = false;
                 ui._isProceeding = false;
+                // OnStart adds its Proceed listener again: with two, one press advances the floor twice and
+                // loads the battle scene twice, and the one left over keeps a crossroads controller whose
+                // gates are gone, throwing every frame at the next crossroads (the game's error dialog
+                // reopening as fast as it is closed).
+                if (ui._proceedButton != null) ui._proceedButton.onClick.RemoveAllListeners();
                 ui.OnStart();
                 var named = entry.TryCast<Ember.Balancing.Sheets.Events.EventEntry>();
                 return "showing event " + id + (named != null ? " " + named.Title : "");
@@ -112,6 +105,65 @@ namespace GuildrunAccess.Module.Dev
                 CoreLog.Warning("dev.event failed: " + e.Message);
                 return "dev.event failed: " + e.Message;
             }
+        }
+
+        /// <summary><c>dev.crossroads:113</c>: the crossroads of that sequential id on the current floor
+        /// node, entered as the game enters one (its own path set-up, its own way into the event), for a
+        /// crossroads a run would only reach by luck.</summary>
+        public static string Crossroads(string arg)
+        {
+            int id;
+            if (!int.TryParse(arg, out id)) return "dev.crossroads needs a crossroads id (dev.crossroads:113)";
+            try
+            {
+                var service = Service();
+                var data = service != null ? service.Data : null;
+                var chunk = data != null ? CurrentChunk(data) : null;
+                if (chunk == null || chunk.Floors == null) return "not in a run";
+                if (!BattleSceneUp()) return NoBattleScene;
+                int node = data.CurrentFloorNodeIndex;
+                if (node < 0 || node >= chunk.Floors.Length) return "floor node " + node + " is outside this chunk";
+                var entry = Entry<Ember.Balancing.Sheets.Crossroads.ICrossroadsEntry>(id);
+                if (entry == null) return "no crossroads " + id;
+                chunk.Floors[node].Crossroads = entry;
+                service.ProceedToCrossroads();
+                return "crossroads " + id + " on floor node " + node + ": proceeding to it";
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("dev.crossroads failed: " + e.Message);
+                return "dev.crossroads failed: " + e.Message;
+            }
+        }
+
+        // The crossroads is a panel of the battle scene, which an event unloads: under an event the flow
+        // state would change with nothing to show it.
+        private const string NoBattleScene = "an event is on show: proceed out of it first (the crossroads lives in the battle scene)";
+
+        private static bool BattleSceneUp() => GameScopes.Controller<Ember.Scopes.Battle.UI.BattleFlow.BattleFlowUIStateController>() != null;
+
+        private static ActChunkData CurrentChunk(RunSessionData data)
+        {
+            var chunks = data.ActChunks;
+            int index = data.CurrentChunkIndex;
+            return chunks != null && index >= 0 && index < chunks.Length ? chunks[index] : null;
+        }
+
+        // The balancing entry of a sheet by its sequential id, or null.
+        private static T Entry<T>(int id) where T : Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase
+        {
+            var compendium = GameScopes.Controller<Ember.Scopes.Application.Compendium.CompendiumUIController>();
+            var balancing = compendium != null && compendium._heroInfoAdapter != null ? compendium._heroInfoAdapter.Balancing : null;
+            if (balancing == null) { CoreLog.Warning("RunJump: no balancing to read entries from"); return null; }
+            var all = balancing.GetAll<T>();
+            int count = all.Cast<Il2CppSystem.Collections.Generic.IReadOnlyCollection<T>>().Count;
+            var indexed = all.Cast<Il2CppSystem.Collections.Generic.IReadOnlyList<T>>();
+            for (int i = 0; i < count; i++)
+            {
+                var e = indexed[i].TryCast<gg.leyline.balancing.Data.IBalancingEntry>();
+                if (e != null && e.Id.SequentialId == id) return indexed[i];
+            }
+            return null;
         }
 
         // The run session service, registered by its interface.

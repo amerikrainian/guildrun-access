@@ -225,6 +225,14 @@ runs; spoken text is still captured. The game already runs in the background whe
   The game keeps whatever that skips. The game's `ScopeService.SwitchToScope` is NOT a shortcut: its
   Campfire scope config names a scene the demo does not ship (an error dialog, then a dead run); the
   campfire is an event (`FirstCampfireEvent`: Train, Study, Recharge, Rest) and reads as one.
+- `POST /input` with `dev.crossroads:N` (`RunJump.Crossroads`): the crossroads of that sequential id
+  on the current floor node (`FloorNodeData.Crossroads` is writable), entered as the game enters one.
+  Both it and `dev.floor` need the battle scene, where the crossroads panel lives: under an event
+  they refuse (proceed out of it first), and from a crossroads they do nothing (the flow state is
+  already Crossroads: take a path first). The second chunk's floor 2 is a fixed crossroads, 113, one
+  path to event 1013 (The Guild Banner), whose title the game left untranslated ("No translation
+  found for 'Crossroads.Crossroads_113.Name' in Crossroads": Unity Localization's own text, read as
+  the game draws it).
 - `POST /input` with `dev.event:N` (`RunJump.Event`), while ANY event is on show (`dev.floor:1`, a
   path): makes the event of that sequential id the active one (`EventService.ClearEvents`,
   `AddActiveEvent`, `SetActiveEvent`) and has `EventUIController` show it (`ClearChoiceButtons`,
@@ -233,11 +241,14 @@ runs; spoken text is still captured. The game already runs in the background whe
   shards 809-812, stat bonuses 819-822 / 902-915, heroes 830-832, rerolls 780 / 2004, the campfires
   600 / 601). The crossroads is bypassed, so the templates that take their numbers from it show the
   game's own format errors; the authored events, the item and relic templates and every branch
-  behind a choice come up whole. `OnStart` subscribes Proceed a second time: leave through
-  `dev.floor`, never Proceed. An unresolved event blocks `dev.floor`: make a choice first. The
-  list of ids: `balancing.GetAll<IEventEntry>()` in `/eval` (the compendium controller's
-  `_heroInfoAdapter.Balancing`), cast to `IReadOnlyCollection` for the count and `IReadOnlyList`
-  for the index.
+  behind a choice come up whole. Leave through Proceed (`RunJump.Event` clears the Proceed
+  button's listeners before `OnStart` adds its own again: with two, one press advanced the floor
+  twice and loaded the Battle scene twice, and the scene left over kept a `CrossroadsController`
+  whose gates were gone, throwing in `Update` every frame at the next crossroads, the game's error
+  dialog reopening as fast as its "ok" closed it. Two "Battle" scenes in `SceneManager` is that
+  state: restart the game). The list of ids: `balancing.GetAll<IEventEntry>()` in `/eval` (the
+  compendium controller's `_heroInfoAdapter.Balancing`), cast to `IReadOnlyCollection` for the
+  count and `IReadOnlyList` for the index.
 - Re-show a dismissed panel for testing: find its scene instance with `Resources.FindObjectsOfTypeAll`
   in `/eval` and `SetActive(true)`; `SetActive(false)` afterwards. Never press a consent button for the player.
 
