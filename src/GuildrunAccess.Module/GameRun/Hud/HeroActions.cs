@@ -72,6 +72,7 @@ namespace GuildrunAccess.Module.GameRun
                     int free = RunData.FreeReserveIndex();
                     options.Add(new ChoiceOption(Strings.RunToReserve, () =>
                     {
+                        if (RunData.RefuseOnlyHeroOnBoard()) return;
                         Speech.Say(RunData.SwapReserveAndBoard(free, from) ? Strings.RunMoved(heroName, Strings.RunReserve) : Strings.RunMoveFailed, interrupt: true);
                     }, enabled: free >= 0));
                 }
@@ -97,6 +98,7 @@ namespace GuildrunAccess.Module.GameRun
                 var service = shop._shopService;
                 options.Add(new ChoiceOption(Strings.RunSell(heroName), () =>
                 {
+                    if (RunData.RefuseOnlyHeroSale()) return;
                     try { service.SellHero(heroId); Speech.Say(Strings.RunSold(heroName), interrupt: true); }
                     catch (Exception e) { CoreLog.Warning("Sell hero failed: " + e.Message); Speech.Say(Strings.RunMoveFailed, interrupt: true); }
                 }));
@@ -140,7 +142,7 @@ namespace GuildrunAccess.Module.GameRun
             var service = shop._shopService;
             return new ChoiceOption(label, () =>
             {
-                if (service == null) return;
+                if (service == null || RunData.RefuseRiftSealSale(itemId)) return;
                 try { service.SellItem(itemId); Speech.Say(Strings.RunSold(itemName), interrupt: true); }
                 catch (Exception e) { CoreLog.Warning("Sell item failed: " + e.Message); Speech.Say(Strings.RunMoveFailed, interrupt: true); }
             }, enabled: service != null);

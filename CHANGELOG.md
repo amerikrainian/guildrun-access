@@ -3,6 +3,7 @@
 ## V0.0.9
 
 - The game map doesn't fully show its floors, which for us implied we were skipping the second act. We weren't, and now there's an explicit, "More floors not shown", entry to clear up the confusion.
+- No more placing heroes over board limit! Not only was it a bug, but it also unfortunately bricked some events!
 
 ## V0.0.8
 

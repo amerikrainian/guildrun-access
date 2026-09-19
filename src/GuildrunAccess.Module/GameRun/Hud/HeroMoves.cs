@@ -41,6 +41,9 @@ namespace GuildrunAccess.Module.GameRun
         public void Drop(Vector2Int cell)
         {
             if (!RunData.IsPlayerCell(cell)) { Speech.Say(Strings.RunMoveInvalid, interrupt: true); return; }
+            // A full board takes a reserve hero only in trade: the hero stays in hand for a cell
+            // with a hero on it, as after an invalid cell.
+            if (_source == Source.Reserve && RunData.RefuseFullBoard(cell)) return;
             bool ok = _source == Source.Board
                 ? RunData.SwapBoard(_from, cell)
                 : RunData.SwapReserveAndBoard(_reserveIndex, cell);

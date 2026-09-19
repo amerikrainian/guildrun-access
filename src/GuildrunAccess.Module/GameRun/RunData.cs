@@ -9,6 +9,7 @@ using Ember.Scopes.GameRun.GameRegistry.Data;
 using Ember.Scopes.GameRun.GameRegistry.Data.Characters;
 using Ember.Scopes.GameRun.GameRegistry.Data.Items;
 using Ember.Scopes.GameRun.GameRegistry.Services;
+using Ember.Scopes.GameRun.InputHandling;
 using Ember.Scopes.GameRun.UI.Navigation;
 using Ember.Scopes.GameRun.UI.Slots;
 using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
@@ -580,6 +581,69 @@ namespace GuildrunAccess.Module.GameRun
                 CoreLog.Warning("RunData: reserve/board swap failed: " + e);
                 return false;
             }
+        }
+
+        // ---- the drag's rules ----
+        // The services the keyboard's moves and sales go through check none of what follows: the game
+        // asks it in its drag controllers (BattleHeroDragSubController.DragReserveHeroToBoard,
+        // TryMovingHeroFromBoardToReserve, DragToDiscard; ItemDragSubController.SellItem) and answers
+        // a refused drag with a dialog. The keyboard asks the same and shows the same dialog, in the
+        // game's words, which the dialog screen reads. They are no courtesies: the board's limit tops
+        // out at five (IHeroesSingleton.MaxTotalHeroes less one) and the catwalk lays out five
+        // waypoints, so with a sixth hero on the board the walk to the next floor throws
+        // (CatwalkWaypoint.GetRelatedPoints) and the run stands still behind the game's error dialog.
+        // Each answers true when the move is refused, the reason already on its way to the player.
+
+        /// <summary>A reserve hero for an EMPTY cell of a full board ("No Space Left"). A cell with a
+        /// hero on it is a trade, which keeps the count.</summary>
+        public static bool RefuseFullBoard(Vector2Int cell) => Refuse(
+            () => TryHeroAt(cell, out _) || Reader().HasSpaceOnBoard(),
+            () => GameRunInputLocalization.NoSpaceLeftTitle, () => GameRunInputLocalization.NoSpaceLeftDescription);
+
+        /// <summary>The board's only hero for an empty reserve slot ("Cannot Move Hero").</summary>
+        public static bool RefuseOnlyHeroOnBoard() => Refuse(
+            () => Reader().HeroesOnBoardCount() != 1,
+            () => GameRunInputLocalization.CantMoveOnlyHeroTitle, () => GameRunInputLocalization.CantMoveOnlyHeroDescription);
+
+        /// <summary>The sale of the only hero the run owns ("Cannot Sell Hero").</summary>
+        public static bool RefuseOnlyHeroSale() => Refuse(
+            () => Reader().OwnedHeroCount != 1,
+            () => GameRunInputLocalization.CantSellOnlyHeroTitle, () => GameRunInputLocalization.CantSellOnlyHeroDescription);
+
+        /// <summary>The sale of the Rift Seal on a Red Rift run ("Cannot Sell Rift Seal").</summary>
+        public static bool RefuseRiftSealSale(ItemId item) => Refuse(
+            () => !IsRiftSeal(item),
+            () => GameRunInputLocalization.CantSellRiftAnchorTitle, () => GameRunInputLocalization.CantSellRiftAnchorDescription);
+
+        // The Red Rift's relic item, as the game's sale asks it: a challenge run, and the item the
+        // difficulties singleton names. The entries are compared, not the refs (a generic struct the
+        // proxy misreads: its id comes back short a letter).
+        private static bool IsRiftSeal(ItemId item)
+        {
+            if (MissionNodes.Controller() == null) return false; // not a Red Rift run
+            var balancing = Ember.Balancing.EmberBalancing.Instance;
+            var difficulties = balancing.GetSingleton<Ember.Balancing.Difficulty.IDifficultiesSingleton>();
+            var seal = balancing.Get<Ember.Balancing.Sheets.Items.IItemEntry>(difficulties.AnchorItemRef);
+            var data = Item(item);
+            var entry = data != null ? data.ItemEntry : null;
+            return seal != null && entry != null && seal.Pointer == entry.Pointer;
+        }
+
+        // A rule that cannot be asked refuses too: the move stays undone, where letting it through
+        // is what breaks a run.
+        private static bool Refuse(Func<bool> allowed, Func<UnityEngine.Localization.LocalizedString> title, Func<UnityEngine.Localization.LocalizedString> message)
+        {
+            try
+            {
+                if (allowed()) return false;
+                Ember.System.UI.DialogPanel.ShowSimpleDialog(title(), message(), null);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: drag rule failed: " + e);
+                Speech.Say(Strings.RunMoveFailed, interrupt: true);
+            }
+            return true;
         }
 
         /// <summary>The first empty reserve slot's index, or -1.</summary>

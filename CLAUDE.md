@@ -404,7 +404,26 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
    `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
    of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is
-   `GetFreeItemSlotCount`), inventory (the reserve's items and the relics as side-by-side columns of
+   `GetFreeItemSlotCount`. The same holds for every rule of the game's drags: the services check
+   NONE of them, the drag controllers do (`BattleHeroDragSubController`, `HeroDragSubController`,
+   `ItemDragSubController`) and answer with `DialogPanel.ShowSimpleDialog` and a
+   `GameRunInputLocalization` text. `RunData`'s `Refuse*` ask the same and show the same dialog,
+   which the dialog screen reads: a reserve hero for an EMPTY cell needs `HasSpaceOnBoard` (a cell
+   with a hero is a trade), the board's only hero does not go to an empty reserve slot
+   (`HeroesOnBoardCount`), the only owned hero is not sold (`OwnedHeroCount`), the Rift Seal
+   (`IDifficultiesSingleton.AnchorItemRef`) is not sold on a Red Rift run. A new move or sale
+   through a service needs its drag read first (`disasm.py --callers` on the service method). The
+   board limit is no courtesy: it tops out at five (`IHeroesSingleton.MaxTotalHeroes` 6, less one)
+   and `CatwalkWaypoint.GetPoints` lays out five points at most, so with a sixth hero on the board
+   `GetRelatedPoints` throws in the walk a crossroads path starts (flow state Outro; Intro walks
+   too), `CompleteOutro` never runs and the run stands still behind the error dialog, in the save
+   as well (a `Run` save is MessagePack, its `Payload` a second MessagePack map:
+   `GameRegistryDto.MaxHeroesOnBoard`, `ReserveSlots`, each hero's `CellPosition`). The guards
+   are the whole answer: nothing looks out for an over-limit board afterwards. The game itself
+   moves surplus heroes to the reserve when the limit SHRINKS (`ModifyTeamSize`, or the reactive
+   `GameRegistryData.MaxHeroesOnBoard` set in `/eval`), never on a load: to build an over-limit
+   board for a test, call `BoardService.SwapReserveAndBoardPositions` in `/eval`),
+   inventory (the reserve's items and the relics as side-by-side columns of
    one stop, `GraphBuilder.StartColumn`: Up/Down within one, Right/Left across, an empty container
    dropped; the shop's heroes, items and relics for sale are one such stop too), info, speed, menu),
    battle result (all forms), shop,
