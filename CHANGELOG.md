@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.0.9
+
+- The game map doesn't fully show its floors, which for us implied we were skipping the second act. We weren't, and now there's an explicit, "More floors not shown", entry to clear up the confusion.
+
 ## V0.0.8
 
 - Shift+q e a d z c now moves a hero from its party slot too, not just from its cell on the board.
