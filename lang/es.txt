@@ -157,6 +157,7 @@ run.difficulty=dificultad
 run.timer=temporizador
 run.map=mapa
 run.map_current=actual
+run.map_more=más pisos, no mostrados
 run.speed_auto=automática
 run.speed_n=velocidad {0}
 run.hero_panel=Héroes

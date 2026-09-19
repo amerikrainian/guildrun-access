@@ -228,6 +228,8 @@ namespace GuildrunAccess.Core.Strings
             D("run.timer", "timer"),
             D("run.map", "map"),
             D("run.map_current", "current"),
+            // The dots the game draws between this act's boss and the final boss: floors it does not draw yet.
+            D("run.map_more", "more floors, not shown"),
             D("run.speed_auto", "auto"),
             // {0} = the speed step number.
             D("run.speed_n", "speed {0}"),
@@ -704,6 +706,7 @@ namespace GuildrunAccess.Core.Strings
         public static string RunTimer => Get("run.timer");
         public static string RunMap => Get("run.map");
         public static string RunMapCurrent => Get("run.map_current");
+        public static string RunMapMore => Get("run.map_more");
         public static string RunSpeedAuto => Get("run.speed_auto");
         public static string RunSpeedN(int n) => F("run.speed_n", n);
         public static string RunHeroPanel => Get("run.hero_panel");

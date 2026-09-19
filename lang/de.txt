@@ -157,6 +157,7 @@ run.difficulty=Schwierigkeit
 run.timer=Timer
 run.map=Karte
 run.map_current=aktuell
+run.map_more=weitere Ebenen, nicht angezeigt
 run.speed_auto=Auto
 run.speed_n=Tempo {0}
 run.hero_panel=Helden

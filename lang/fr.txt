@@ -157,6 +157,7 @@ run.difficulty=difficulté
 run.timer=chronomètre
 run.map=carte
 run.map_current=position actuelle
+run.map_more=autres étages, non affichés
 run.speed_auto=auto
 run.speed_n=vitesse {0}
 run.hero_panel=Héros

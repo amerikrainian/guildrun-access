@@ -157,6 +157,7 @@ run.difficulty=dificuldade
 run.timer=cronômetro
 run.map=mapa
 run.map_current=atual
+run.map_more=mais patamares, não exibidos
 run.speed_auto=auto
 run.speed_n=velocidade {0}
 run.hero_panel=Heróis

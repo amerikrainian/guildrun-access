@@ -31,6 +31,14 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   P/Invoke in the host (`src/GuildrunAccess/Speech/`). Prism talks to NVDA/JAWS/SAPI itself.
 - **Anti-cheat**: CodeStage ACTk ships, but only `ObscuredCheatingDetectorService` uses it and it merely
   flags analytics on tamper. Never write to `Obscured*` fields.
+- **Run structure**: the demo is ONE `ActEntry` of two `ActChunk`s, six floor nodes each (a fight per
+  floor, a crossroads or event between them; `RunSessionData.ActChunks`, `CurrentChunkIndex`,
+  `CurrentFloorNodeIndex`; `CurrentActIndex` stays 0 and `IsLastAct` is true from the first floor).
+  What the game's text calls "Act 1" is chunk 0, its last floor the "Act Boss" (`FloorNodeData.
+  TryGetBossName`); chunk 1 ends on the "Final boss". The map strip (`ChunkUIController.
+  InitializeActStructure`) draws the CURRENT chunk alone and, while a later one is to come, a dots
+  image (`_dotsNode`: no text, no tooltip) and the final boss after it; `MapSection` gives the dots
+  a line (`Strings.RunMapMore`), or the final boss reads as the stage after the act boss.
 - **Saves**: `%LocalAppData%Low\Leyline\Guildrun\Saves\steam-<id>\{Profile,Run}` (Steam Cloud
   synced). The game saves a run only while `GameRunPersistenceService.Data.IsSavingActive` is on,
   which it turns on once the tutorial's save-point step (`Ftue_11_ThirdShop`) completes; Quit to

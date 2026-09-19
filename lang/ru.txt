@@ -157,6 +157,7 @@ run.difficulty=сложность
 run.timer=таймер
 run.map=карта
 run.map_current=вы здесь
+run.map_more=ещё этажи, не показаны
 run.speed_auto=авто
 run.speed_n=скорость {0}
 run.hero_panel=Герои

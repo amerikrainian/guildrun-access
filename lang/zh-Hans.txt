@@ -157,6 +157,7 @@ run.difficulty=难度
 run.timer=计时器
 run.map=地图
 run.map_current=当前
+run.map_more=更多层数，未显示
 run.speed_auto=自动
 run.speed_n=速度{0}
 run.hero_panel=英雄面板
