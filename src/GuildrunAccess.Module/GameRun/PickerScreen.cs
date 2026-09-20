@@ -157,7 +157,7 @@ namespace GuildrunAccess.Module.GameRun
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
                 Details = () =>
                 {
-                    var lines = new List<string>(DetailsOf(choice, choice._tooltipRaycastTarget, choice._descriptionText));
+                    var lines = new List<string>(DetailsOf(choice, choice._tooltipRaycastTarget, choice._descriptionText, choice._detailsText));
                     var item = ShownItem(choice);
                     if (item != null) lines.AddRange(TooltipReader.Lines(item.TooltipRaycastTarget));
                     return lines;
@@ -222,14 +222,29 @@ namespace GuildrunAccess.Module.GameRun
             return text != null && text.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(text.text) ? text.text : null;
         }
 
-        // The tooltip as lines, else the shown description as the one line; then the banners' tooltips
-        // (what the added class plays like, what an archetype stands for).
-        private static IEnumerable<string> DetailsOf(Component choice, TooltipRaycastTarget target, TMPro.TMP_Text description)
+        // The card's Shift text first, then the tooltip as lines, else the shown description as the one
+        // line; then the banners' tooltips (what the added class plays like, what an archetype stands for).
+        private static IEnumerable<string> DetailsOf(Component choice, TooltipRaycastTarget target, TMPro.TMP_Text description, string shiftText)
         {
-            var lines = TooltipReader.Lines(target);
-            if (lines.Count == 0) lines.AddRange(GameNodes.Lines(description != null ? description.text : null));
+            var lines = new List<string>();
+            string shift = ShiftText(description, shiftText);
+            if (shift != null) lines.Add(shift);
+            var tooltip = TooltipReader.Lines(target);
+            if (tooltip.Count == 0) lines.AddRange(GameNodes.Lines(description != null ? description.text : null));
+            else lines.AddRange(tooltip);
             lines.AddRange(HeroCardNodes.TagsTooltips(choice));
             return lines;
+        }
+
+        /// <summary>The description a choice card swaps in while Shift is held over it (the card's
+        /// <c>_detailsText</c>), when it is not the one on show, else null: the card draws a scaled
+        /// number worked out for the hero's rank ("8 (Rank)") and, with Shift, as its rule ("4 (+4 per
+        /// Rank)"). A line of the control buffer, after the shown description; the keyword definitions
+        /// Shift also brings are the card's tooltip.</summary>
+        internal static string ShiftText(TMPro.TMP_Text shown, string shiftText)
+        {
+            if (string.IsNullOrWhiteSpace(shiftText)) return null;
+            return shown != null && shown.text == shiftText ? null : shiftText;
         }
 
         // A rank modifier: "<name>, Class Upgrade, <description>", Enter picks it. The kind is the card's
@@ -252,7 +267,7 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => choice._itemNameText != null ? choice._itemNameText.text : null,
                 OnActivate = () => choice.OnPointerClick(new PointerEventData(EventSystem.current)),
-                Details = () => DetailsOf(choice, choice._tooltipRaycastTarget, choice._modifierDescriptionText),
+                Details = () => DetailsOf(choice, choice._tooltipRaycastTarget, choice._modifierDescriptionText, choice._detailsText),
             };
         }
 

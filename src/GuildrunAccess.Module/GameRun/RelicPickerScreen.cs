@@ -128,13 +128,19 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(s) ? null : s;
         }
 
-        // The tooltip as lines (heading, effect, keyword definitions), from the choice's own target or
-        // its relic view's, else the shown description as the one line.
+        // The card's Shift text (PickerScreen.ShiftText), then the tooltip as lines (heading, effect,
+        // keyword definitions), from the choice's own target or its relic view's, else the shown
+        // description as the one line.
         private static IEnumerable<string> Details(RelicChoiceView choice)
         {
-            var lines = TooltipReader.Lines(choice._tooltipRaycastTarget);
-            if (lines.Count == 0 && choice._relicView != null) lines = TooltipReader.Lines(choice._relicView._tooltipRaycastTarget);
-            return lines.Count > 0 ? lines : GameNodes.Lines(Shown(choice._descriptionText));
+            var lines = new List<string>();
+            string shift = PickerScreen.ShiftText(choice._descriptionText, choice._detailsText);
+            if (shift != null) lines.Add(shift);
+            var tooltip = TooltipReader.Lines(choice._tooltipRaycastTarget);
+            if (tooltip.Count == 0 && choice._relicView != null) tooltip = TooltipReader.Lines(choice._relicView._tooltipRaycastTarget);
+            if (tooltip.Count > 0) lines.AddRange(tooltip);
+            else lines.AddRange(GameNodes.Lines(Shown(choice._descriptionText)));
+            return lines;
         }
 
         public override IEnumerable<ElementAction> GetActions()
