@@ -24,6 +24,17 @@ namespace GuildrunAccess.Module.Input
 
         private readonly StringBuilder _typed = new StringBuilder(4);
 
+        // The dev driver's typing (dev.type): read as typed on the frame after the request, by every
+        // reader of that frame, as a key press is.
+        private static string _injected;
+        private static int _injectedFrame = int.MinValue / 2;
+
+        public static void InjectTyped(string text)
+        {
+            _injected = text;
+            _injectedFrame = Time.frameCount + 1;
+        }
+
         public string TypedText
         {
             get
@@ -34,6 +45,7 @@ namespace GuildrunAccess.Module.Input
                         _typed.Append((char)('a' + (k - KeyCode.A)));
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Space))
                     _typed.Append(' ');
+                if (_injected != null && Time.frameCount == _injectedFrame) _typed.Append(_injected);
                 return _typed.Length == 0 ? "" : _typed.ToString();
             }
         }

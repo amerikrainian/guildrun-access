@@ -45,6 +45,7 @@ namespace GuildrunAccess.Core.Strings
             D("role.list", "list"),
             D("role.table", "table"),
             D("role.link", "link"),
+            D("role.edit", "edit"),
 
             // Control states.
             D("state.disabled", "disabled"),
@@ -54,6 +55,7 @@ namespace GuildrunAccess.Core.Strings
             D("state.expanded", "expanded"),
             D("state.collapsed", "collapsed"),
             D("value.blank", "blank"),
+            D("value.space", "space"),
 
             // Navigation feedback. {0} = index, {1} = count.
             D("nav.position", "{0} of {1}"),
@@ -602,6 +604,7 @@ namespace GuildrunAccess.Core.Strings
         public static string StateOff => Get("state.off");
         public static string ExpandedState(bool expanded) => Get(expanded ? "state.expanded" : "state.collapsed");
         public static string ValueBlank => Get("value.blank");
+        public static string ValueSpace => Get("value.space");
 
         public static string Position(int index, int count) => F("nav.position", index, count);
         public static string NoTooltip => Get("nav.no_tooltip");

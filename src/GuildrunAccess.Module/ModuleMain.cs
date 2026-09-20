@@ -276,6 +276,11 @@ namespace GuildrunAccess.Module
             if (actionKey == "dev.shop") return Dev.RunJump.Shop();
             if (actionKey != null && actionKey.StartsWith("dev.crossroads:")) return Dev.RunJump.Crossroads(actionKey.Substring("dev.crossroads:".Length));
             if (actionKey != null && actionKey.StartsWith("dev.event:")) return Dev.RunJump.Event(actionKey.Substring("dev.event:".Length));
+            if (actionKey != null && actionKey.StartsWith("dev.type:"))
+            {
+                Input.UnityNavInput.InjectTyped(actionKey.Substring("dev.type:".Length));
+                return "typing next frame";
+            }
             if (string.IsNullOrEmpty(actionKey) || InputManager.Find(actionKey) == null) return null;
             InputManager.Dispatch(actionKey);
             var nav = Navigation.Active as GraphNavigator;

@@ -45,6 +45,15 @@ namespace GuildrunAccess.Core.UI
             Common = () => RoleWord("slider"),
         };
 
+        /// <summary>A text field: the screen that declares one types into it while it is focused
+        /// (type-ahead standing down there) and echoes each character.</summary>
+        public static readonly ControlType Edit = new ControlType
+        {
+            Key = "edit",
+            Order = StandardOrder,
+            Common = () => RoleWord("edit"),
+        };
+
         /// <summary>One option of a single-select group (dropdown options, tab rows).</summary>
         public static readonly ControlType RadioButton = new ControlType
         {
@@ -109,6 +118,6 @@ namespace GuildrunAccess.Core.UI
         };
 
         /// <summary>Every registered type, for settings registration. New types are added here.</summary>
-        public static readonly ControlType[] All = { Button, Toggle, Slider, RadioButton, ComboBox, Tab, KeyBinding, Item, Link, Group, Text };
+        public static readonly ControlType[] All = { Button, Toggle, Slider, RadioButton, ComboBox, Tab, KeyBinding, Item, Link, Edit, Group, Text };
     }
 }

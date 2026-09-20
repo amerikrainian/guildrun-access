@@ -257,6 +257,12 @@ runs; spoken text is still captured. The game already runs in the background whe
   state: restart the game). The list of ids: `balancing.GetAll<IEventEntry>()` in `/eval` (the
   compendium controller's `_heroInfoAdapter.Balancing`), cast to `IReadOnlyCollection` for the
   count and `IReadOnlyList` for the index.
+- `POST /input` with `dev.type:TEXT` (`UnityNavInput.InjectTyped`): TEXT reads as typed on the next
+  frame, by type-ahead or by a text field. A field is an `Edit` node (`ControlTypes.Edit`) whose screen
+  types into it while it has focus (`CompendiumScreen`: `AllowsTypeahead` false there, `OnUpdate`
+  appends `NavInput.TypedText` to the game's `TMP_InputField.text` and echoes it, Backspace, the
+  secondary action, takes a character back). The compendium's search filters on `onValueChanged`
+  alone, no Enter. The server trims the body, so a lone space cannot be sent (`dev.type:a b` can).
 - Re-show a dismissed panel for testing: find its scene instance with `Resources.FindObjectsOfTypeAll`
   in `/eval` and `SetActive(true)`; `SetActive(false)` afterwards. Never press a consent button for the player.
 

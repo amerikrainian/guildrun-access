@@ -23,6 +23,7 @@ using UnityEngine.UI;
 using GuildrunAccess.Module.Interop;
 using GuildrunAccess.Module.GameRun;
 using Screen = GuildrunAccess.Core.Screens.Screen;
+using Navigation = GuildrunAccess.Core.UI.Navigation;
 
 namespace GuildrunAccess.Module.Screens
 {
@@ -52,6 +53,57 @@ namespace GuildrunAccess.Module.Screens
 
         public override bool IsActive() => Panel() != null;
 
+        // ---- the search field ----
+
+        // The game filters on every change of the field (its one listener is onValueChanged: no Enter,
+        // no submit), so the field is typed into while it has focus: letters and space go to its text,
+        // each echoed, Backspace takes the last one back, and type-ahead stands down there. Setting
+        // the text runs the game's listener as its own typing does.
+        private static readonly ControlId SearchId = ControlId.Structural("compendium:search");
+
+        private static bool SearchFocused
+        {
+            get { var node = Navigation.FocusedNode; return node != null && Equals(node.Id, SearchId); }
+        }
+
+        public override bool AllowsTypeahead => !SearchFocused;
+
+        private static NodeVtable SearchNode(TMP_InputField search)
+        {
+            return new NodeVtable
+            {
+                ControlType = ControlTypes.Edit,
+                Announcements = new List<NodeAnnouncement>
+                {
+                    GameNodes.LabelPart(() => Strings.CompendiumSearch(string.IsNullOrEmpty(search.text) ? Strings.CompendiumSearchEmpty : search.text)),
+                },
+                OnSecondary = () =>
+                {
+                    string text = search.text;
+                    if (string.IsNullOrEmpty(text)) { Speech.Say(Strings.ValueBlank, interrupt: true); return; }
+                    char last = text[text.Length - 1];
+                    search.text = text.Substring(0, text.Length - 1);
+                    Speech.Say(CharName(last), interrupt: true);
+                },
+            };
+        }
+
+        private static string CharName(char c) => c == ' ' ? Strings.ValueSpace : c.ToString();
+
+        public override void OnUpdate()
+        {
+            if (!SearchFocused || !Navigation.FocusActive()) return;
+            var input = NavInput.Current;
+            if (input.CtrlHeld || input.AltHeld) return;
+            string typed = input.TypedText;
+            if (string.IsNullOrEmpty(typed)) return;
+            var c = Panel();
+            var search = c != null ? c._searchInputField : null;
+            if (search == null || !search.gameObject.activeInHierarchy) return;
+            search.text = (search.text ?? "") + typed;
+            Speech.Say(typed.Length == 1 ? CharName(typed[0]) : typed, interrupt: true);
+        }
+
         public override void Build(GraphBuilder b)
         {
             var c = Panel();
@@ -73,7 +125,7 @@ namespace GuildrunAccess.Module.Screens
             b.PushContext(Strings.CompendiumFilters, null, positions: false);
             var search = c._searchInputField;
             if (search != null && search.gameObject.activeInHierarchy)
-                b.AddItem(ControlId.Structural("compendium:search"), GameNodes.Text(() => Strings.CompendiumSearch(string.IsNullOrWhiteSpace(search.text) ? Strings.CompendiumSearchEmpty : search.text)));
+                b.AddItem(SearchId, SearchNode(search));
             if (c._classFilterDropdown != null && c._classFilterDropdown.gameObject.activeInHierarchy)
                 b.AddItem(ControlId.Structural("compendium:class"), GameNodes.Dropdown(c._classFilterDropdown, () => Strings.CompendiumClassFilter));
             if (GameNodes.IsShown(c._classFilterClearButton))
