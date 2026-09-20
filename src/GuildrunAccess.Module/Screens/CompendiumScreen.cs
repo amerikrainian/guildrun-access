@@ -58,7 +58,8 @@ namespace GuildrunAccess.Module.Screens
         // The game filters on every change of the field (its one listener is onValueChanged: no Enter,
         // no submit), so the field is typed into while it has focus: letters and space go to its text,
         // each echoed, Backspace takes the last one back, and type-ahead stands down there. Setting
-        // the text runs the game's listener as its own typing does.
+        // the text runs the game's listener as its own typing does. Enter is the whole editor
+        // (UI/TextEdit: the caret, the selection, the clipboard, any character).
         private static readonly ControlId SearchId = ControlId.Structural("compendium:search");
 
         private static bool SearchFocused
@@ -77,22 +78,21 @@ namespace GuildrunAccess.Module.Screens
                 {
                     GameNodes.LabelPart(() => Strings.CompendiumSearch(string.IsNullOrEmpty(search.text) ? Strings.CompendiumSearchEmpty : search.text)),
                 },
+                OnActivate = () => TextEdit.Begin(search),
                 OnSecondary = () =>
                 {
                     string text = search.text;
                     if (string.IsNullOrEmpty(text)) { Speech.Say(Strings.ValueBlank, interrupt: true); return; }
                     char last = text[text.Length - 1];
                     search.text = text.Substring(0, text.Length - 1);
-                    Speech.Say(CharName(last), interrupt: true);
+                    Speech.Say(EditEcho.Name(last.ToString()), interrupt: true);
                 },
             };
         }
 
-        private static string CharName(char c) => c == ' ' ? Strings.ValueSpace : c.ToString();
-
         public override void OnUpdate()
         {
-            if (!SearchFocused || !Navigation.FocusActive()) return;
+            if (TextEdit.OwnsKeyboard || !SearchFocused || !Navigation.FocusActive()) return;
             var input = NavInput.Current;
             if (input.CtrlHeld || input.AltHeld) return;
             string typed = input.TypedText;
@@ -101,7 +101,7 @@ namespace GuildrunAccess.Module.Screens
             var search = c != null ? c._searchInputField : null;
             if (search == null || !search.gameObject.activeInHierarchy) return;
             search.text = (search.text ?? "") + typed;
-            Speech.Say(typed.Length == 1 ? CharName(typed[0]) : typed, interrupt: true);
+            Speech.Say(EditEcho.Name(typed), interrupt: true);
         }
 
         public override void Build(GraphBuilder b)

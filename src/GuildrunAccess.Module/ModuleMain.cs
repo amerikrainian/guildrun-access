@@ -53,6 +53,7 @@ namespace GuildrunAccess.Module
             NavInput.Current = new UnityNavInput();
             Navigation.FocusActive = () => FocusMode.Active;
             InputManager.FocusActive = () => FocusMode.Active;
+            InputManager.TextFieldFocused = () => TextEdit.OwnsKeyboard;
             GraphAnnouncer.PositionText = (i, n) => host.Settings.SpeakPositions ? Strings.Position(i, n) : null;
             GraphAnnouncer.ExpandedStateText = Strings.ExpandedState;
             InputBinding.RegisterType("keyboard", KeyboardBinding.Deserialize);
@@ -229,9 +230,10 @@ namespace GuildrunAccess.Module
                 Speech.Say(Strings.UpdateAvailable(_updateCheck.NewerVersion));
             }
             FocusMode.Tick();
+            Safe(TextEdit.Tick, "text edit");
             InputManager.Tick();
             ScreenManager.Tick();
-            Navigation.TickTypeahead();
+            if (!TextEdit.OwnsKeyboard) Navigation.TickTypeahead();
             Safe(_comics.Tick, "comics");
             Safe(_tutorials.Tick, "tutorials");
             Safe(BattleEvents.Tick, "battle events");
@@ -255,6 +257,7 @@ namespace GuildrunAccess.Module
             // only. On a shutdown, give everything back to the game.
             bool restore = _host == null || !_host.SuccessorLoaded;
             try { SyntheticMouse.Reset(); } catch (Exception e) { _host?.LogError("[dispose] mouse: " + e); }
+            try { TextEdit.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] text edit: " + e); }
             try { FocusMode.Shutdown(restore); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
             try { ScreenManager.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] screens: " + e); }
             try { InputManager.Clear(); } catch (Exception e) { _host?.LogError("[dispose] input: " + e); }
