@@ -1,5 +1,11 @@
 # Changelog
 
+## V0.1.0
+
+- Allow backspace to perform secondary action (open compendium) on a hero while in a party slot or on the board. You used to need to click inspect and go to the sidebar. That was annoying, so we did away with it.
+- Include long-details for tooltips in buffers for things like ranking and relic choices. We were already getting plenty of info, but now calculations should be even more clear. This is probably verbose, but it's a start.
+- Compendium search field now works.
+
 ## V0.0.9
 
 - The game map doesn't fully show its floors, which for us implied we were skipping the second act. We weren't, and now there's an explicit, "More floors not shown", entry to clear up the confusion.
