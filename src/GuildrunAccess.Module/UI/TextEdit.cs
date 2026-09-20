@@ -1,5 +1,6 @@
 using System;
 using GuildrunAccess.Core;
+using GuildrunAccess.Core.Input;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
 using TMPro;
@@ -17,7 +18,8 @@ namespace GuildrunAccess.Module.UI
     /// lasts the mod's keys stand down (<see cref="OwnsKeyboard"/>, <c>InputManager.TextFieldFocused</c>)
     /// and each step is echoed from the field's state before and after it (<see cref="EditEcho"/>).
     /// Enter, Escape and Tab end it: the first two are the field's own way out, and Escape keeps the
-    /// text (the field would put the old one back, and with it undo a filter the player just typed).
+    /// text (the field would put the old one back, and with it undo a filter the player just typed);
+    /// Tab and Shift+Tab go on to the next or the previous stop, as they do from any control.
     /// </summary>
     public static class TextEdit
     {
@@ -39,14 +41,16 @@ namespace GuildrunAccess.Module.UI
         /// is released (the Escape that leaves the field must not also close the screen).</summary>
         public static bool OwnsKeyboard => Active || _holdKeys;
 
-        public static void Begin(TMP_InputField field)
+        /// <summary>Edit the field. <paramref name="announce"/> says so ("editing": Enter on a field
+        /// at rest); a field edited on landing has just been read as one.</summary>
+        public static void Begin(TMP_InputField field, bool announce)
         {
             if (field == null || Active) return;
             _field = field;
             _pending = true;
             _seenFocus = false;
             _activated = false;
-            Speech.Say(Strings.EditBegin, interrupt: true);
+            if (announce) Speech.Say(Strings.EditBegin, interrupt: true);
         }
 
         public static void Tick()
@@ -81,24 +85,34 @@ namespace GuildrunAccess.Module.UI
                     }
                     return;
                 }
+                bool first = !_seenFocus;
                 _seenFocus = true;
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Tab))
                 {
+                    bool back = UnityEngine.Input.GetKey(KeyCode.LeftShift) || UnityEngine.Input.GetKey(KeyCode.RightShift);
                     _field.DeactivateInputField();
-                    End(announce: true);
+                    End(announce: false);
+                    InputManager.Dispatch(back ? UiActions.Prev : UiActions.Next);
                     return;
                 }
                 var now = Read(_field);
                 bool ctrl = UnityEngine.Input.GetKey(KeyCode.LeftControl) || UnityEngine.Input.GetKey(KeyCode.RightControl);
                 string say = EditEcho.Describe(_last, now, ctrl);
                 _last = now;
-                if (say != null) Speech.Say(say, interrupt: true);
+                // The field selects its text as it takes focus: said after the landing, not over it.
+                if (say != null) Speech.Say(say, interrupt: !first);
             }
             catch (Exception e)
             {
                 CoreLog.Warning("TextEdit: " + e.Message);
                 End(announce: false);
             }
+        }
+
+        /// <summary>End an edit under way without a word: focus has left the field.</summary>
+        public static void Stop()
+        {
+            if (Active) End(announce: false);
         }
 
         /// <summary>Module teardown: the field goes back to the game as it was.</summary>

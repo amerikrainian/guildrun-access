@@ -258,20 +258,21 @@ runs; spoken text is still captured. The game already runs in the background whe
   compendium controller's `_heroInfoAdapter.Balancing`), cast to `IReadOnlyCollection` for the
   count and `IReadOnlyList` for the index.
 - `POST /input` with `dev.type:TEXT` (`UnityNavInput.InjectTyped`): TEXT reads as typed on the next
-  frame, by type-ahead or by a text field. A field is an `Edit` node (`ControlTypes.Edit`) whose screen
-  types into it while it has focus (`CompendiumScreen`: `AllowsTypeahead` false there, `OnUpdate`
-  appends `NavInput.TypedText` to the game's `TMP_InputField.text` and echoes it, Backspace, the
-  secondary action, takes a character back). The compendium's search filters on `onValueChanged`
-  alone, no Enter. The server trims the body, so a lone space cannot be sent (`dev.type:a b` can).
-  Enter on the field is the whole editor (`UI/TextEdit`): the game's field is selected and activated
-  as a click does, so the caret, the selection, Ctrl+A, the clipboard and any character are TextMesh
-  Pro's own (it reads Unity's legacy event queue, which focus mode leaves alone), the mod's keys stand
-  down (`InputManager.TextFieldFocused`, until the key that ended the edit comes up) and each step is
-  echoed from the field's state before and after it (`Core/UI/EditEcho`, unit-tested). Enter, Escape
-  and Tab end it; Escape keeps the text (`restoreOriginalTextOnEscape` is off for the edit). The
-  driver cannot press OS keys: `confirm` on the field, then set `text` and
-  `selectionStringFocusPosition` / `selectionStringAnchorPosition` in `/eval` and read `/speech`;
-  `DeactivateInputField()` ends it as Enter does.
+  frame by type-ahead. The server trims the body, so a lone space cannot be sent (`dev.type:a b` can).
+- Text fields (`UI/TextEdit`, the compendium's search: an `Edit` node, a stop of its own, no context):
+  the field is edited with the game's own editor the moment focus lands on it (`CompendiumScreen.
+  OnUpdate`), selected and activated as a click does, so the caret, the selection, Ctrl+A, the
+  clipboard and any character are TextMesh Pro's (it reads Unity's legacy event queue, which focus
+  mode leaves alone). The mod's keys stand down meanwhile (`InputManager.TextFieldFocused`, until the
+  key that ended the edit comes up): a field among other controls would swallow their arrows, hence
+  the stop of its own. Each step is echoed from the field's state before and after it
+  (`Core/UI/EditEcho`, unit-tested). Tab and Shift+Tab end the edit and move on; Escape or Enter end
+  it with focus still on the field, which then rests (Enter edits again, a second Escape backs out);
+  Escape keeps the text (`restoreOriginalTextOnEscape` is off for the edit); focus leaving any other
+  way stops it (`TextEdit.Stop`). The search filters on `onValueChanged` alone, no Enter. The driver
+  cannot press OS keys: land on the field, set `text` and `selectionStringFocusPosition` /
+  `selectionStringAnchorPosition` in `/eval` and read `/speech`; `DeactivateInputField()` ends the
+  edit as Enter does.
 - Re-show a dismissed panel for testing: find its scene instance with `Resources.FindObjectsOfTypeAll`
   in `/eval` and `SetActive(true)`; `SetActive(false)` afterwards. Never press a consent button for the player.
 

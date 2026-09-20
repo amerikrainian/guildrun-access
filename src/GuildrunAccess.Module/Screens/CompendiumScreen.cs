@@ -56,11 +56,13 @@ namespace GuildrunAccess.Module.Screens
         // ---- the search field ----
 
         // The game filters on every change of the field (its one listener is onValueChanged: no Enter,
-        // no submit), so the field is typed into while it has focus: letters and space go to its text,
-        // each echoed, Backspace takes the last one back, and type-ahead stands down there. Setting
-        // the text runs the game's listener as its own typing does. Enter is the whole editor
-        // (UI/TextEdit: the caret, the selection, the clipboard, any character).
+        // no submit). The field is a stop of its own and is edited the moment focus lands on it, with
+        // the game's own editor (UI/TextEdit: the caret, the selection, the clipboard, any character;
+        // the arrows are the field's there, so Tab and Shift+Tab leave it). Escape or Enter ends the
+        // edit with focus still on the field, which then waits for Enter, or for focus to come back,
+        // to be edited again: a second Escape closes the compendium.
         private static readonly ControlId SearchId = ControlId.Structural("compendium:search");
+        private bool _searchRested; // the player ended the edit and focus has not left the field since
 
         private static bool SearchFocused
         {
@@ -78,30 +80,28 @@ namespace GuildrunAccess.Module.Screens
                 {
                     GameNodes.LabelPart(() => Strings.CompendiumSearch(string.IsNullOrEmpty(search.text) ? Strings.CompendiumSearchEmpty : search.text)),
                 },
-                OnActivate = () => TextEdit.Begin(search),
-                OnSecondary = () =>
-                {
-                    string text = search.text;
-                    if (string.IsNullOrEmpty(text)) { Speech.Say(Strings.ValueBlank, interrupt: true); return; }
-                    char last = text[text.Length - 1];
-                    search.text = text.Substring(0, text.Length - 1);
-                    Speech.Say(EditEcho.Name(last.ToString()), interrupt: true);
-                },
+                OnActivate = () => TextEdit.Begin(search, announce: true),
             };
         }
 
+        public override void OnUnfocus() => TextEdit.Stop();
+
+        public override void OnPop() => TextEdit.Stop();
+
         public override void OnUpdate()
         {
-            if (TextEdit.OwnsKeyboard || !SearchFocused || !Navigation.FocusActive()) return;
-            var input = NavInput.Current;
-            if (input.CtrlHeld || input.AltHeld) return;
-            string typed = input.TypedText;
-            if (string.IsNullOrEmpty(typed)) return;
+            if (!SearchFocused || !Navigation.FocusActive())
+            {
+                // Focus left the field some other way than its own Tab: the edit goes with it.
+                _searchRested = false;
+                TextEdit.Stop();
+                return;
+            }
+            if (TextEdit.OwnsKeyboard) { _searchRested = true; return; }
+            if (_searchRested) return;
             var c = Panel();
             var search = c != null ? c._searchInputField : null;
-            if (search == null || !search.gameObject.activeInHierarchy) return;
-            search.text = (search.text ?? "") + typed;
-            Speech.Say(EditEcho.Name(typed), interrupt: true);
+            if (search != null && search.gameObject.activeInHierarchy) TextEdit.Begin(search, announce: false);
         }
 
         public override void Build(GraphBuilder b)
@@ -120,12 +120,17 @@ namespace GuildrunAccess.Module.Screens
             }
             b.PopContext();
 
+            // The search, a stop of its own: the arrows are the field's while it is edited.
+            var search = c._searchInputField;
+            if (search != null && search.gameObject.activeInHierarchy)
+            {
+                b.BeginStop("search");
+                b.AddItem(SearchId, SearchNode(search));
+            }
+
             // The filters.
             b.BeginStop("filters");
             b.PushContext(Strings.CompendiumFilters, null, positions: false);
-            var search = c._searchInputField;
-            if (search != null && search.gameObject.activeInHierarchy)
-                b.AddItem(SearchId, SearchNode(search));
             if (c._classFilterDropdown != null && c._classFilterDropdown.gameObject.activeInHierarchy)
                 b.AddItem(ControlId.Structural("compendium:class"), GameNodes.Dropdown(c._classFilterDropdown, () => Strings.CompendiumClassFilter));
             if (GameNodes.IsShown(c._classFilterClearButton))
