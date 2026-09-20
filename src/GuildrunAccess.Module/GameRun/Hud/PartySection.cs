@@ -101,6 +101,8 @@ namespace GuildrunAccess.Module.GameRun
                     },
                     SearchText = () => RunLabels.SlotSummary(view),
                     OnActivate = () => _actions.OpenHeroMenu(view, reserve),
+                    // Backspace opens the hero's compendium page, as on its card.
+                    OnSecondary = view.IsEmpty ? (System.Action)null : () => { if (RunData.TryHeroId(view, out var id)) HeroActions.OpenCompendium(id); },
                     // Landing shows the hero's card in the sidebar, as hovering the slot does; the line
                     // and the buffers read it.
                     OnFocus = () => { if (RunData.TryHeroId(view, out var id)) HeroActions.PeekHero(id); },

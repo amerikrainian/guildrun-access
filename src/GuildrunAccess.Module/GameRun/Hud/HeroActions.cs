@@ -230,6 +230,22 @@ namespace GuildrunAccess.Module.GameRun
             catch (Exception e) { CoreLog.Warning("Peek: ShowHeroCard threw: " + e.Message); }
         }
 
+        /// <summary>The compendium on a hero of the run, from a control that is not its card (a slot,
+        /// a cell, a unit): the game has its compendium button on the full card alone, which a click on
+        /// the hero brings up in the sidebar, so the card is shown and its own button pressed.</summary>
+        public static void OpenCompendium(HeroId heroId)
+        {
+            PeekHero(heroId);
+            var sidebar = Sidebar;
+            var card = sidebar != null ? sidebar._heroCardView : null;
+            if (card == null || !card.gameObject.activeInHierarchy)
+            {
+                CoreLog.Warning("Compendium: the sidebar shows no hero card");
+                return;
+            }
+            HeroCardNodes.OpenCompendium(card);
+        }
+
         /// <summary>The same for an enemy on the board.</summary>
         public static void PeekEnemy(EnemyId enemyId)
         {

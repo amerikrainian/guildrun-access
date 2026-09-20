@@ -368,6 +368,8 @@ namespace GuildrunAccess.Module.GameRun
                 },
                 SearchText = () => Occupant(cell),
                 OnActivate = () => ActivateCell(cell),
+                // Backspace on a hero's cell opens its compendium page, as on its card.
+                OnSecondary = RunData.TryHeroAt(cell, out _) ? () => { if (RunData.TryHeroAt(cell, out var id)) HeroActions.OpenCompendium(id); } : (System.Action)null,
                 // Landing on an occupied cell shows its card in the sidebar, as the mouse hovering it
                 // does; the buffers below read that card, so what the inspect panel shows is what
                 // review reads, without leaving the grid.
@@ -390,6 +392,11 @@ namespace GuildrunAccess.Module.GameRun
             if (view == null) return;
             if (Nullables.TryGet(() => view.HeroId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId hero)) HeroActions.PeekHero(hero);
             else if (Nullables.TryGet(() => view.EnemyId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.EnemyId enemy)) HeroActions.PeekEnemy(enemy);
+        }
+
+        private static void OpenCompendium(CharacterViewController view)
+        {
+            if (view != null && Nullables.TryGet(() => view.HeroId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId hero)) HeroActions.OpenCompendium(hero);
         }
 
         // A fighting unit's rows and tooltips come from its card when the sidebar shows it, else its
@@ -614,6 +621,8 @@ namespace GuildrunAccess.Module.GameRun
                     // Landing shows the unit's card in the sidebar, as hovering it does; the buffers read
                     // it: the hero buffer as name, stats, abilities, the control buffer as the tooltips.
                     OnFocus = () => Peek(u.View),
+                    // Backspace on a hero opens its compendium page, as on its card.
+                    OnSecondary = u.IsHero ? () => OpenCompendium(u.View) : (System.Action)null,
                     Details = () => UnitDetails(u),
                     Subject = () => u.View,
                     SideLines = HeroLines.SideOfSlots(() => UnitHeroLines(u), () => UnitSlots(u)),
