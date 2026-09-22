@@ -135,7 +135,7 @@ namespace GuildrunAccess.Module
             // the run's shards, Ctrl+C the focused cell's or unit's board coordinates, Ctrl+T the
             // battle timer, Ctrl+N the units near the focused cell or hero while placing, Ctrl+H the
             // hostile ones, Ctrl+Q the quests of the focused hero, item or relic, Ctrl+M a Red Rift
-            // run's missions (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
+            // run's missions, Ctrl+B the act's boss (RunGlance). Digits and Ctrl chords never clash with the type-ahead search,
             // which owns the bare letters.
             Glance("glance.vitals", "Unit health, shield and mana", KeyCode.Alpha1, KeyCode.Keypad1, () => UnitGlance.LineFor(UnitGlance.Group.Vitals));
             Glance("glance.attack", "Unit attack, magic and defense", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.LineFor(UnitGlance.Group.Attack));
@@ -153,6 +153,7 @@ namespace GuildrunAccess.Module
             Glance("run.hostiles", "Nearby hostiles", () => RunGlance.NearbyLine(hostilesOnly: true)).AddBinding(new KeyboardBinding(KeyCode.H, ctrl: true));
             Glance("run.quests", "Quests of the focused hero or item", RunGlance.QuestsLine).AddBinding(new KeyboardBinding(KeyCode.Q, ctrl: true));
             Glance("run.missions", "Red Rift missions", RunGlance.MissionsLine).AddBinding(new KeyboardBinding(KeyCode.M, ctrl: true));
+            Glance("run.boss", "Act boss", RunGlance.BossLine).AddBinding(new KeyboardBinding(KeyCode.B, ctrl: true));
             // The shop's reroll and freeze, answered by the shop screen's own actions (ShopScreen) and
             // by nothing else: no handler here.
             InputManager.Register("shop.reroll", "Shop reroll", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.R, ctrl: true));

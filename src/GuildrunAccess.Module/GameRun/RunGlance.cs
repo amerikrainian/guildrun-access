@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Ember.Scopes.Battle.UI;
 using Ember.Scopes.GameRun.UI;
+using Ember.Scopes.GameRun.UI.ChunkUI;
 using GuildrunAccess.Core;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -113,6 +114,26 @@ namespace GuildrunAccess.Module.GameRun
         {
             var lines = MissionNodes.Lines();
             return lines.Count > 0 ? string.Join(". ", lines) : null;
+        }
+
+        /// <summary>Ctrl+B: the boss this act ends on, as the map strip's own boss node says it
+        /// ("Current Act Boss: Demon"), read at the keypress from the strip the game draws for the
+        /// CURRENT chunk, so it changes with the act. The boss is what the session data says the
+        /// chunk's last floor holds (<see cref="RunData.ActBossName"/>): that name is the line where
+        /// the strip is not up (the hero picker) or its node's text does not say it (the final
+        /// chunk's node describes the final challenge, not who it is). Silent outside a run.</summary>
+        public static string BossLine()
+        {
+            string name = RunData.ActBossName();
+            var chunk = GameScopes.Controller<ChunkUIController>();
+            var node = chunk != null && chunk.gameObject.activeInHierarchy ? MapSection.ActBossNode(chunk) : null;
+            var lines = node != null ? TooltipReader.Lines(node.TooltipRaycastTarget) : null;
+            // The tooltip's heading is the node's title ("Act Boss"): its description is the line.
+            if (lines != null && lines.Count > 1) lines.RemoveAt(0);
+            string text = lines != null && lines.Count > 0 ? string.Join(", ", lines) : null;
+            if (string.IsNullOrEmpty(name)) return text;
+            if (text != null && text.IndexOf(name, StringComparison.CurrentCultureIgnoreCase) >= 0) return text;
+            return text == null ? Strings.RunActBoss(name) : Strings.RunActBoss(name) + ", " + text;
         }
 
         public static string TimerLine()

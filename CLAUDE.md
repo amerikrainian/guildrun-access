@@ -297,7 +297,12 @@ Slime 2 4": the last number is the distance, the one before it a numbered enemy'
 enemies from a hero, silent on an empty cell), both placement-only (`RunData.Placing`) and silent in a
 fight, Ctrl+Q the quests of the focused hero, item or relic (the control's
 `BufferKeys.QuestBrief` side lines: the item named once, its quests after it, no rewards), Ctrl+M a
-Red Rift run's missions from anywhere (`GameRun/Nodes/MissionNodes`) (`RunGlance`); Ctrl+R/Ctrl+F reroll
+Red Rift run's missions from anywhere (`GameRun/Nodes/MissionNodes`), Ctrl+B the boss the current act
+ends on: the description of the map strip's boss node for the CURRENT chunk (the last stage node
+before the dots, `MapSection.ActBossNode`: "Current Act Boss: Demon", read at the keypress so it
+follows the act), prefixed with the session's own boss name (`RunData.ActBossName`: the chunk's last
+floor's `TryGetBossName`) when the node's text does not say it, that name alone where the strip is not
+up (`RunGlance`); Ctrl+R/Ctrl+F reroll
 and freeze from anywhere on the shop (the shop section's `GetActions`; feedback deferred a few frames
 through `UI/Later`). Digits and Ctrl chords never clash with type-ahead; bare letters do. The battle board is a
 pointy-top hex grid (Unity's hexagon `Grid`, odd rows half a cell to the right, no cell straight up

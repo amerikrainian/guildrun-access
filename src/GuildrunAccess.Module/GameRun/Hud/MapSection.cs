@@ -66,6 +66,22 @@ namespace GuildrunAccess.Module.GameRun
             return list;
         }
 
+        /// <summary>The strip's node for the current act's boss: the chunk's last floor, so the last
+        /// stage node of the part the game draws for the current chunk, which is what stands before
+        /// the dots while a later chunk is to come, and the last stage node of the strip otherwise
+        /// (the final boss node that follows the dots is a later chunk's). Null without a strip.</summary>
+        internal static ActNodeView ActBossNode(ChunkUIController chunk)
+        {
+            var nodes = MapNodes(chunk);
+            ActNodeView last = null;
+            foreach (var node in nodes)
+            {
+                if (node == null) break; // the dots: what follows is not this chunk's
+                last = node;
+            }
+            return last;
+        }
+
         // "map" plus the act indicator's own text ("Act 1") when it shows one.
         private static string MapTitle(ChunkUIController chunk)
         {

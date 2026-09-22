@@ -56,6 +56,39 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
+        /// <summary>The run session's reader (the act structure, the floor indices), from whichever of
+        /// the game's controllers that hold one is live: the battle flow's in a battle scene, the map
+        /// strip's, the hero picker's at a run's start. Null outside a run.</summary>
+        public static Ember.Scopes.GameRun.RunSession.Data.RunSessionDataReader SessionReader()
+        {
+            var flow = GameScopes.Controller<BattleFlowUIStateController>();
+            if (flow != null && flow._runSessionReader != null) return flow._runSessionReader;
+            var chunk = GameScopes.Controller<Ember.Scopes.GameRun.UI.ChunkUI.ChunkUIController>();
+            if (chunk != null && chunk._runSessionReader != null) return chunk._runSessionReader;
+            var picker = GameScopes.Controller<Ember.Scopes.GameRun.UI.HeroPicker.HeroPickerController>();
+            return picker != null ? picker._runSessionReader : null;
+        }
+
+        /// <summary>The name of the boss the current act (chunk) ends on, as the game names it for its
+        /// map strip (<c>FloorNodeData.TryGetBossName</c> on the chunk's last floor), or null.</summary>
+        public static string ActBossName()
+        {
+            try
+            {
+                var reader = SessionReader();
+                var chunk = reader != null ? reader.CurrentChunk : null;
+                var floors = chunk != null ? chunk.Floors : null;
+                if (floors == null || floors.Length == 0) return null;
+                string name;
+                return floors[floors.Length - 1].TryGetBossName(out name) && !string.IsNullOrWhiteSpace(name) ? name : null;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("ActBossName: unreadable: " + e.Message);
+                return null;
+            }
+        }
+
         /// <summary>Whether the run is in the placement phase (the board editable): the battle flow shows
         /// its placement UI and a board exists.</summary>
         public static bool Placing()

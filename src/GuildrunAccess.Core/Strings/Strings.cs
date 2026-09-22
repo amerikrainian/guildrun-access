@@ -141,6 +141,7 @@ namespace GuildrunAccess.Core.Strings
             D("bind.run.hostiles", "Nearby hostiles"),
             D("bind.run.quests", "Quests of the focused hero or item"),
             D("bind.run.missions", "Red Rift missions"),
+            D("bind.run.boss", "Act boss"),
             D("bind.shop.reroll", "Shop reroll"),
             D("bind.shop.freeze", "Shop freeze"),
             D("bind.mod.reload", "Reload mod code"),
@@ -235,6 +236,8 @@ namespace GuildrunAccess.Core.Strings
             D("run.map_current", "current"),
             // The dots the game draws between this act's boss and the final boss: floors it does not draw yet.
             D("run.map_more", "more floors, not shown"),
+            // Ctrl+B where the map strip's boss node does not name the boss itself; {0} = the boss's name.
+            D("run.act_boss", "act boss {0}"),
             D("run.speed_auto", "auto"),
             // {0} = the speed step number.
             D("run.speed_n", "speed {0}"),
@@ -716,6 +719,7 @@ namespace GuildrunAccess.Core.Strings
         public static string RunMap => Get("run.map");
         public static string RunMapCurrent => Get("run.map_current");
         public static string RunMapMore => Get("run.map_more");
+        public static string RunActBoss(string name) => F("run.act_boss", name);
         public static string RunSpeedAuto => Get("run.speed_auto");
         public static string RunSpeedN(int n) => F("run.speed_n", n);
         public static string RunHeroPanel => Get("run.hero_panel");
