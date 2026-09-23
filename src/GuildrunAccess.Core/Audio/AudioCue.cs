@@ -27,24 +27,36 @@ namespace GuildrunAccess.Core.Audio
         HeroCast,
         /// <summary>An enemy casts an ability.</summary>
         EnemyCast,
-        /// <summary>A status lands on a hero.</summary>
+        /// <summary>A status the mod has no sound of its own for lands on a hero (none was on it).</summary>
         StatusOnHero,
+        /// <summary>Such a status leaves a hero.</summary>
+        StatusOnHeroLost,
         /// <summary>A hero's mana fills: its ability is ready.</summary>
         ManaFull,
         /// <summary>A rush effect starts.</summary>
         RushStarted,
         /// <summary>A stall effect starts.</summary>
         StallStarted,
-        /// <summary>Burn lands on a unit (panned to its side: heroes left, enemies right).</summary>
+        /// <summary>Burn lands on a unit that had none (panned to its side: heroes left, enemies right).</summary>
         StatusBurn,
-        /// <summary>Frost lands on a unit (panned to its side).</summary>
+        /// <summary>Frost lands on a unit that had none (panned to its side).</summary>
         StatusFrost,
-        /// <summary>Poison lands on a unit (panned to its side).</summary>
+        /// <summary>Poison lands on a unit that had none (panned to its side).</summary>
         StatusPoison,
         /// <summary>A unit is stunned (panned to its side).</summary>
         StatusStun,
-        /// <summary>A unit gains a shield (panned to its side).</summary>
+        /// <summary>A unit gains a shield, having had none (panned to its side).</summary>
         ShieldGained,
+        /// <summary>The burn on a unit wears off (the acquired sound reversed; panned to its side).</summary>
+        StatusBurnLost,
+        /// <summary>The frost on a unit wears off.</summary>
+        StatusFrostLost,
+        /// <summary>The poison on a unit wears off.</summary>
+        StatusPoisonLost,
+        /// <summary>A unit's stun wears off.</summary>
+        StatusStunLost,
+        /// <summary>A unit's shield is gone.</summary>
+        ShieldLost,
         /// <summary>Shards are gained mid-fight (the game's shard feedback).</summary>
         ShardsGained,
         /// <summary>A unit's stats go up mid-fight (the game's stat-gain feedback).</summary>

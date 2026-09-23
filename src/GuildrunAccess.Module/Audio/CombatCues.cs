@@ -24,8 +24,8 @@ namespace GuildrunAccess.Module.Audio
     /// <see cref="Player"/>, whose per-cue interval thins a rattle to a pulse. A bar's
     /// <c>_isPlayer</c> tells a hero from an enemy. Only a fighting unit's bar counts (the game
     /// drives the same views while it sets a board up), and only while the flow state is a fight.
-    /// Nothing is cached about the game: the two edge-triggers (low health, mana full) remember
-    /// only which bars have already sounded, cleared at each new placement.
+    /// Nothing is cached about the game: the edge-triggers (low health, mana full, the statuses a
+    /// bar shows) remember only which bars have already sounded, cleared at each new placement.
     /// </summary>
     internal static class CombatCues
     {
@@ -34,12 +34,17 @@ namespace GuildrunAccess.Module.Audio
 
         private static readonly HashSet<int> _lowBars = new HashSet<int>();
         private static readonly HashSet<int> _fullBars = new HashSet<int>();
+        // The statuses each bar shows right now (bar instance id, status): a status sounds as it
+        // arrives on a bar that had none of it and as the last of it leaves, not on every refresh or
+        // stack the game re-applies in between.
+        private static readonly HashSet<(int, StatusType)> _statuses = new HashSet<(int, StatusType)>();
 
         /// <summary>A new fight is being set up: the edge-triggers and the interval clocks start over.</summary>
         public static void Reset()
         {
             _lowBars.Clear();
             _fullBars.Clear();
+            _statuses.Clear();
             Player?.Reset();
         }
 
@@ -54,17 +59,17 @@ namespace GuildrunAccess.Module.Audio
         private const float SidePan = 0.35f;
         private static float PanOf(bool hero) => hero ? -SidePan : SidePan;
 
-        // The cue for a status the game names by type, or null for the rest (a hero's other statuses
-        // are the generic cue below).
-        private static AudioCue? StatusCue(StatusType type)
+        // The cues for a status the mod names by type, arriving and leaving, or null for the rest (a
+        // hero's other statuses are the generic pair).
+        private static (AudioCue arrived, AudioCue left)? StatusCues(StatusType type)
         {
             switch (type)
             {
-                case StatusType.Burn: return AudioCue.StatusBurn;
-                case StatusType.Frost: return AudioCue.StatusFrost;
-                case StatusType.Poison: return AudioCue.StatusPoison;
-                case StatusType.Stun: return AudioCue.StatusStun;
-                case StatusType.Shield: return AudioCue.ShieldGained;
+                case StatusType.Burn: return (AudioCue.StatusBurn, AudioCue.StatusBurnLost);
+                case StatusType.Frost: return (AudioCue.StatusFrost, AudioCue.StatusFrostLost);
+                case StatusType.Poison: return (AudioCue.StatusPoison, AudioCue.StatusPoisonLost);
+                case StatusType.Stun: return (AudioCue.StatusStun, AudioCue.StatusStunLost);
+                case StatusType.Shield: return (AudioCue.ShieldGained, AudioCue.ShieldLost);
                 default: return null;
             }
         }
@@ -115,13 +120,19 @@ namespace GuildrunAccess.Module.Audio
             {
                 try
                 {
-                    if (Player == null || stackCount <= 0 || !Fighting(__instance)) return;
+                    if (Player == null || !Fighting(__instance)) return;
                     bool hero = __instance._isPlayer;
-                    // A status with a sound of its own sounds on either side, placed by side; any
-                    // other status sounds only on a hero, the generic way.
-                    var own = StatusCue(type);
-                    if (own != null) Play(own.Value, PanOf(hero));
-                    else if (hero) Play(AudioCue.StatusOnHero);
+                    var key = (__instance.GetInstanceID(), type);
+                    // The edges only: a count above zero on a bar that showed none of this status is
+                    // an arrival, zero on one that did is a departure; a refresh or a stack in between
+                    // is neither. A status with a sound of its own sounds on either side, placed by
+                    // side; any other status sounds only on a hero, the generic way.
+                    bool arrived = stackCount > 0 && _statuses.Add(key);
+                    bool left = stackCount <= 0 && _statuses.Remove(key);
+                    if (!arrived && !left) return;
+                    var own = StatusCues(type);
+                    if (own != null) Play(arrived ? own.Value.arrived : own.Value.left, PanOf(hero));
+                    else if (hero) Play(arrived ? AudioCue.StatusOnHero : AudioCue.StatusOnHeroLost);
                 }
                 catch (Exception e) { CoreLog.Warning("CombatCues: status hook failed: " + e.Message); }
             }

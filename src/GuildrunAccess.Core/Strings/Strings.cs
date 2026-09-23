@@ -363,6 +363,13 @@ namespace GuildrunAccess.Core.Strings
             D("sound.shards_gained", "shards gained"),
             D("sound.stat_up", "stats go up"),
             D("sound.taunt", "hero taunts"),
+            // The statuses' other edge: the status wearing off (the acquired sound reversed).
+            D("sound.status_on_hero_lost", "status leaves a hero"),
+            D("sound.status_burn_lost", "burn wears off"),
+            D("sound.status_frost_lost", "frost wears off"),
+            D("sound.status_poison_lost", "poison wears off"),
+            D("sound.status_stun_lost", "stun wears off"),
+            D("sound.shield_lost", "shield lost"),
             // {0} = the key category, one of the three names below.
             D("mod.key_category", "{0} keys"),
             // The key categories of the "All keys" list: live everywhere, on the focused screen, in a run.

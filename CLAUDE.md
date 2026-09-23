@@ -424,9 +424,14 @@ resolves from the application scope's container), unused so far.
   crit, hero healed, hero low health (below a quarter, once until it recovers), hero and enemy
   died, hero and enemy cast, a status on a hero, mana full (ability ready), rush and stall
   started; and, with the maintainer's authored sounds, burn, frost, poison, stun and a shield
-  landing on EITHER side, panned by side (heroes a little left, enemies a little right,
-  `CombatCues.SidePan`; a hero's other statuses stay the generic cue), shards gained, stats up and
-  a taunt. `Module/Audio/CombatCues` raises them from Harmony postfixes on the same HUD views the
+  ARRIVING on a unit of either side that had none of it, and LEAVING it (the `*Lost` cues: the
+  arrival's file reversed, `ffmpeg -af areverse`), panned by side (heroes a little left, enemies a
+  little right, `CombatCues.SidePan`; a hero's other statuses are the generic pair), shards
+  gained, stats up and a taunt. A status sounds at its edges only: the HUD's `SetStatusStack` runs
+  on every applied event, which the simulation raises for each refresh and stack (a shield granted
+  on every attack made 21 shield events in one 17 s fight), so `CombatCues` keeps the set of
+  (bar, status) it has seen at a positive count and sounds a count above zero only for a new
+  member, zero only for a removed one. `Module/Audio/CombatCues` raises them from Harmony postfixes on the same HUD views the
   battle log hooks (`HealthBarView.UpdateHealth/SetStatusStack/UpdateMana/ShowAbilityIcon`,
   `CharacterViewController.HandleAnimationAudio`; `_isPlayer` tells the sides, a bar counts only
   while `BattleEvents.UnitName` names a fighting unit), on the tutorial's rush and stall
@@ -560,7 +565,10 @@ resolves from the application scope's container), unused so far.
    live with the choice still owed. The picker lists it last (`MenuSection.AddChoiceButton`); the
    screen underneath takes over by itself (the picker object is inactive) and its menu stop
    carries the same button, where `MenuSection.OnUpdate` lands focus the moment a choice is hidden
-   ("Run, menu, list, Show, button"). The game drops the button once the choice is made.
+   ("Run, menu, list, Show, button"). An EVENT underneath stays `_isCovered` while the hidden
+   choice is owed (its Proceed disabled), so `EventScreen.IsActive` counts a covered event as the
+   player's when the choice button shows hidden; before that, hiding a campfire rank-up left no
+   screen at all. The game drops the button once the choice is made.
    `IGameRegistryService.RankUpHero(heroId)`
    in `/eval` brings a picker up, the ids from `GameRegistryService.Data.Heroes.Keys.CopyTo`), the
    relic reward picker

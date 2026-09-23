@@ -40,6 +40,14 @@ CUES = {
     "combat/shards_gained": ([1568, 2093], 0.04, 0.01, "sine", 0.35),
     "combat/stat_up": ([440, 554, 659], 0.05, 0.005, "sine", 0.4),
     "combat/taunt": ([262, 196], 0.1, 0.01, "rich", 0.45),
+    # A status wearing off: the authored files are the arrival reversed (ffmpeg -af areverse); the
+    # fallbacks play the arrival's notes backwards.
+    "combat/status_on_hero_lost": ([587, 587], 0.05, 0.03, "tri", 0.3),
+    "combat/status_burn_lost": ([880, 740], 0.05, 0.01, "square", 0.2),
+    "combat/status_frost_lost": ([988, 1175], 0.06, 0.01, "sine", 0.35),
+    "combat/status_poison_lost": ([370, 349], 0.07, 0.01, "tri", 0.35),
+    "combat/status_stun_lost": ([494, 494], 0.04, 0.02, "square", 0.2),
+    "combat/shield_lost": ([587, 392], 0.08, 0.01, "rich", 0.4),
 }
 
 
