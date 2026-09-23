@@ -210,6 +210,7 @@ end.backup=equipo de apoyo
 end.no_items=sin objetos
 end.continue=Continuar
 end.no_highlights=sin destacados
+end.summary=Resumen
 screen.progression=Progreso
 progression.xp={0} EXP, nivel {1}
 progression.milestones=hitos

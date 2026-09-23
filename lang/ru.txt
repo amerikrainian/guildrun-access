@@ -210,6 +210,7 @@ end.backup=резервный отряд
 end.no_items=нет предметов
 end.continue=Продолжить
 end.no_highlights=нет показателей
+end.summary=Итоги
 screen.progression=Прогресс
 progression.xp=очки опыта: {0}, уровень {1}
 progression.milestones=вехи

@@ -592,7 +592,10 @@ resolves from the application scope's container), unused so far.
    `LeaderboardNodes`, `UI/TooltipReader`; run data and moves through `GameRun/RunData`.
 6. **(done)** End screen (a boss victory shows it in the game's short form, `Show(_, true)` from the
    flow controller's OnStart timer: every navigation button hidden, one caption-less click-anywhere
-   button whose click hides it back to the result panel, listed as Continue and pressed by Escape),
+   button whose click hides it back to the result panel, listed as Continue and pressed by Escape;
+   its Summary button turns on `EndScreenController._endlessShareView`, a `HeroPanelView` in its
+   summary form, read by `RunSummaryScreen` above the end screen: the team's cards, the endless
+   floor when filled, the endless leaderboard, Close, which Escape presses),
    progression, the sidebar (inspect cards, damage tracker), battle events
    (`GameRun/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties
    bars, cast animations: the battle events log, a run-HUD stop, and NOTHING spoken as it happens;

@@ -294,6 +294,8 @@ namespace GuildrunAccess.Core.Strings
             D("end.no_items", "no items"),
             D("end.continue", "Continue"),
             D("end.no_highlights", "no highlights"),
+            // The end screen's Summary overlay (its own title is used when it shows one).
+            D("end.summary", "Summary"),
 
             // The meta-progression (unlock timeline) after a run.
             D("screen.progression", "Progression"),
@@ -826,6 +828,7 @@ namespace GuildrunAccess.Core.Strings
         public static string EndNoItems => Get("end.no_items");
         public static string EndContinue => Get("end.continue");
         public static string EndNoHighlights => Get("end.no_highlights");
+        public static string EndSummary => Get("end.summary");
         public static string ScreenProgression => Get("screen.progression");
         public static string ProgressionXp(int xp, int level) => F("progression.xp", xp, level);
         public static string ProgressionMilestones => Get("progression.milestones");

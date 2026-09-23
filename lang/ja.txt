@@ -210,6 +210,7 @@ end.backup=バックアップチーム
 end.no_items=アイテムなし
 end.continue=続ける
 end.no_highlights=ハイライトなし
+end.summary=サマリー
 screen.progression=進行度
 progression.xp={0} XP、レベル {1}
 progression.milestones=マイルストーン

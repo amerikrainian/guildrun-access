@@ -210,6 +210,7 @@ end.backup=equipe de reforço
 end.no_items=sem itens
 end.continue=Continuar
 end.no_highlights=sem destaques
+end.summary=Resumo
 screen.progression=Progressão
 progression.xp={0} EXP, nível {1}
 progression.milestones=marcos

@@ -228,6 +228,7 @@ namespace GuildrunAccess.Module
             ScreenManager.Register(new HeroesPanelScreen());
             ScreenManager.Register(new RunSettingsScreen());
             ScreenManager.Register(new RunEndScreen());
+            ScreenManager.Register(new RunSummaryScreen());
             ScreenManager.Register(new ProgressionScreen());
             ScreenManager.Register(new ComicScreen());
             ScreenManager.Register(new CompendiumScreen());

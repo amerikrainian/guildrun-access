@@ -210,6 +210,7 @@ end.backup=équipe de réserve
 end.no_items=aucun objet
 end.continue=Continuer
 end.no_highlights=aucun fait marquant
+end.summary=Résumé
 screen.progression=Progression
 progression.xp={0} XP, niveau {1}
 progression.milestones=paliers

@@ -212,6 +212,7 @@ end.backup=backup team
 end.no_items=no items
 end.continue=Continue
 end.no_highlights=no highlights
+end.summary=Summary
 screen.progression=Progression
 progression.xp={0} XP, level {1}
 progression.milestones=milestones

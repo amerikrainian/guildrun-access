@@ -210,6 +210,7 @@ end.backup=后援队伍
 end.no_items=无物品
 end.continue=继续
 end.no_highlights=无亮点
+end.summary=总结
 screen.progression=游戏进度
 progression.xp={0}经验值，{1}级
 progression.milestones=里程碑

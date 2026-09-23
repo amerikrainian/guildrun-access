@@ -210,6 +210,7 @@ end.backup=後備隊伍
 end.no_items=無物品
 end.continue=繼續
 end.no_highlights=無精彩表現
+end.summary=總結
 screen.progression=進度
 progression.xp={0} 經驗值，等級 {1}
 progression.milestones=里程碑
