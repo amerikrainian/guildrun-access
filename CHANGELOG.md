@@ -1,5 +1,15 @@
 # Changelog
 
+## V0.1.1
+
+- ctrl+b says which boss this act ends on.
+- alt+b, alt+t and alt+i jump straight to the board (or the shop, paths, event choices), the party, and your items.
+- items can go into a specific slot, and worn items can be moved between slots.
+- the hero picker tells you how many boss tokens you have.
+- the result screen reads relic and item rewards, like trial rewards.
+- Added some audio cues for combat in an effort to try and communicate what is going on regarding statuses.
+- Cleaned up the progression screen, consolidating things into a single stop.
+
 ## V0.1.0
 
 - Allow backspace to perform secondary action (open compendium) on a hero while in a party slot or on the board. You used to need to click inspect and go to the sidebar. That was annoying, so we did away with it.
