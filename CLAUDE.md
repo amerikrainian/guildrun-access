@@ -460,7 +460,12 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    inventory (the reserve's items and the relics as side-by-side columns of
    one stop, `GraphBuilder.StartColumn`: Up/Down within one, Right/Left across, an empty container
    dropped; the shop's heroes, items and relics for sale are one such stop too), info, speed, menu),
-   battle result (all forms), shop,
+   battle result (all forms; its reward list is the reward parent's children in draw order,
+   `BattleFlowUIStateController.UpdateResultRewards`: shard rewards as `ResultTextRewardView`s and,
+   since build 25461680 for a Trial event's promise as well, a `ResultRelicRewardView` or
+   `ResultItemRewardView` for a quest completed or an event's delayed reward, read as the title and
+   the thing by name with its tooltip in the buffer; `panel.AddRelicRewardView(title, entry)` in
+   `/eval` puts one on a live result for a look), shop,
    crossroads, events (campfire included; the event UI is one controller and four views: a choice
    is its caption, title and text in ONE label split by a line break, which the audit's substring
    match reports as unread and is not; an `ArtifactChoiceButtonView` adds an item or relic, named

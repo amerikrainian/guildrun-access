@@ -25,7 +25,8 @@ namespace GuildrunAccess.Module.GameRun
 {
     /// <summary>
     /// The post-fight result panel (victory, defeat, or the run's end): its title as the context, the
-    /// total shards and reward lines, the battle stats (run and combat duration, each hero's combat
+    /// reward lines in the order drawn (shards as text, a relic or an item won by a quest or promised
+    /// by an event, each with its tooltip in the buffer) and the total shards, the battle stats (run and combat duration, each hero's combat
     /// tracker: damage dealt / taken / healing, statuses applied), the endless-mode leaderboard when the
     /// panel shows it, then the buttons (Proceed / Summary / feedback, or whatever button the panel's
     /// current form shows). Active while the battle flow shows its result parent; sits above the run HUD
@@ -99,31 +100,85 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- rewards: every reward line as the game draws it, the total when there are several ----
 
+        // The game spawns one reward view per reward into the reward parent, in the order it grants
+        // them (BattleFlowUIStateController.UpdateResultRewards): shard rewards as text views (a title
+        // and an amount), and, since build 25461680 for a Trial event's promise too, a relic or an
+        // item (a quest completed, an event's delayed reward) as a relic or item view whose title is
+        // the reason and whose icon is the thing. Each is one control in the drawn order.
         private static void BuildRewards(GraphBuilder b, BattleResultPanelView panel)
         {
             var rewards = panel._rewardParent;
-            var views = new List<ResultTextRewardView>();
+            var nodes = new List<KeyValuePair<ControlId, NodeVtable>>();
+            int shardLines = 0;
             if (rewards != null && rewards.gameObject.activeInHierarchy)
-                foreach (var view in rewards.GetComponentsInChildren<ResultTextRewardView>(false))
-                    if (view != null && view.gameObject.activeInHierarchy) views.Add(view);
+                for (int i = 0; i < rewards.childCount; i++)
+                {
+                    var child = rewards.GetChild(i);
+                    if (child == null || !child.gameObject.activeInHierarchy) continue;
+                    var text = child.GetComponent<ResultTextRewardView>();
+                    if (text != null)
+                    {
+                        // "Battle Won, Shard 15": the reward line is one control, its title and value together.
+                        shardLines++;
+                        nodes.Add(new KeyValuePair<ControlId, NodeVtable>(ControlId.Structural("result:reward:" + text.GetInstanceID()), GameNodes.Text(() => RewardLine(text))));
+                        continue;
+                    }
+                    var relic = child.GetComponent<ResultRelicRewardView>();
+                    if (relic != null)
+                    {
+                        nodes.Add(new KeyValuePair<ControlId, NodeVtable>(ControlId.Structural("result:reward:" + relic.GetInstanceID()), RelicReward(relic)));
+                        continue;
+                    }
+                    var item = child.GetComponent<ResultItemRewardView>();
+                    if (item != null)
+                        nodes.Add(new KeyValuePair<ControlId, NodeVtable>(ControlId.Structural("result:reward:" + item.GetInstanceID()), ItemReward(item)));
+                }
 
-            // "Battle Won, Shard 15": the reward line is one control, its title and value together.
-            if (views.Count > 0)
+            if (nodes.Count > 0)
             {
                 b.PushContext(Strings.RunRewards, Strings.RoleList);
-                for (int i = 0; i < views.Count; i++)
-                {
-                    var v = views[i];
-                    b.AddItem(ControlId.Structural("result:reward:" + v.GetInstanceID()), GameNodes.Text(() => RewardLine(v)));
-                }
+                foreach (var node in nodes) b.AddItem(node.Key, node.Value);
                 b.PopContext();
             }
 
-            // The total only says something new when it sums several lines (with one reward it is
+            // The total only says something new when it sums several shard lines (with one it is
             // that reward over again); captioned as the game captions it ("Total Earned").
             var total = panel._totalShardsText;
-            if (views.Count != 1 && total != null && total.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(total.text))
+            if (shardLines != 1 && total != null && total.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(total.text))
                 b.AddItem(ControlId.Structural("result:shards"), GameNodes.Text(() => TotalLine(total)));
+        }
+
+        // "Quest Completed, relic Rift Seal": the title, then the relic by name; the relic's tooltip is
+        // the buffer, its quests the quests buffer, as for the relic bar's own.
+        private static NodeVtable RelicReward(ResultRelicRewardView view)
+        {
+            var relic = view._relicView;
+            var vt = ItemNodes.Relic(relic);
+            vt.Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Titled(view._titleText, Strings.HeroRelicNamed(ItemNodes.RelicName(relic) ?? Strings.HeroRelic))) };
+            return vt;
+        }
+
+        // "Reward Received, Hammer": the title, then the item by name from whichever of the view's two
+        // item views the game filled (a placeholder slot for an owned item, a plain item view for an
+        // entry); the item's tooltip is the buffer.
+        private static NodeVtable ItemReward(ResultItemRewardView view)
+        {
+            var slot = view._itemView;
+            var simple = view._simpleItemView;
+            bool slotShown = slot != null && slot.gameObject.activeInHierarchy && ItemNodes.HasItem(slot);
+            var vt = slotShown ? ItemNodes.Slot(slot) : new NodeVtable
+            {
+                Details = () => simple != null ? TooltipReader.Lines(simple.TooltipRaycastTarget) : new List<string>(),
+            };
+            vt.Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(() => Titled(view._titleText, (slotShown ? ItemNodes.ItemName(slot) : ItemNodes.ItemName(simple)) ?? Strings.RunItems)) };
+            vt.SearchText = () => slotShown ? ItemNodes.ItemName(slot) : ItemNodes.ItemName(simple);
+            return vt;
+        }
+
+        private static string Titled(TMP_Text title, string what)
+        {
+            string text = title != null && title.gameObject.activeInHierarchy ? title.text : null;
+            return string.IsNullOrWhiteSpace(text) ? what : text.Trim() + ", " + what;
         }
 
         private static string RewardLine(ResultTextRewardView view)
