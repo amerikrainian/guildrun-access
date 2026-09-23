@@ -406,6 +406,53 @@ no plural or gender machinery, so a template must hold for any count and any nam
 A module-only build deploys `lang/` too, and a reload reads the file again. Key names in the key
 help ("Ctrl+Shift+A", "Up Arrow") are not translated.
 
+## Sounds (`Core/Audio`, `Module/Audio`, `assets/audio`; the dd2a11y pattern)
+The game's audio is FMOD Studio (four banks in StreamingAssets, 358 events; `FMODAudioService` over
+`FMODUnity.RuntimeManager`), and Unity's own audio is OFF (output sample rate 0, no AudioSource
+anywhere): an AudioSource of ours would be silent, so the mod's cues play through FMOD's core
+system. `Module/Audio/FmodCueEngine`: one channel group of ours, parented under the studio
+`bus:/SFX` channel group (`lockChannelGroup`, `flushCommands`, `getChannelGroup`, `addGroup`), so
+the player's SFX slider governs the cues (the master group when the bus cannot be reached); one
+`Sound` per cue from `assets/audio/<group>/<cue>.wav` (`AudioCues.FileName`: the enum name in
+snake case), created on first play and kept, released in Dispose (native handles survive no
+reload). The game's own UI events are playable by path too (`RuntimeManager.CreateInstance
+("event:/SFX/UI/ui_main_menu_hover")`, `start`, `release`; the game's `IEmberAudioService`
+resolves from the application scope's container), unused so far.
+- **Cues** (`Core/Audio/AudioCue`): what the fight shows but never sounds: hero and enemy damaged,
+  crit, hero healed, hero low health (below a quarter, once until it recovers), hero and enemy
+  died, hero and enemy cast, a status on a hero, mana full (ability ready), rush and stall
+  started. `Module/Audio/CombatCues` raises them from Harmony postfixes on the same HUD views the
+  battle log hooks (`HealthBarView.UpdateHealth/SetStatusStack/UpdateMana/ShowAbilityIcon`,
+  `CharacterViewController.HandleAnimationAudio`; `_isPlayer` tells the sides, a bar counts only
+  while `BattleEvents.UnitName` names a fighting unit) and on the tutorial's rush and stall
+  subscribers (`TutorialServiceInitializer._HandleNotifications_b__23_7` / `_6`: the interop proxy
+  spells a lambda's angle brackets as underscores; the publisher is a generic relay method no
+  patch can name). The edge-triggers and the interval clocks reset at each new placement
+  (`EventsSection.OnUpdate`). The simulation itself raises typed events on an `EventBus`
+  (`OnCharacterDamagedEvent` and kin, dispatched per frame from `BattleSimulation.
+  FinishFrameExecution`, subscribed through the battle scope's `SimulationEventBusRelay`): the
+  HUD hooks are the same facts one step later and need no delegate conversion. The shipped files
+  are placeholder tones from `tools/python/make_cues.py` (writes the missing ones, `--force`
+  all); a real sound replaces a placeholder 1:1 by file name. A module-only build deploys
+  `assets/audio` too. Every play logs one Info line ("audio: HeroDamaged at 0.90"), which is how
+  a fight's cue count is checked against its events.
+- **Settings** (`Core/Audio/SoundSettings`, in the host's store under `sound_*`): a master volume
+  and, per cue, a volume stored as a signed offset from the master ("+0", "-10"; 0 to 200
+  percent, steps of 10) and an interval: the least seconds between two plays of that cue, blank
+  (the default) for every event. `CuePlayer.Play` is the one door: it reads the interval live and
+  gates by an unscaled clock (unit-tested in `SoundTests`). The mod menu's Sounds screen
+  (`Screens/ModSoundsScreen`) lists the master, then per cue a volume row (Left/Right step,
+  Enter previews the cue at that volume, the sound alone the feedback) and an interval row (an
+  Edit: Enter opens the mod's own number entry, `UI/NumberEdit`).
+- **NumberEdit** is the dd2a11y synthetic text field cut down to a number: focus mode disables
+  the Input System keyboard, so the layout-aware `onTextInput` event dd2a11y listens to never
+  fires here; digits, point (period, comma, keypad), Backspace, Enter and Escape are polled
+  through legacy `Input`, each echoed, the mod's keys standing down meanwhile
+  (`InputManager.TextFieldFocused` covers it beside `TextEdit`) until the ending key comes up.
+  A blank Enter clears the interval; Escape keeps it and re-reads the row; a screen change ends
+  the edit silently. The driver cannot press OS keys: `POST /input` with `dev.number:1.5`,
+  `dev.number:enter`, `dev.number:escape`, `dev.number:backspace`.
+
 ## Hard rules
 - **All speech through `Speech.Say`** (Core) -> the host `SpeechPipeline`; never call Prism directly.
   Navigation moves interrupt; screen entry and feedback queue.

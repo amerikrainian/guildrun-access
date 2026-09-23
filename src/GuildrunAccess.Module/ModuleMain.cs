@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using GuildrunAccess.Contracts;
 using GuildrunAccess.Core;
+using GuildrunAccess.Core.Audio;
 using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Input;
 using GuildrunAccess.Core.Screens;
@@ -39,6 +40,15 @@ namespace GuildrunAccess.Module
         // request lands with a release newer than the running build.
         private readonly UpdateChecker _updateCheck = new UpdateChecker();
         private bool _updateAnnounced;
+        // The mod's sound cues: their settings (volumes, intervals) and the engine every cue plays
+        // through (the game's FMOD core system, scaled by the settings). Owned per generation.
+        private Audio.FmodCueEngine _cueEngine;
+
+        /// <summary>The sound settings of the live generation, for the sounds screen and the cues.</summary>
+        public static SoundVolumes Sounds { get; private set; }
+
+        /// <summary>The engine cues play through, the player's volumes applied.</summary>
+        public static IAudioEngine CueEngine { get; private set; }
 
         public void Load(IModHost host)
         {
@@ -53,13 +63,21 @@ namespace GuildrunAccess.Module
             NavInput.Current = new UnityNavInput();
             Navigation.FocusActive = () => FocusMode.Active;
             InputManager.FocusActive = () => FocusMode.Active;
-            InputManager.TextFieldFocused = () => TextEdit.OwnsKeyboard;
+            InputManager.TextFieldFocused = () => TextEdit.OwnsKeyboard || NumberEdit.OwnsKeyboard;
             GraphAnnouncer.PositionText = (i, n) => host.Settings.SpeakPositions ? Strings.Position(i, n) : null;
             GraphAnnouncer.ExpandedStateText = Strings.ExpandedState;
             InputBinding.RegisterType("keyboard", KeyboardBinding.Deserialize);
             // The strings follow the game's language from the first game scope on (the seed below, on a
             // reload); until then, at boot, nothing is spoken that the table words.
             LanguageSync.Start(host.PluginDir, AnnounceLaunch);
+
+            // The sound cues: settings in the host's store, files under the plugin's assets/audio,
+            // played through the game's FMOD (Unity's own audio is off in this game), each cue gated
+            // by its saved interval (CombatCues hooks the fight; the sounds screen previews).
+            Sounds = new SoundVolumes(host.Settings.Store);
+            _cueEngine = new Audio.FmodCueEngine(Path.Combine(host.PluginDir, "assets", "audio"));
+            CueEngine = new VolumeScaledEngine(_cueEngine, Sounds);
+            Audio.CombatCues.Player = new CuePlayer(CueEngine, Sounds, () => Time.unscaledTimeAsDouble);
 
             // A per-load UNIQUE id so a reload's Dispose unpatches exactly this load's patches: the host
             // loads the new module (which patches) before disposing the old one, and UnpatchSelf removes
@@ -237,9 +255,10 @@ namespace GuildrunAccess.Module
             }
             FocusMode.Tick();
             Safe(TextEdit.Tick, "text edit");
+            Safe(NumberEdit.Tick, "number edit");
             InputManager.Tick();
             ScreenManager.Tick();
-            if (!TextEdit.OwnsKeyboard) Navigation.TickTypeahead();
+            if (!TextEdit.OwnsKeyboard && !NumberEdit.OwnsKeyboard) Navigation.TickTypeahead();
             Safe(_comics.Tick, "comics");
             Safe(_tutorials.Tick, "tutorials");
             Safe(BattleEvents.Tick, "battle events");
@@ -264,6 +283,12 @@ namespace GuildrunAccess.Module
             bool restore = _host == null || !_host.SuccessorLoaded;
             try { SyntheticMouse.Reset(); } catch (Exception e) { _host?.LogError("[dispose] mouse: " + e); }
             try { TextEdit.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] text edit: " + e); }
+            try { NumberEdit.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] number edit: " + e); }
+            // The FMOD handles are native: released here, and the successor makes its own.
+            try { Audio.CombatCues.Player = null; _cueEngine?.Dispose(); } catch (Exception e) { _host?.LogError("[dispose] audio: " + e); }
+            _cueEngine = null;
+            CueEngine = null; // this generation's statics: the successor has its own
+            Sounds = null;
             try { FocusMode.Shutdown(restore); } catch (Exception e) { _host?.LogError("[dispose] focus: " + e); }
             try { ScreenManager.Shutdown(); } catch (Exception e) { _host?.LogError("[dispose] screens: " + e); }
             try { InputManager.Clear(); } catch (Exception e) { _host?.LogError("[dispose] input: " + e); }
@@ -290,6 +315,8 @@ namespace GuildrunAccess.Module
                 Input.UnityNavInput.InjectTyped(actionKey.Substring("dev.type:".Length));
                 return "typing next frame";
             }
+            // The mod's own number entry, which polls OS keys the driver cannot press.
+            if (actionKey != null && actionKey.StartsWith("dev.number:")) return NumberEdit.Inject(actionKey.Substring("dev.number:".Length));
             if (string.IsNullOrEmpty(actionKey) || InputManager.Find(actionKey) == null) return null;
             InputManager.Dispatch(actionKey);
             var nav = Navigation.Active as GraphNavigator;

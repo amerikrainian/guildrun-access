@@ -30,7 +30,11 @@ namespace GuildrunAccess.Module.GameRun
         {
             // The events belong to one fight: placement returning means the next one is being set up.
             bool placing = RunData.Placing();
-            if (placing && !_wasPlacing && BattleEvents.Lines.Count > 0) BattleEvents.Clear();
+            if (placing && !_wasPlacing)
+            {
+                if (BattleEvents.Lines.Count > 0) BattleEvents.Clear();
+                Audio.CombatCues.Reset(); // the cues' edge-triggers and interval clocks too
+            }
             _wasPlacing = placing;
         }
     }

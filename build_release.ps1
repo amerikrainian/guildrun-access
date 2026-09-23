@@ -121,6 +121,14 @@ try {
         }
     }
 
+    # The sound cues' files (assets\audio\<group>\<cue>.wav), under the plugin's assets folder.
+    $audioDir = Join-Path $scriptDir "assets\audio"
+    if (Test-Path $audioDir) {
+        $stageAssetsDir = Join-Path $pluginDir "assets"
+        New-Item -ItemType Directory -Force $stageAssetsDir | Out-Null
+        Copy-Item -Path $audioDir -Destination $stageAssetsDir -Recurse
+    }
+
     if ($hasDocs) {
         # Packaging pattern adapted from SayTheSpire2: https://github.com/bradjrenshaw/say-the-spire2
         Copy-Item -Path (Join-Path $docsDir "book") -Destination (Join-Path $stageDir "GuildrunAccessDocs") -Recurse

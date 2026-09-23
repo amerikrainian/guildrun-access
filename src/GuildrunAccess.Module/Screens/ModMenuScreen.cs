@@ -12,7 +12,7 @@ using Screen = GuildrunAccess.Core.Screens.Screen;
 namespace GuildrunAccess.Module.Screens
 {
     /// <summary>
-    /// The mod's own menu (Ctrl+Shift+M anywhere): Settings, Key help, Close. An overlay above every
+    /// The mod's own menu (Ctrl+Shift+M anywhere): Settings, Sounds, Key help, Close. An overlay above every
     /// game screen, opened and closed by a static flag the poll picks up; its sub-screens are child
     /// screens, so Escape walks back through them to the game.
     /// </summary>
@@ -38,6 +38,7 @@ namespace GuildrunAccess.Module.Screens
         {
             b.PushContext(Strings.ScreenModMenu, Strings.RoleList);
             b.AddItem(ControlId.Structural("modmenu:settings"), GameNodes.Button(() => Strings.ModSettings, () => PushChild(new ModSettingsScreen())));
+            b.AddItem(ControlId.Structural("modmenu:sounds"), GameNodes.Button(() => Strings.ModSounds, () => PushChild(new ModSoundsScreen())));
             b.AddItem(ControlId.Structural("modmenu:keys"), GameNodes.Button(() => Strings.ModKeyHelp, () => PushChild(new KeyHelpScreen())));
             b.AddItem(ControlId.Structural("modmenu:close"), GameNodes.Button(() => Strings.ModClose, Close));
             b.PopContext();

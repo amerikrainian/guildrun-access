@@ -74,6 +74,7 @@
     <ItemGroup>
       <_DeployDll Include="$(TargetDir)*.dll" />
       <_LangFile Include="$(RepoRoot)lang\*.txt" />
+      <_AudioAsset Include="$(RepoRoot)assets\audio\**\*.wav" />
     </ItemGroup>
     <MakeDir Directories="$(PluginDeployDir)" />
     <Copy SourceFiles="@(_DeployDll);$(CoreDll);$(ModuleDll)"
@@ -82,6 +83,8 @@
           DestinationFolder="$(GameDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
     <Copy SourceFiles="@(_LangFile)" DestinationFolder="$(PluginDeployDir)\lang"
           SkipUnchangedFiles="true" ContinueOnError="true" Condition="'@(_LangFile)' != ''" />
+    <Copy SourceFiles="@(_AudioAsset)" DestinationFiles="@(_AudioAsset->'$(PluginDeployDir)\assets\audio\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" ContinueOnError="true" Condition="'@(_AudioAsset)' != ''" />
     <Message Importance="high" Text="GuildrunAccess deployed -> $(PluginDeployDir)" />
   </Target>
 

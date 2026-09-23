@@ -34,11 +34,15 @@
     </PropertyGroup>
     <ItemGroup>
       <_LangFile Include="$(RepoRoot)lang\*.txt" />
+      <_AudioAsset Include="$(RepoRoot)assets\audio\**\*.wav" />
     </ItemGroup>
     <MakeDir Directories="$(PluginDeployDir)" />
     <Copy SourceFiles="$(TargetPath);$(CoreDll)" DestinationFolder="$(PluginDeployDir)" ContinueOnError="true" />
     <Copy SourceFiles="@(_LangFile)" DestinationFolder="$(PluginDeployDir)\lang"
           SkipUnchangedFiles="true" ContinueOnError="true" Condition="'@(_LangFile)' != ''" />
+    <!-- The sound cues' files, one per cue, under the plugin's assets/audio (a reload re-reads a replaced one on its next play). -->
+    <Copy SourceFiles="@(_AudioAsset)" DestinationFiles="@(_AudioAsset->'$(PluginDeployDir)\assets\audio\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" ContinueOnError="true" Condition="'@(_AudioAsset)' != ''" />
     <Message Importance="high" Text="GuildrunAccess.Module + Core deployed -> $(PluginDeployDir)" />
   </Target>
 

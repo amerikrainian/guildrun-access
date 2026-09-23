@@ -59,6 +59,9 @@ namespace GuildrunAccess.Core.Strings
             D("edit.begin", "editing"),
             D("edit.selected", "{0} selected"),
             D("edit.unselected", "{0} unselected"),
+            // The mod's own number entry: the decimal point as typed, a character erased with Backspace.
+            D("edit.point", "point"),
+            D("edit.deleted", "{0} deleted"),
 
             // Navigation feedback. {0} = index, {1} = count.
             D("nav.position", "{0} of {1}"),
@@ -326,6 +329,32 @@ namespace GuildrunAccess.Core.Strings
             D("mod.close", "Close"),
             D("mod.speak_positions", "Speak list positions"),
             D("mod.focus_on_launch", "Keyboard navigation on at launch"),
+            // The mod sounds glossary (the mod menu's Sounds): the master volume, then per cue a volume
+            // row and an interval row.
+            D("mod.sounds", "Sounds"),
+            D("sound.master", "Master volume"),
+            // A volume as spoken; {0} = the percent.
+            D("sound.percent", "{0} percent"),
+            // The interval row's label; {0} = the cue's own label ("hero takes damage, seconds between plays").
+            D("sound.interval_of", "{0}, seconds between plays"),
+            // The interval row's value while blank: the cue plays at every event.
+            D("sound.every_event", "blank, every event"),
+            // What the player typed was no number of seconds: the value stays.
+            D("sound.invalid", "not a number of seconds, unchanged"),
+            // Glossary row labels: what the mod plays each cue for (keyed "sound." + the cue's file name).
+            D("sound.hero_damaged", "hero takes damage"),
+            D("sound.enemy_damaged", "enemy takes damage"),
+            D("sound.crit", "critical hit"),
+            D("sound.hero_healed", "hero healed"),
+            D("sound.hero_low_health", "hero low on health"),
+            D("sound.hero_died", "hero falls"),
+            D("sound.enemy_died", "enemy falls"),
+            D("sound.hero_cast", "hero casts an ability"),
+            D("sound.enemy_cast", "enemy casts an ability"),
+            D("sound.status_on_hero", "status lands on a hero"),
+            D("sound.mana_full", "hero's ability ready"),
+            D("sound.rush_started", "rush starts"),
+            D("sound.stall_started", "stall starts"),
             // {0} = the key category, one of the three names below.
             D("mod.key_category", "{0} keys"),
             // The key categories of the "All keys" list: live everywhere, on the focused screen, in a run.
@@ -636,6 +665,8 @@ namespace GuildrunAccess.Core.Strings
         public static string EditBegin => Get("edit.begin");
         public static string EditSelected(string text) => F("edit.selected", text);
         public static string EditUnselected(string text) => F("edit.unselected", text);
+        public static string EditPoint => Get("edit.point");
+        public static string EditDeleted(string text) => F("edit.deleted", text);
 
         public static string Position(int index, int count) => F("nav.position", index, count);
         public static string NoTooltip => Get("nav.no_tooltip");
@@ -800,6 +831,14 @@ namespace GuildrunAccess.Core.Strings
         public static string ScreenComic => Get("screen.comic");
         public static string ComicContinue => Get("comic.continue");
         public static string ScreenModMenu => Get("screen.mod_menu");
+        public static string ModSounds => Get("mod.sounds");
+        public static string SoundMaster => Get("sound.master");
+        public static string SoundPercent(int percent) => F("sound.percent", percent);
+        public static string SoundIntervalOf(string cue) => F("sound.interval_of", cue);
+        public static string SoundEveryEvent => Get("sound.every_event");
+        public static string SoundIntervalInvalid => Get("sound.invalid");
+        /// <summary>The glossary label of one mod sound, keyed "sound." + its file name.</summary>
+        public static string SoundLabel(Audio.AudioCue cue) => Get("sound." + Audio.AudioCues.FileName(cue));
         public static string ModSettings => Get("mod.settings");
         public static string ModKeyHelp => Get("mod.key_help");
         public static string ScreenHelp => Get("screen.help");
