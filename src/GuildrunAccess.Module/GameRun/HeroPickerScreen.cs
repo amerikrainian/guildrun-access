@@ -76,10 +76,18 @@ namespace GuildrunAccess.Module.GameRun
             // ProgressionReader.BonusTokens). Its cost is a number beside an icon, its tooltip says
             // what the number is of.
             var reroll = c._reRollPanelView;
+            // The profile's Boss Tokens, which the game shows nowhere on this panel (the reroll's
+            // cost is the only sign of them, and only while there is one to spend): "Boss Token: 2",
+            // the token by the game's own word (the reroll tooltip's bold term), the count live from
+            // the progression data the reroll itself reads. The actions stop opens with it, the
+            // reroll after it when offered.
+            b.BeginStop("actions");
+            string tokens = TokensLine(c, reroll);
+            if (tokens != null)
+                b.AddItem(ControlId.Structural("heropicker:tokens"), GameNodes.Text(() => TokensLine(c, reroll) ?? tokens));
             if (reroll != null && GameNodes.IsShown(reroll._reRollButton))
             {
                 var button = reroll._reRollButton;
-                b.BeginStop("actions");
                 var vt = GameNodes.Button(button, () => RerollCaption(button));
                 vt.Announcements = new List<NodeAnnouncement>
                 {
@@ -141,15 +149,44 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var tmp in reroll.GetComponentsInChildren<TMP_Text>(false))
                 if (tmp != null && tmp.gameObject.name == "CostText" && !string.IsNullOrWhiteSpace(tmp.text)) { cost = tmp.text.Trim(); break; }
             if (cost == null) return null;
-            string token = null;
+            string token = TokenName(reroll);
+            return Strings.ShopCost(string.IsNullOrEmpty(token) ? cost : cost + " " + token);
+        }
+
+        // The game's own word for the token ("Boss Token"), the one bold term of the reroll's tooltip
+        // description (a localized string, readable while the panel is hidden); null without one.
+        private static string TokenName(ReRollPanelView reroll)
+        {
             try
             {
-                var description = reroll._tooltipDescription;
+                var description = reroll != null ? reroll._tooltipDescription : null;
                 var m = description != null ? BoldTerm.Match(description.GetLocalizedString() ?? "") : null;
-                if (m != null && m.Success) token = m.Groups[1].Value.Trim();
+                return m != null && m.Success ? m.Groups[1].Value.Trim() : null;
             }
-            catch (Exception e) { GuildrunAccess.Core.CoreLog.Warning("hero picker: the reroll's token name: " + e.Message); }
-            return Strings.ShopCost(string.IsNullOrEmpty(token) ? cost : cost + " " + token);
+            catch (Exception e)
+            {
+                GuildrunAccess.Core.CoreLog.Warning("hero picker: the reroll's token name: " + e.Message);
+                return null;
+            }
+        }
+
+        // "Boss Token: 2": the profile's tokens, live from the progression reader the picker's
+        // registry service holds (the reroll panel reads the same); null where that is unreadable.
+        private static string TokensLine(HeroPickerController c, ReRollPanelView reroll)
+        {
+            try
+            {
+                var service = c._gameRegistryService != null ? c._gameRegistryService.TryCast<Ember.Scopes.GameRun.GameRegistry.Services.GameRegistryService>() : null;
+                var progression = service != null ? service._progressionReader : null;
+                var tokens = progression != null ? progression.BonusTokens : null;
+                if (tokens == null) return null;
+                return Strings.HeroTokens(TokenName(reroll) ?? Strings.HeroBossToken, tokens.CurrentValue);
+            }
+            catch (Exception e)
+            {
+                GuildrunAccess.Core.CoreLog.Warning("hero picker: the token count: " + e.Message);
+                return null;
+            }
         }
 
         private static readonly System.Text.RegularExpressions.Regex BoldTerm =

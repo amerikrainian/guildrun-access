@@ -428,7 +428,10 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    tutorial's save point and while the profile holds a Boss Token: `ProgressionData.BonusTokens`,
    a reactive int reached through `GameRegistryService._progressionReader._data`; set it in `/eval`
    to see the panel, the press consumes one; "cost 1 Boss Token" with the game's tooltip in the
-   buffer, a press landing on the first new hero), run HUD (placement grid with keyboard moves, party/reserve
+   buffer, a press landing on the first new hero; the picker's actions stop opens with the profile's
+   count, "Boss Token: 2", which the game shows nowhere on the panel: the token named by the reroll
+   tooltip's bold term, the count live off the picker's registry service's `_progressionReader`,
+   whether or not the reroll is offered), run HUD (placement grid with keyboard moves, party/reserve
    with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
    `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
    of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is

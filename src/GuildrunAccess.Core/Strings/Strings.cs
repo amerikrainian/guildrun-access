@@ -183,6 +183,10 @@ namespace GuildrunAccess.Core.Strings
             D("hero.no_relic", "no relic"),
             D("hero.no_abilities", "no abilities"),
             D("hero.reroll", "Reroll"),
+            // The profile's Boss Tokens on the hero picker: {0} = the token's name (the game's own word
+            // where its reroll tooltip has it, else hero.boss_token), {1} = how many.
+            D("hero.tokens", "{0}: {1}"),
+            D("hero.boss_token", "Boss Token"),
 
             // The run screen (the battlefield HUD between and during fights) and its sections.
             D("screen.run", "Run"),
@@ -700,6 +704,8 @@ namespace GuildrunAccess.Core.Strings
         public static string HeroNoRelic => Get("hero.no_relic");
         public static string HeroNoAbilities => Get("hero.no_abilities");
         public static string HeroReroll => Get("hero.reroll");
+        public static string HeroTokens(string name, int count) => F("hero.tokens", name, count);
+        public static string HeroBossToken => Get("hero.boss_token");
 
         public static string ScreenRun => Get("screen.run");
         public static string RunActions => Get("run.actions");
