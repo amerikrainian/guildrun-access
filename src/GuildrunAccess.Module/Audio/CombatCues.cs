@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Ember.Balancing.Sheets.Characters;
 using Ember.Balancing.Sheets.Characters.Attacks;
+using Ember.Balancing.SimulationBridge.Effects.Actions;
 using Ember.Scopes.Battle.Characters;
+using Ember.Simulation.Core.Fsm.States.ActiveAbilities;
 using Ember.Scopes.Battle.UI.Hud;
 using Ember.Scopes.GameRun.SimulationRelay.Notifications;
 using Ember.Scopes.GameRun.Tutorial;
@@ -41,10 +43,30 @@ namespace GuildrunAccess.Module.Audio
             Player?.Reset();
         }
 
-        private static void Play(AudioCue cue)
+        private static void Play(AudioCue cue, float pan = 0f)
         {
-            try { Player?.Play(cue); }
+            try { Player?.Play(cue, pan: pan); }
             catch (Exception e) { CoreLog.Warning("CombatCues: " + cue + ": " + e.Message); }
+        }
+
+        // A side as a stereo place: heroes a little to the left, enemies a little to the right,
+        // for the cues both sides raise (a status landing, a shield), so one sound tells whose.
+        private const float SidePan = 0.35f;
+        private static float PanOf(bool hero) => hero ? -SidePan : SidePan;
+
+        // The cue for a status the game names by type, or null for the rest (a hero's other statuses
+        // are the generic cue below).
+        private static AudioCue? StatusCue(StatusType type)
+        {
+            switch (type)
+            {
+                case StatusType.Burn: return AudioCue.StatusBurn;
+                case StatusType.Frost: return AudioCue.StatusFrost;
+                case StatusType.Poison: return AudioCue.StatusPoison;
+                case StatusType.Stun: return AudioCue.StatusStun;
+                case StatusType.Shield: return AudioCue.ShieldGained;
+                default: return null;
+            }
         }
 
         // A bar that belongs to a fighting unit (named, or a nameless enemy in the Resolution state).
@@ -93,8 +115,13 @@ namespace GuildrunAccess.Module.Audio
             {
                 try
                 {
-                    if (Player == null || stackCount <= 0 || !__instance._isPlayer || !Fighting(__instance)) return;
-                    Play(AudioCue.StatusOnHero);
+                    if (Player == null || stackCount <= 0 || !Fighting(__instance)) return;
+                    bool hero = __instance._isPlayer;
+                    // A status with a sound of its own sounds on either side, placed by side; any
+                    // other status sounds only on a hero, the generic way.
+                    var own = StatusCue(type);
+                    if (own != null) Play(own.Value, PanOf(hero));
+                    else if (hero) Play(AudioCue.StatusOnHero);
                 }
                 catch (Exception e) { CoreLog.Warning("CombatCues: status hook failed: " + e.Message); }
             }
@@ -150,6 +177,48 @@ namespace GuildrunAccess.Module.Audio
                 }
                 catch (Exception e) { CoreLog.Warning("CombatCues: animation hook failed: " + e.Message); }
             }
+        }
+
+        // The game's own feedback VFX by key (VfxController plays one for every OnFeedbackEvent and for
+        // OnShardsGainedEvent): shards gained mid-fight, a stat gain, permanent or not. The event
+        // struct's key is a string the struct proxy drops, so the method that takes the key is the hook.
+        [HarmonyPatch(typeof(VfxController), nameof(VfxController.PlayFeedbackVfx))]
+        private static class FeedbackPatch
+        {
+            private static void Postfix(string feedbackKey)
+            {
+                try
+                {
+                    if (Player == null || feedbackKey == null) return;
+                    switch (feedbackKey)
+                    {
+                        case "GainShards": Play(AudioCue.ShardsGained); break;
+                        case "GainStats":
+                        case "GainPermanentStats": Play(AudioCue.StatUp); break;
+                    }
+                }
+                catch (Exception e) { CoreLog.Warning("CombatCues: feedback hook failed: " + e.Message); }
+            }
+        }
+
+        // A taunt is an effect action (no status, no feedback key): the two balancing actions and
+        // Skorn's shield-taunt ability state, which run as the simulation applies them.
+        [HarmonyPatch(typeof(TauntAllEnemiesAction), nameof(TauntAllEnemiesAction.ApplyAction))]
+        private static class TauntAllPatch
+        {
+            private static void Postfix() { try { if (Player != null) Play(AudioCue.Taunt); } catch (Exception e) { CoreLog.Warning("CombatCues: taunt hook failed: " + e.Message); } }
+        }
+
+        [HarmonyPatch(typeof(TauntAdjacentEnemiesAction), nameof(TauntAdjacentEnemiesAction.ApplyAction))]
+        private static class TauntAdjacentPatch
+        {
+            private static void Postfix() { try { if (Player != null) Play(AudioCue.Taunt); } catch (Exception e) { CoreLog.Warning("CombatCues: taunt hook failed: " + e.Message); } }
+        }
+
+        [HarmonyPatch(typeof(SkornShieldTauntAction), nameof(SkornShieldTauntAction.OnEnter))]
+        private static class SkornTauntPatch
+        {
+            private static void Postfix() { try { if (Player != null) Play(AudioCue.Taunt); } catch (Exception e) { CoreLog.Warning("CombatCues: taunt hook failed: " + e.Message); } }
         }
 
         // Rush and stall activations reach the tutorial's subscriber whether or not a tutorial runs

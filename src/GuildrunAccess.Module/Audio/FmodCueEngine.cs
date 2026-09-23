@@ -25,6 +25,10 @@ namespace GuildrunAccess.Module.Audio
         private ChannelGroup _group;
         private bool _started;
         private bool _failed;
+        private bool _underBus;        // our group hangs under the SFX bus's (else the master's)
+        private FMOD.Studio.Bus? _lockedBus; // the bus we locked ourselves, to unlock on teardown
+        private double _nextBusTry;    // the SFX bus group appears only once the studio system has built it
+        private bool _busWarned;
 
         public FmodCueEngine(string assetRoot) => _assetRoot = assetRoot;
 
@@ -40,21 +44,10 @@ namespace GuildrunAccess.Module.Audio
                 var core = RuntimeManager.CoreSystem;
                 var result = core.createChannelGroup("GuildrunAccess", out _group);
                 if (result != RESULT.OK) throw new InvalidOperationException("createChannelGroup: " + result);
-                // Under the SFX bus, so the game's SFX slider applies; the bus's group exists only once
-                // it is locked and the studio system has updated, hence the fallback to the master.
-                ChannelGroup parent;
-                bool underBus = false;
-                var bus = default(FMOD.Studio.Bus);
-                if (RuntimeManager.StudioSystem.getBus("bus:/SFX", out bus) == RESULT.OK && bus.lockChannelGroup() == RESULT.OK)
-                {
-                    RuntimeManager.StudioSystem.flushCommands();
-                    if (bus.getChannelGroup(out parent) == RESULT.OK && parent.hasHandle())
-                        underBus = parent.addGroup(_group) == RESULT.OK;
-                }
-                if (!underBus && core.getMasterChannelGroup(out parent) == RESULT.OK)
-                    parent.addGroup(_group);
+                ChannelGroup master;
+                if (core.getMasterChannelGroup(out master) == RESULT.OK) master.addGroup(_group);
                 _started = true;
-                CoreLog.Info("audio: cue channel group opened" + (underBus ? " under the SFX bus" : " under the master group"));
+                CoreLog.Info("audio: cue channel group opened");
                 return true;
             }
             catch (Exception e)
@@ -65,9 +58,52 @@ namespace GuildrunAccess.Module.Audio
             }
         }
 
+        // Move our group under the SFX bus's, so the game's SFX slider applies. The bus's channel
+        // group exists only once the bus is locked and the studio system has built it, which a
+        // reload's moment does not always have ready: tried again on later plays, a second apart,
+        // the group playing under the master meanwhile (a move re-parents it, nothing restarts).
+        private void TryAttachToSfxBus()
+        {
+            double now = UnityEngine.Time.unscaledTimeAsDouble;
+            if (now < _nextBusTry) return;
+            _nextBusTry = now + 1.0;
+            string step = "getBus";
+            try
+            {
+                var studio = RuntimeManager.StudioSystem;
+                FMOD.Studio.Bus bus;
+                var result = studio.getBus("bus:/SFX", out bus);
+                if (result == RESULT.OK)
+                {
+                    // Locked by us, or still locked by the generation before a reload: the group exists either way.
+                    step = "lockChannelGroup";
+                    result = bus.lockChannelGroup();
+                    if (result == RESULT.OK) _lockedBus = bus;
+                    else if (result == RESULT.ERR_ALREADY_LOCKED) result = RESULT.OK;
+                }
+                if (result == RESULT.OK) { step = "flushCommands"; result = studio.flushCommands(); }
+                ChannelGroup parent = default(ChannelGroup);
+                if (result == RESULT.OK) { step = "getChannelGroup"; result = bus.getChannelGroup(out parent); }
+                if (result == RESULT.OK && !parent.hasHandle()) { step = "bus group not built yet"; result = RESULT.ERR_NOTREADY; }
+                if (result == RESULT.OK) { step = "addGroup"; result = parent.addGroup(_group); }
+                if (result == RESULT.OK)
+                {
+                    _underBus = true;
+                    CoreLog.Info("audio: cue channel group moved under the SFX bus");
+                    return;
+                }
+                if (!_busWarned) { _busWarned = true; CoreLog.Warning("audio: SFX bus not reached at " + step + " (" + result + "); cues play under the master group until it is"); }
+            }
+            catch (Exception e)
+            {
+                if (!_busWarned) { _busWarned = true; CoreLog.Warning("audio: SFX bus attach failed at " + step + ": " + e.Message); }
+            }
+        }
+
         public void PlayCue(AudioCue cue, float volume, float pan, float pitch = 1f)
         {
             if (volume <= 0f || !EnsureStarted()) return;
+            if (!_underBus) TryAttachToSfxBus();
             try
             {
                 if (!TryLoad(cue, out var sound)) return;
@@ -82,7 +118,6 @@ namespace GuildrunAccess.Module.Audio
                 channel.setPan(Math.Max(-1f, Math.Min(1f, pan)));
                 if (Math.Abs(pitch - 1f) > 0.001f) channel.setPitch(pitch);
                 channel.setPaused(false);
-                CoreLog.Info("audio: " + cue + " at " + volume.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture));
             }
             catch (Exception e)
             {
@@ -116,6 +151,8 @@ namespace GuildrunAccess.Module.Audio
                 foreach (var sound in _sounds.Values) sound.release();
                 _sounds.Clear();
                 if (_started) _group.release();
+                if (_lockedBus != null) _lockedBus.Value.unlockChannelGroup();
+                _lockedBus = null;
             }
             catch (Exception e) { CoreLog.Warning("audio: release failed: " + e.Message); }
             _started = false;

@@ -30,6 +30,16 @@ CUES = {
     "combat/mana_full": ([784, 1047, 1319], 0.06, 0.02, "sine", 0.4),
     "combat/rush_started": ([523, 659, 784, 1047], 0.05, 0.005, "sine", 0.4),
     "combat/stall_started": ([523, 392, 262], 0.12, 0.01, "tri", 0.4),
+    # These ship authored (assets/audio/combat, from the maintainer); the tones below are only a
+    # fallback for a cue whose file went missing.
+    "combat/status_burn": ([740, 880], 0.05, 0.01, "square", 0.2),
+    "combat/status_frost": ([1175, 988], 0.06, 0.01, "sine", 0.35),
+    "combat/status_poison": ([349, 370], 0.07, 0.01, "tri", 0.35),
+    "combat/status_stun": ([494, 494, 494], 0.04, 0.02, "square", 0.2),
+    "combat/shield_gained": ([392, 587], 0.08, 0.01, "rich", 0.4),
+    "combat/shards_gained": ([1568, 2093], 0.04, 0.01, "sine", 0.35),
+    "combat/stat_up": ([440, 554, 659], 0.05, 0.005, "sine", 0.4),
+    "combat/taunt": ([262, 196], 0.1, 0.01, "rich", 0.45),
 }
 
 

@@ -355,6 +355,14 @@ namespace GuildrunAccess.Core.Strings
             D("sound.mana_full", "hero's ability ready"),
             D("sound.rush_started", "rush starts"),
             D("sound.stall_started", "stall starts"),
+            D("sound.status_burn", "burn lands"),
+            D("sound.status_frost", "frost lands"),
+            D("sound.status_poison", "poison lands"),
+            D("sound.status_stun", "stun lands"),
+            D("sound.shield_gained", "shield gained"),
+            D("sound.shards_gained", "shards gained"),
+            D("sound.stat_up", "stats go up"),
+            D("sound.taunt", "hero taunts"),
             // {0} = the key category, one of the three names below.
             D("mod.key_category", "{0} keys"),
             // The key categories of the "All keys" list: live everywhere, on the focused screen, in a run.

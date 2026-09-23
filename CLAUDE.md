@@ -410,9 +410,11 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
 The game's audio is FMOD Studio (four banks in StreamingAssets, 358 events; `FMODAudioService` over
 `FMODUnity.RuntimeManager`), and Unity's own audio is OFF (output sample rate 0, no AudioSource
 anywhere): an AudioSource of ours would be silent, so the mod's cues play through FMOD's core
-system. `Module/Audio/FmodCueEngine`: one channel group of ours, parented under the studio
-`bus:/SFX` channel group (`lockChannelGroup`, `flushCommands`, `getChannelGroup`, `addGroup`), so
-the player's SFX slider governs the cues (the master group when the bus cannot be reached); one
+system. `Module/Audio/FmodCueEngine`: one channel group of ours under the master group, moved
+under the studio `bus:/SFX` channel group (`lockChannelGroup`, `flushCommands`, `getChannelGroup`,
+`addGroup`) so the player's SFX slider governs the cues; the bus's group exists only once the
+studio system has built it, which a reload's moment does not always have ready, so the move is
+retried on later plays a second apart (a warning names the failing step once); one
 `Sound` per cue from `assets/audio/<group>/<cue>.wav` (`AudioCues.FileName`: the enum name in
 snake case), created on first play and kept, released in Dispose (native handles survive no
 reload). The game's own UI events are playable by path too (`RuntimeManager.CreateInstance
@@ -421,21 +423,31 @@ resolves from the application scope's container), unused so far.
 - **Cues** (`Core/Audio/AudioCue`): what the fight shows but never sounds: hero and enemy damaged,
   crit, hero healed, hero low health (below a quarter, once until it recovers), hero and enemy
   died, hero and enemy cast, a status on a hero, mana full (ability ready), rush and stall
-  started. `Module/Audio/CombatCues` raises them from Harmony postfixes on the same HUD views the
+  started; and, with the maintainer's authored sounds, burn, frost, poison, stun and a shield
+  landing on EITHER side, panned by side (heroes a little left, enemies a little right,
+  `CombatCues.SidePan`; a hero's other statuses stay the generic cue), shards gained, stats up and
+  a taunt. `Module/Audio/CombatCues` raises them from Harmony postfixes on the same HUD views the
   battle log hooks (`HealthBarView.UpdateHealth/SetStatusStack/UpdateMana/ShowAbilityIcon`,
   `CharacterViewController.HandleAnimationAudio`; `_isPlayer` tells the sides, a bar counts only
-  while `BattleEvents.UnitName` names a fighting unit) and on the tutorial's rush and stall
+  while `BattleEvents.UnitName` names a fighting unit), on the tutorial's rush and stall
   subscribers (`TutorialServiceInitializer._HandleNotifications_b__23_7` / `_6`: the interop proxy
   spells a lambda's angle brackets as underscores; the publisher is a generic relay method no
-  patch can name). The edge-triggers and the interval clocks reset at each new placement
+  patch can name), on `VfxController.PlayFeedbackVfx(string key, ...)` for the game's feedback
+  keys (`GainShards`, `GainStats`, `GainPermanentStats`; the 19 keys are the balancing
+  `VisualFeedbackSingleton._keyToVfxBlocks`, and `OnFeedbackEvent`'s own key is a string the
+  struct proxy drops), and on the taunt effect actions (`TauntAllEnemiesAction.ApplyAction`,
+  `TauntAdjacentEnemiesAction.ApplyAction`, `SkornShieldTauntAction.OnEnter`: taunt is neither a
+  status nor a feedback key). The edge-triggers and the interval clocks reset at each new placement
   (`EventsSection.OnUpdate`). The simulation itself raises typed events on an `EventBus`
   (`OnCharacterDamagedEvent` and kin, dispatched per frame from `BattleSimulation.
   FinishFrameExecution`, subscribed through the battle scope's `SimulationEventBusRelay`): the
   HUD hooks are the same facts one step later and need no delegate conversion. The shipped files
   are placeholder tones from `tools/python/make_cues.py` (writes the missing ones, `--force`
   all); a real sound replaces a placeholder 1:1 by file name. A module-only build deploys
-  `assets/audio` too. Every play logs one Info line ("audio: HeroDamaged at 0.90"), which is how
-  a fight's cue count is checked against its events.
+  `assets/audio` too. The maintainer's authored sounds land in `assets/audio/combat` under the
+  cue's file name (their originals stay in the untracked `audio/`). To check a fight's cue count
+  against its events, put a temporary Info line in `FmodCueEngine.PlayCue` and tally `GET /log`:
+  a 17 s fight with blank intervals raised hero damage 87 times, enemy damage 46, shields 21.
 - **Settings** (`Core/Audio/SoundSettings`, in the host's store under `sound_*`): a master volume
   and, per cue, a volume stored as a signed offset from the master ("+0", "-10"; 0 to 200
   percent, steps of 10) and an interval: the least seconds between two plays of that cue, blank

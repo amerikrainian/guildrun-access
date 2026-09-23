@@ -35,6 +35,22 @@ namespace GuildrunAccess.Core.Audio
         RushStarted,
         /// <summary>A stall effect starts.</summary>
         StallStarted,
+        /// <summary>Burn lands on a unit (panned to its side: heroes left, enemies right).</summary>
+        StatusBurn,
+        /// <summary>Frost lands on a unit (panned to its side).</summary>
+        StatusFrost,
+        /// <summary>Poison lands on a unit (panned to its side).</summary>
+        StatusPoison,
+        /// <summary>A unit is stunned (panned to its side).</summary>
+        StatusStun,
+        /// <summary>A unit gains a shield (panned to its side).</summary>
+        ShieldGained,
+        /// <summary>Shards are gained mid-fight (the game's shard feedback).</summary>
+        ShardsGained,
+        /// <summary>A unit's stats go up mid-fight (the game's stat-gain feedback).</summary>
+        StatUp,
+        /// <summary>A hero taunts the enemies onto itself.</summary>
+        Taunt,
     }
 
     /// <summary>The glossary's grouping of cues, mirroring the assets/audio folders.</summary>
