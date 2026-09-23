@@ -213,6 +213,7 @@ end.no_highlights=aucun fait marquant
 end.summary=Résumé
 screen.progression=Progression
 progression.xp={0} XP, niveau {1}
+progression.next=encore {0} XP avant le prochain palier
 progression.milestones=paliers
 progression.threshold={0} XP
 progression.locked=bloqué

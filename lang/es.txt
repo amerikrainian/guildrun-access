@@ -213,6 +213,7 @@ end.no_highlights=sin destacados
 end.summary=Resumen
 screen.progression=Progreso
 progression.xp={0} EXP, nivel {1}
+progression.next=faltan {0} XP para el siguiente hito
 progression.milestones=hitos
 progression.threshold={0} EXP
 progression.locked=bloqueado

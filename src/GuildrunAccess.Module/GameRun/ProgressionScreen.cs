@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Ember.Scopes.Application.UI.Tooltips;
@@ -62,22 +63,29 @@ namespace GuildrunAccess.Module.GameRun
             b.PushContext(Title(panel), null, positions: false);
             b.BeginStop("progression");
             var reader = panel._unlockReader;
+            var thresholds = new List<ProgressionUnlockThresholdView>();
+            if (panel._thresholds != null)
+                foreach (var threshold in panel._thresholds)
+                    if (threshold != null && threshold.gameObject.activeInHierarchy) thresholds.Add(threshold);
+
+            // "130 XP, level 1, 120 XP to the next milestone": the game draws no number for the XP
+            // itself, only the bar and each milestone's threshold, so the line is the reader's
+            // figures with the distance to the next milestone still locked.
             if (reader != null)
-                b.AddItem(ControlId.Structural("progression:xp"), GameNodes.Text(() => Strings.ProgressionXp(reader.CurrentXP, reader.CurrentLevel)));
+                b.AddItem(ControlId.Structural("progression:xp"), GameNodes.Text(() => XpLine(reader, thresholds)));
             var hint = Hint(panel);
             if (hint != null)
                 b.AddItem(ControlId.Structural("progression:hint"), GameNodes.Text(() => hint.text));
 
-            var thresholds = panel._thresholds;
-            if (thresholds != null && thresholds.Count > 0)
+            // The milestones as the strip the game draws: Left and Right along it, Down from the hint
+            // entering on the next milestone to reach (the first still locked), Down again to the buttons.
+            if (thresholds.Count > 0)
             {
                 b.PushContext(Strings.ProgressionMilestones, Strings.RoleList);
+                b.StartRow(entry: () => NextIndex(thresholds));
                 for (int i = 0; i < thresholds.Count; i++)
-                {
-                    var threshold = thresholds[i];
-                    if (threshold == null || !threshold.gameObject.activeInHierarchy) continue;
-                    b.AddItem(ControlId.Structural("progression:milestone:" + i), Milestone(threshold));
-                }
+                    b.AddItem(ControlId.Structural("progression:milestone:" + i), Milestone(thresholds[i]));
+                b.EndRow();
                 b.PopContext();
             }
 
@@ -136,6 +144,44 @@ namespace GuildrunAccess.Module.GameRun
             string head = string.IsNullOrWhiteSpace(xp) ? null : Strings.ProgressionThreshold(xp);
             if (string.IsNullOrEmpty(head)) return name;
             return string.IsNullOrEmpty(name) ? head : head + ", " + name;
+        }
+
+        // The XP and level, and how far the next locked milestone is when there is one.
+        private static string XpLine(Ember.Scopes.Application.Unlock.Data.UnlockReader reader, List<ProgressionUnlockThresholdView> thresholds)
+        {
+            int xp = reader.CurrentXP;
+            string line = Strings.ProgressionXp(xp, reader.CurrentLevel);
+            int next = NextIndex(thresholds);
+            if (next < thresholds.Count && !IsUnlocked(thresholds[next]))
+            {
+                int needed = ThresholdXp(thresholds[next]);
+                if (needed > xp) line += ", " + Strings.ProgressionNext(needed - xp);
+            }
+            return line;
+        }
+
+        // The first milestone still locked (the next to reach), or the last when all are unlocked.
+        private static int NextIndex(List<ProgressionUnlockThresholdView> thresholds)
+        {
+            for (int i = 0; i < thresholds.Count; i++)
+                if (!IsUnlocked(thresholds[i])) return i;
+            return Math.Max(0, thresholds.Count - 1);
+        }
+
+        private static bool IsUnlocked(ProgressionUnlockThresholdView threshold)
+        {
+            try { return (int)threshold._currentState != 0; } // 1 unlocked, 2 new
+            catch (System.Exception) { return false; }
+        }
+
+        // The milestone's XP figure from its own text ("250 XP"), 0 when it holds no number.
+        private static int ThresholdXp(ProgressionUnlockThresholdView threshold)
+        {
+            string text = threshold._thresholdText != null ? threshold._thresholdText.text : null;
+            if (string.IsNullOrEmpty(text)) return 0;
+            var digits = new StringBuilder();
+            foreach (char c in text) if (char.IsDigit(c)) digits.Append(c);
+            return digits.Length > 0 && int.TryParse(digits.ToString(), out int value) ? value : 0;
         }
 
         private static string StateText(ProgressionUnlockThresholdView threshold)

@@ -215,6 +215,7 @@ end.no_highlights=no highlights
 end.summary=Summary
 screen.progression=Progression
 progression.xp={0} XP, level {1}
+progression.next={0} XP to the next milestone
 progression.milestones=milestones
 progression.threshold={0} XP
 progression.locked=locked

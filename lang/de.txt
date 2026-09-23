@@ -213,6 +213,7 @@ end.no_highlights=keine Highlights
 end.summary=Zusammenfassung
 screen.progression=Progression
 progression.xp={0} EP, Stufe {1}
+progression.next=noch {0} XP bis zum nächsten Meilenstein
 progression.milestones=Meilensteine
 progression.threshold={0} EP
 progression.locked=gesperrt

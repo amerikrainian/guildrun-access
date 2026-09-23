@@ -213,6 +213,7 @@ end.no_highlights=無精彩表現
 end.summary=總結
 screen.progression=進度
 progression.xp={0} 經驗值，等級 {1}
+progression.next=距下一里程碑還差 {0} 經驗
 progression.milestones=里程碑
 progression.threshold={0} 經驗值
 progression.locked=已鎖定

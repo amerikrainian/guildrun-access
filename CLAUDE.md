@@ -596,8 +596,11 @@ resolves from the application scope's container), unused so far.
    its Summary button turns on `EndScreenController._endlessShareView`, a `HeroPanelView` in its
    summary form, read by `RunSummaryScreen` above the end screen: the team's cards, the endless
    floor when filled, the endless leaderboard, Close, which Escape presses),
-   progression (one Tab-stop top to bottom: XP, the hint, the milestones, New Run, Quit to Menu, the
-   landing on New Run; the panel disables its buttons while its XP bar fills, two seconds a level,
+   progression (one Tab-stop top to bottom: the XP line, the hint, the milestones as a Left/Right
+   row entered on the next one to reach, New Run, Quit to Menu, the landing on New Run; the game
+   draws no XP number, only the bar and each milestone's threshold text, so the XP line is the
+   `UnlockReader`'s XP and level plus the distance to the first locked milestone, its threshold
+   parsed from its own text; the panel disables its buttons while its XP bar fills, two seconds a level,
    `_buttonsToDisableDuringAnimation`, so `ProgressionScreen.IsActive` waits for a button to be
    interactable and New Run never lands as "disabled"), the sidebar (inspect cards, damage tracker), battle events
    (`GameRun/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties

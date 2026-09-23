@@ -213,6 +213,7 @@ end.no_highlights=нет показателей
 end.summary=Итоги
 screen.progression=Прогресс
 progression.xp=очки опыта: {0}, уровень {1}
+progression.next=до следующей вехи: {0} опыта
 progression.milestones=вехи
 progression.threshold=очки опыта: {0}
 progression.locked=заблокировано

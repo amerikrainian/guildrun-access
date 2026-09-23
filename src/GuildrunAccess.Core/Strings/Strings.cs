@@ -301,6 +301,8 @@ namespace GuildrunAccess.Core.Strings
             D("screen.progression", "Progression"),
             // {0} = XP, {1} = level.
             D("progression.xp", "{0} XP, level {1}"),
+            // Follows the XP line while a milestone is still locked; {0} = the XP short of the next one.
+            D("progression.next", "{0} XP to the next milestone"),
             D("progression.milestones", "milestones"),
             // {0} = the XP the milestone needs.
             D("progression.threshold", "{0} XP"),
@@ -831,6 +833,7 @@ namespace GuildrunAccess.Core.Strings
         public static string EndSummary => Get("end.summary");
         public static string ScreenProgression => Get("screen.progression");
         public static string ProgressionXp(int xp, int level) => F("progression.xp", xp, level);
+        public static string ProgressionNext(int xp) => F("progression.next", xp);
         public static string ProgressionMilestones => Get("progression.milestones");
         public static string ProgressionThreshold(string xp) => F("progression.threshold", xp);
         public static string ProgressionLocked => Get("progression.locked");

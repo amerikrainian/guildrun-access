@@ -213,6 +213,7 @@ end.no_highlights=ハイライトなし
 end.summary=サマリー
 screen.progression=進行度
 progression.xp={0} XP、レベル {1}
+progression.next=次のマイルストーンまであと {0} XP
 progression.milestones=マイルストーン
 progression.threshold={0} XP
 progression.locked=未解放
