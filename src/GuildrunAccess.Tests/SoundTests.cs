@@ -67,7 +67,7 @@ namespace GuildrunAccess.Tests
         {
             var store = new MemoryStore();
             var sounds = new SoundVolumes(store);
-            var interval = sounds.Interval(AudioCue.HeroDamaged);
+            var interval = sounds.Interval(AudioCue.HeroHealed);
             Assert.Null(interval.Seconds);
             Assert.True(interval.TrySet("1.5"));
             Assert.Equal(1.5, interval.Seconds);
@@ -80,7 +80,7 @@ namespace GuildrunAccess.Tests
             Assert.True(interval.TrySet("  "));
             Assert.Null(interval.Seconds);
             Assert.Equal("", store.Values[interval.Key]);
-            Assert.Null(new SoundVolumes(store).Interval(AudioCue.HeroDamaged).Seconds);
+            Assert.Null(new SoundVolumes(store).Interval(AudioCue.HeroHealed).Seconds);
         }
 
         [Fact]
@@ -92,28 +92,28 @@ namespace GuildrunAccess.Tests
             double now = 0;
             var player = new CuePlayer(new VolumeScaledEngine(engine, sounds), sounds, () => now);
 
-            Assert.True(player.Play(AudioCue.HeroDamaged));
+            Assert.True(player.Play(AudioCue.HeroHealed));
             now = 0.01;
-            Assert.True(player.Play(AudioCue.HeroDamaged)); // blank: every event
+            Assert.True(player.Play(AudioCue.HeroHealed)); // blank: every event
             Assert.Equal(2, engine.Plays.Count);
 
-            sounds.Interval(AudioCue.HeroDamaged).TrySet("1");
+            sounds.Interval(AudioCue.HeroHealed).TrySet("1");
             now = 0.5;
-            Assert.False(player.Play(AudioCue.HeroDamaged)); // too soon after the last
-            Assert.True(player.Play(AudioCue.EnemyDamaged));  // another cue keeps its own clock
+            Assert.False(player.Play(AudioCue.HeroHealed)); // too soon after the last
+            Assert.True(player.Play(AudioCue.EnemyDied));  // another cue keeps its own clock
             now = 1.01;
-            Assert.True(player.Play(AudioCue.HeroDamaged));
+            Assert.True(player.Play(AudioCue.HeroHealed));
             Assert.Equal(4, engine.Plays.Count);
 
             // The volume setting scales what reaches the engine.
-            sounds.All[(int)AudioCue.HeroDamaged].Adjust(-1);
+            sounds.All[(int)AudioCue.HeroHealed].Adjust(-1);
             now = 3;
-            Assert.True(player.Play(AudioCue.HeroDamaged));
+            Assert.True(player.Play(AudioCue.HeroHealed));
             Assert.Equal(0.9f, engine.Plays[engine.Plays.Count - 1].Volume, 3);
 
             player.Reset();
             now = 3.1;
-            Assert.True(player.Play(AudioCue.HeroDamaged)); // a new fight starts the clocks over
+            Assert.True(player.Play(AudioCue.HeroHealed)); // a new fight starts the clocks over
         }
     }
 }

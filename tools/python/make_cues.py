@@ -17,8 +17,6 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "ass
 
 # group/name: (notes in Hz, note length s, gap s, waveform, amplitude)
 CUES = {
-    "combat/hero_damaged": ([330], 0.08, 0.02, "tri", 0.35),
-    "combat/enemy_damaged": ([220], 0.06, 0.02, "square", 0.2),
     "combat/crit": ([880, 1320], 0.06, 0.02, "sine", 0.45),
     "combat/hero_healed": ([523, 659, 784], 0.07, 0.02, "sine", 0.35),
     "combat/hero_low_health": ([440, 415, 440, 415], 0.09, 0.01, "tri", 0.45),

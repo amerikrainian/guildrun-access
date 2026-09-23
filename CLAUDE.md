@@ -420,7 +420,8 @@ snake case), created on first play and kept, released in Dispose (native handles
 reload). The game's own UI events are playable by path too (`RuntimeManager.CreateInstance
 ("event:/SFX/UI/ui_main_menu_hover")`, `start`, `release`; the game's `IEmberAudioService`
 resolves from the application scope's container), unused so far.
-- **Cues** (`Core/Audio/AudioCue`): what the fight shows but never sounds: hero and enemy damaged,
+- **Cues** (`Core/Audio/AudioCue`): what the fight shows but never sounds (plain damage is left
+  out on purpose: a cue per hit was a rattle at 87 in one fight):
   crit, hero healed, hero low health (below a quarter, once until it recovers), hero and enemy
   died, hero and enemy cast, a status on a hero, mana full (ability ready), rush and stall
   started; and, with the maintainer's authored sounds, burn, frost, poison, stun and a shield
@@ -451,8 +452,7 @@ resolves from the application scope's container), unused so far.
   all); a real sound replaces a placeholder 1:1 by file name. A module-only build deploys
   `assets/audio` too. The maintainer's authored sounds land in `assets/audio/combat` under the
   cue's file name (their originals stay in the untracked `audio/`). To check a fight's cue count
-  against its events, put a temporary Info line in `FmodCueEngine.PlayCue` and tally `GET /log`:
-  a 17 s fight with blank intervals raised hero damage 87 times, enemy damage 46, shields 21.
+  against its events, put a temporary Info line in `FmodCueEngine.PlayCue` and tally `GET /log`.
 - **Settings** (`Core/Audio/SoundSettings`, in the host's store under `sound_*`): a master volume
   and, per cue, a volume stored as a signed offset from the master ("+0", "-10"; 0 to 200
   percent, steps of 10) and an interval: the least seconds between two plays of that cue, blank

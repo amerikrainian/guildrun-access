@@ -9,10 +9,6 @@ namespace GuildrunAccess.Core.Audio
     public enum AudioCue
     {
         // Combat (assets/audio/combat).
-        /// <summary>A hero takes damage.</summary>
-        HeroDamaged,
-        /// <summary>An enemy takes damage.</summary>
-        EnemyDamaged,
         /// <summary>A critical hit lands, on either side.</summary>
         Crit,
         /// <summary>A hero is healed.</summary>
@@ -77,7 +73,7 @@ namespace GuildrunAccess.Core.Audio
         public static AudioCueGroup GroupOf(AudioCue cue) => AudioCueGroup.Combat;
 
         /// <summary>The file a cue plays, under the group's folder, without an extension:
-        /// "hero_damaged" for <see cref="AudioCue.HeroDamaged"/> (the enum name in snake case).</summary>
+        /// "hero_low_health" for <see cref="AudioCue.HeroLowHealth"/> (the enum name in snake case).</summary>
         public static string FileName(AudioCue cue)
         {
             string name = cue.ToString();

@@ -92,7 +92,6 @@ namespace GuildrunAccess.Module.Audio
                     }
                     else if (changeState.HasDamage && changeState.TotalDamage > 0)
                     {
-                        Play(hero ? AudioCue.HeroDamaged : AudioCue.EnemyDamaged);
                         if (changeState.IsCrit) Play(AudioCue.Crit);
                     }
                     bool dead = changeState.CurrentHealth <= 0 && changeState.CurrentShield <= 0 && changeState.HasDamage;

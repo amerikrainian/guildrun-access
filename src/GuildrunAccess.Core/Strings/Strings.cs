@@ -342,8 +342,6 @@ namespace GuildrunAccess.Core.Strings
             // What the player typed was no number of seconds: the value stays.
             D("sound.invalid", "not a number of seconds, unchanged"),
             // Glossary row labels: what the mod plays each cue for (keyed "sound." + the cue's file name).
-            D("sound.hero_damaged", "hero takes damage"),
-            D("sound.enemy_damaged", "enemy takes damage"),
             D("sound.crit", "critical hit"),
             D("sound.hero_healed", "hero healed"),
             D("sound.hero_low_health", "hero low on health"),
