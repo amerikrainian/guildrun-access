@@ -80,6 +80,8 @@ namespace GuildrunAccess.Module.GameRun
             var shop = ShopScreen.Open();
             if (view != null && view._itemSlotViews != null)
             {
+                var hero = RunData.Hero(heroId);
+                int slots = RunData.SlotCount(hero);
                 foreach (var slot in view._itemSlotViews)
                 {
                     if (!RunData.TryItemId(slot, out var itemId)) continue;
@@ -89,6 +91,21 @@ namespace GuildrunAccess.Module.GameRun
                     {
                         if (RunData.Unequip(heroId, id)) Speech.Say(Strings.RunUnequipped(itemName), interrupt: true);
                     }));
+                    // "Move Hammer to slot 1": the item to another of the hero's slots (what dragging
+                    // it there does), trading places with the item wearing it. Where a hero reads
+                    // its slots by position, the order is the point.
+                    int own = slot.SlotIndex;
+                    for (int index = 0; index < slots; index++)
+                    {
+                        if (index == own) continue;
+                        int target = index;
+                        string other = RunData.TryItemAt(hero, index, out var otherId) ? RunData.ItemName(RunData.Item(otherId)) : null;
+                        options.Add(new ChoiceOption(Strings.RunMoveToSlot(itemName, index + 1), () =>
+                        {
+                            if (RunData.MoveItemTo(heroId, id, target)) Speech.Say(Strings.RunMovedToSlot(itemName, target + 1), interrupt: true);
+                            else Speech.Say(Strings.RunMoveFailed, interrupt: true);
+                        }, other ?? Strings.RunSlotEmpty));
+                    }
                     if (shop != null) options.Add(SellItemOption(shop, id, itemName));
                 }
             }
@@ -159,13 +176,33 @@ namespace GuildrunAccess.Module.GameRun
                 var id = heroId;
                 // A hero with every slot taken is listed but not a target (the mouse cannot drop
                 // there either): the registry would take the item and lose it (see RunData.Equip).
-                bool free = RunData.HasFreeSlot(RunData.Hero(heroId));
+                var hero = RunData.Hero(heroId);
+                bool free = RunData.HasFreeSlot(hero);
                 string wearing = RunLabels.Wearing(view._itemSlotViews);
                 string detail = free ? wearing : wearing == null ? Strings.RunSlotsFull : wearing + ", " + Strings.RunSlotsFull;
-                options.Add(new ChoiceOption(RunData.HeroLabel(view) ?? heroName, () =>
+                string label = RunData.HeroLabel(view) ?? heroName;
+                options.Add(new ChoiceOption(label, () =>
                 {
                     Speech.Say(RunData.Equip(id, itemId) ? Strings.RunEquipped(itemName, heroName) : Strings.RunEquipFailed, interrupt: true);
                 }, detail, enabled: free));
+                // Then the hero's slots one by one, "Nyx, slot 2", what dropping the item on that
+                // slot does: into an empty one, or in place of the item there, which goes back to
+                // the reserve (so a full hero is still a target, slot by slot). Where a hero reads
+                // its slots by position, the slot is the choice. A lone empty slot adds nothing to
+                // the hero's own line and is left out.
+                int slots = RunData.SlotCount(hero);
+                for (int index = 0; index < slots; index++)
+                {
+                    int target = index;
+                    string worn = RunData.TryItemAt(hero, index, out var wornId) ? RunData.ItemName(RunData.Item(wornId)) : null;
+                    if (slots == 1 && worn == null) continue;
+                    options.Add(new ChoiceOption(Strings.RunHeroSlot(label, index + 1), () =>
+                    {
+                        if (!RunData.MoveItemTo(id, itemId, target)) { Speech.Say(Strings.RunEquipFailed, interrupt: true); return; }
+                        Speech.Say(Strings.RunEquipped(itemName, heroName), interrupt: true);
+                        if (worn != null) Speech.Say(Strings.RunUnequipped(worn));
+                    }, worn ?? Strings.RunSlotEmpty));
+                }
             }
         }
 

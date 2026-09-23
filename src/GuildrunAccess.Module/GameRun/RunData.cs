@@ -446,6 +446,62 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
+        /// <summary>Put an item into ONE of a hero's slots, by index, what dropping it on that slot
+        /// does (<c>ItemDragSubController</c>'s drop calls the registry's three-argument MoveItem):
+        /// a reserve item goes into an empty slot, or trades places with the item wearing it
+        /// (that one goes to the reserve); an item the hero wears moves to the slot, or swaps with
+        /// the item there. Verified live on build 25461680. False when the slot does not exist or the
+        /// call could not be made. Matters where a hero reads its slots by position (a hero that
+        /// consumes its leftmost item).</summary>
+        public static bool MoveItemTo(HeroId hero, ItemId item, int index)
+        {
+            try
+            {
+                var service = Service();
+                if (service == null) return false;
+                if (index < 0 || index >= SlotCount(Hero(hero)))
+                {
+                    CoreLog.Warning("RunData: move to slot refused: no slot " + index);
+                    return false;
+                }
+                service.MoveItem(item, hero, index);
+                return true;
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: move to slot failed: " + e);
+                return false;
+            }
+        }
+
+        /// <summary>How many item slots the hero has (empties included), 0 without a hero.</summary>
+        public static int SlotCount(HeroData hero)
+        {
+            try { return hero != null ? hero.ItemSlotCount : 0; }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: slot count failed: " + e.Message);
+                return 0;
+            }
+        }
+
+        /// <summary>The item in the hero's slot of that index, false for an empty or missing slot.</summary>
+        public static bool TryItemAt(HeroData hero, int index, out ItemId id)
+        {
+            id = default;
+            try
+            {
+                var ids = hero != null ? hero._itemIds : null;
+                if (ids == null || index < 0 || index >= ids.Count) return false;
+                return Nullables.TryGet(ids[index], out id);
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("RunData: item at slot failed: " + e.Message);
+                return false;
+            }
+        }
+
         // "No slot index" for the registry calls: a proper empty nullable (the interop proxy rejects
         // a plain null for a nullable-typed parameter).
         private static Il2CppSystem.Nullable<int> NoSlot() => new Il2CppSystem.Nullable<int>();

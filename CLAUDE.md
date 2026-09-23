@@ -432,7 +432,13 @@ help ("Ctrl+Shift+A", "Up Arrow") are not translated.
    with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
    `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
    of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is
-   `GetFreeItemSlotCount`. The same holds for every rule of the game's drags: the services check
+   `GetFreeItemSlotCount`. A SPECIFIC slot is a target of its own ("Nyx, slot 2", the item there as
+   the detail, in the equip menu after the hero's line; "Move Hammer to slot 1" in the hero's menu):
+   the drag's drop on a slot is the registry's three-argument `MoveItem(item, hero, index)`, which
+   equips into an empty slot, trades the reserve item for the one wearing it (that one to the
+   reserve), or moves a worn item between the hero's own slots, swapping with an occupant
+   (`RunData.MoveItemTo`, verified live); slots read by position, one-based, leftmost first, since a
+   hero exists that consumes its leftmost item. The same holds for every rule of the game's drags: the services check
    NONE of them, the drag controllers do (`BattleHeroDragSubController`, `HeroDragSubController`,
    `ItemDragSubController`) and answer with `DialogPanel.ShowSimpleDialog` and a
    `GameRunInputLocalization` text. `RunData`'s `Refuse*` ask the same and show the same dialog,

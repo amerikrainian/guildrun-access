@@ -421,6 +421,11 @@ namespace GuildrunAccess.Core.Strings
             // {0} = the item's name.
             D("run.unequip", "Unequip {0}"),
             D("run.unequipped", "{0} unequipped"),
+            // One of a hero's item slots as an equip target: {0} = the hero, {1} = the slot number (from 1, leftmost).
+            D("run.hero_slot", "{0}, slot {1}"),
+            // A worn item to another of its hero's slots: {0} = the item, {1} = the slot number.
+            D("run.move_to_slot", "Move {0} to slot {1}"),
+            D("run.moved_to_slot", "{0} moved to slot {1}"),
             D("run.sell", "Sell {0}"),
             D("run.sell_for", "Sell {0} for {1} shards"),
             D("run.sold", "{0} sold"),
@@ -859,6 +864,9 @@ namespace GuildrunAccess.Core.Strings
         public static string RunInspect => Get("run.inspect");
         public static string RunInspectFailed => Get("run.inspect_failed");
         public static string RunUnequip(string item) => F("run.unequip", item);
+        public static string RunHeroSlot(string hero, int slot) => F("run.hero_slot", hero, slot);
+        public static string RunMoveToSlot(string item, int slot) => F("run.move_to_slot", item, slot);
+        public static string RunMovedToSlot(string item, int slot) => F("run.moved_to_slot", item, slot);
         public static string RunSell(string name) => F("run.sell", name);
         public static string RunSellFor(string name, int shards) => F("run.sell_for", name, shards);
         public static string RunSold(string name) => F("run.sold", name);
