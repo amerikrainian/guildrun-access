@@ -18,7 +18,9 @@ namespace GuildrunAccess.Module.GameRun
     /// The meta-progression panel after a run (<see cref="ProgressionUnlockUIController"/>): the
     /// player's XP and level, every milestone on the timeline with its state (locked, unlocked, new) and
     /// the rewards it holds (named through their own tooltips; the buffer reads the milestone's tooltip and
-    /// each reward's description), then New Run and Quit to Menu. Escape presses Quit to Menu.
+    /// each reward's description), then New Run and Quit to Menu, all one Tab-stop read top to bottom,
+    /// the landing on New Run. The screen appears once the panel's fill animation has enabled the
+    /// buttons. Escape presses Quit to Menu.
     /// </summary>
     public sealed class ProgressionScreen : Screen
     {
@@ -34,16 +36,31 @@ namespace GuildrunAccess.Module.GameRun
             return panel != null && panel.gameObject.activeInHierarchy ? panel : null;
         }
 
-        public override bool IsActive() => Panel() != null;
+        // The panel disables its buttons while the XP bar fills (_buttonsToDisableDuringAnimation,
+        // SetButtonsInteractable after AnimateFillAsync, two seconds a level), so the screen waits
+        // for them: a landing on New Run then never reads "disabled" for a button that comes alive
+        // a moment later unannounced.
+        public override bool IsActive()
+        {
+            var panel = Panel();
+            if (panel == null) return false;
+            var newRun = panel._newRunButton;
+            var quit = panel._quitToMenuButton;
+            return (newRun != null && newRun.interactable) || (quit != null && quit.interactable);
+        }
 
+        private static readonly ControlId NewRunId = ControlId.Structural("progression:newrun");
+        private bool _landed;
+
+        // One Tab-stop, top to bottom: the XP, the hint, the milestones, then the buttons; the first
+        // landing is New Run, as it was when the buttons had a stop of their own.
         public override void Build(GraphBuilder b)
         {
             var panel = Panel();
             if (panel == null) return;
 
             b.PushContext(Title(panel), null, positions: false);
-
-            b.BeginStop("summary");
+            b.BeginStop("progression");
             var reader = panel._unlockReader;
             if (reader != null)
                 b.AddItem(ControlId.Structural("progression:xp"), GameNodes.Text(() => Strings.ProgressionXp(reader.CurrentXP, reader.CurrentLevel)));
@@ -54,7 +71,6 @@ namespace GuildrunAccess.Module.GameRun
             var thresholds = panel._thresholds;
             if (thresholds != null && thresholds.Count > 0)
             {
-                b.BeginStop("milestones");
                 b.PushContext(Strings.ProgressionMilestones, Strings.RoleList);
                 for (int i = 0; i < thresholds.Count; i++)
                 {
@@ -65,14 +81,22 @@ namespace GuildrunAccess.Module.GameRun
                 b.PopContext();
             }
 
-            b.BeginStop("actions");
             if (GameNodes.IsShown(panel._newRunButton))
-                b.AddItem(ControlId.Structural("progression:newrun"), GameNodes.Button(panel._newRunButton));
+                b.AddItem(NewRunId, GameNodes.Button(panel._newRunButton));
             if (GameNodes.IsShown(panel._quitToMenuButton))
                 b.AddItem(ControlId.Structural("progression:quit"), GameNodes.Button(panel._quitToMenuButton));
 
             b.PopContext();
         }
+
+        public override void OnUpdate()
+        {
+            if (_landed) return;
+            _landed = true;
+            Navigation.FocusNode(NewRunId);
+        }
+
+        public override void OnPop() => _landed = false;
 
         private static string Title(ProgressionUnlockUIController panel)
         {
@@ -161,8 +185,6 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var target in threshold.GetComponentsInChildren<TooltipRaycastTarget>(false))
                 if (target != null && target != threshold._tooltipRaycastTarget) yield return target;
         }
-
-        public override object InitialFocusStop => "actions";
 
         public override IEnumerable<ElementAction> GetActions()
         {

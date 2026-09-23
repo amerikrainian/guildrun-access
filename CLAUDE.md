@@ -596,7 +596,10 @@ resolves from the application scope's container), unused so far.
    its Summary button turns on `EndScreenController._endlessShareView`, a `HeroPanelView` in its
    summary form, read by `RunSummaryScreen` above the end screen: the team's cards, the endless
    floor when filled, the endless leaderboard, Close, which Escape presses),
-   progression, the sidebar (inspect cards, damage tracker), battle events
+   progression (one Tab-stop top to bottom: XP, the hint, the milestones, New Run, Quit to Menu, the
+   landing on New Run; the panel disables its buttons while its XP bar fills, two seconds a level,
+   `_buttonsToDisableDuringAnimation`, so `ProgressionScreen.IsActive` waits for a button to be
+   interactable and New Run never lands as "disabled"), the sidebar (inspect cards, damage tracker), battle events
    (`GameRun/BattleEvents`: Harmony postfixes on the HUD views: floating numbers, status icons, empties
    bars, cast animations: the battle events log, a run-HUD stop, and NOTHING spoken as it happens;
    only what the game draws is reported: the simulation's own `BattleLogger` is developer debug text
