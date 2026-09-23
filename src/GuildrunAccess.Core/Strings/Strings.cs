@@ -103,6 +103,11 @@ namespace GuildrunAccess.Core.Strings
             D("bind.ui.regionPrev", "Previous section"),
             D("bind.ui.regionNext", "Next section"),
             D("bind.ui.readFocus", "Read current control"),
+            // The run's jump keys (Alt+B, Alt+T, Alt+I): a landing on that Tab-stop from anywhere on
+            // the screen. In the key help each reads by what it lands on here ("Jump to offers").
+            D("bind.jump.board", "Jump to board"),
+            D("bind.jump.party", "Jump to party"),
+            D("bind.jump.items", "Jump to items and relics"),
             // Buffer review (Ctrl plus arrows): switch between the review lists, step through one.
             D("bind.buffer.next", "Next buffer"),
             D("bind.buffer.prev", "Previous buffer"),
@@ -189,6 +194,8 @@ namespace GuildrunAccess.Core.Strings
             // {0} = the hero's equipped items, comma-separated: after the hero's name wherever a hero is listed.
             D("run.wearing", "wearing {0}"),
             D("run.relics", "relics"),
+            // The inventory stop as a whole (the items and the relics side by side), for Alt+I's help row.
+            D("run.inventory", "items and relics"),
             D("run.info", "info"),
             D("run.speed", "battle speed"),
             D("run.menu", "menu"),
@@ -333,6 +340,8 @@ namespace GuildrunAccess.Core.Strings
             D("help.cancel_move", "Cancel move"),
             // {0} = what the key does, {1} = the keys bound to it.
             D("help.row", "{0}: {1}"),
+            // A jump key's row, by what it lands on here; {0} = that stop's name ("offers", "party").
+            D("help.jump_to", "Jump to {0}"),
 
             // The run's sidebar and the fight narration.
             D("run.sidebar", "sidebar"),
@@ -438,6 +447,8 @@ namespace GuildrunAccess.Core.Strings
 
             // The shop between fights.
             D("screen.shop", "Shop"),
+            // The offers stop as a whole (heroes, items and relics for sale), for Alt+B's help row.
+            D("shop.offers", "offers"),
             D("shop.heroes", "heroes"),
             D("shop.items", "shop items"),
             D("shop.relics", "shop relics"),
@@ -458,6 +469,8 @@ namespace GuildrunAccess.Core.Strings
             // A random event: story, choices, outcome.
             D("screen.event", "Event"),
             D("event.outcome", "outcome"),
+            // The event's choices, for Alt+B's help row (the key lands on the first one).
+            D("event.choices", "choices"),
 
             // A hero's rank-up choice (specialization / rank modifier picker).
             D("screen.picker", "Rank up"),
@@ -691,6 +704,7 @@ namespace GuildrunAccess.Core.Strings
         public static string RunItems => Get("run.items");
         public static string RunWearing(string items) => F("run.wearing", items);
         public static string RunRelics => Get("run.relics");
+        public static string RunInventory => Get("run.inventory");
         public static string RunInfo => Get("run.info");
         public static string RunSpeed => Get("run.speed");
         public static string RunMenu => Get("run.menu");
@@ -782,6 +796,7 @@ namespace GuildrunAccess.Core.Strings
         public static string HelpPause => Get("help.pause");
         public static string HelpCancelMove => Get("help.cancel_move");
         public static string HelpRow(string label, string keys) => F("help.row", label, keys);
+        public static string JumpTo(string stop) => F("help.jump_to", stop);
         public static string ModClose => Get("mod.close");
         public static string ModSpeakPositions => Get("mod.speak_positions");
         public static string ModFocusOnLaunch => Get("mod.focus_on_launch");
@@ -866,6 +881,7 @@ namespace GuildrunAccess.Core.Strings
 
         public static string ScreenShop => Get("screen.shop");
         public static string ShopHeroes => Get("shop.heroes");
+        public static string ShopOffers => Get("shop.offers");
         public static string ShopItems => Get("shop.items");
         public static string ShopRelics => Get("shop.relics");
         public static string ShopActions => Get("shop.actions");
@@ -879,6 +895,7 @@ namespace GuildrunAccess.Core.Strings
         public static string CrossroadsPaths => Get("crossroads.paths");
         public static string ScreenEvent => Get("screen.event");
         public static string EventOutcome => Get("event.outcome");
+        public static string EventChoices => Get("event.choices");
         public static string ScreenPicker => Get("screen.picker");
         public static string PickerChoices => Get("picker.choices");
         public static string PickerNoChoices => Get("picker.no_choices");

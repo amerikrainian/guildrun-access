@@ -71,6 +71,15 @@ namespace GuildrunAccess.Core.UI
         /// caller stays silent as at an edge.</summary>
         public virtual bool MoveTo(Graph.ControlId id) => false;
 
+        /// <summary>Whether the current render has a focusable node in that Tab-stop: a screen offers
+        /// a jump key (Alt+B for the board) only where its stop is on show.</summary>
+        public virtual bool HasStop(object stopKey) => false;
+
+        /// <summary>Land on a Tab-stop right now, as Tab would (its remembered position, else its
+        /// selected member, else its first node), and announce the landing as a move, wherever focus
+        /// was, in that stop included: a jump key's answer. False when the stop is not in the render.</summary>
+        public virtual bool JumpToStop(object stopKey) => false;
+
         /// <summary>The Tab-stop the focused node belongs to, or null.</summary>
         public virtual object FocusedStopKey => null;
 
@@ -111,6 +120,10 @@ namespace GuildrunAccess.Core.UI
         public static void AnnounceCurrent() => Active?.AnnounceCurrent();
 
         public static bool WouldHandle(InputAction action) => Active != null && Active.WouldHandle(action);
+
+        public static bool HasStop(object stopKey) => Active != null && Active.HasStop(stopKey);
+
+        public static bool JumpToStop(object stopKey) => Active != null && Active.JumpToStop(stopKey);
 
         public static void QuietNextLanding() => Active?.QuietNextLanding();
 

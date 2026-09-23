@@ -279,7 +279,14 @@ runs; spoken text is still captured. The game already runs in the background whe
 ## Keys (focus mode on at launch; Ctrl+Shift+A toggles it)
 F1 is the key help (below). Arrows navigate, Tab/Shift+Tab cycle control groups, Enter activates,
 Backspace is the secondary action, Escape backs out, Home/End jump, Alt+Up/Down jump sections, typing letters searches the
-focused group. Ctrl+arrows review the buffers (below). Space is unbound: nothing is read on demand
+focused group. Ctrl+arrows review the buffers (below). On the run, Alt+B, Alt+T and Alt+I jump to a
+Tab-stop from anywhere on the screen (`GameRun/JumpKeys`: the board, the party, the items and relics;
+on a panel over the run Alt+B is the panel's own stop: the shop's offers, the crossroads' paths, an
+event's first choice, `RunPanelScreen.PanelStop` / `PanelJump`): UI actions with no handler, answered
+by the focused screen through `GetActions` only while the stop is in the render (`Navigation.HasStop`),
+landing as Tab would (`Navigator.JumpToStop`: the stop's remembered position, spoken as a move, the
+focused control re-read when pressed on its own stop), so the key help lists a jump exactly where it
+lands somewhere. Space is unbound: nothing is read on demand
 by a key; everything a control carries beyond its focus line waits in a buffer, except the glance
 keys: digits 1-6 speak one fact group of the unit the focused control concerns (`NodeVtable.Subject`,
 set wherever the hero buffer finds a hero; `GameRun/UnitGlance`), in place, focus unmoved: 1 vitals,

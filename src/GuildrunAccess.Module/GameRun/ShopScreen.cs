@@ -54,6 +54,10 @@ namespace GuildrunAccess.Module.GameRun
 
         public override bool IsActive() => Open() != null;
 
+        // Alt+B: the offers (the stop is gone once everything is sold; the actions stay a Tab away).
+        protected override object PanelStop => "shop:offers";
+        protected override string PanelStopLabel => Strings.ShopOffers;
+
         protected override string PanelBackLabel
         {
             get { var shop = Shop; return shop != null ? GameNodes.LabelOf(shop._proceedButton) ?? base.PanelBackLabel : base.PanelBackLabel; }

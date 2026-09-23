@@ -150,6 +150,33 @@ namespace GuildrunAccess.Core.UI
             return true;
         }
 
+        public override bool HasStop(object stopKey)
+        {
+            if (stopKey == null || _graph == null || !_graph.Rerender()) return false;
+            foreach (var n in _graph.Current.Order)
+                if (n.Focusable && Equals(n.StopKey, stopKey)) return true;
+            return false;
+        }
+
+        public override bool JumpToStop(object stopKey)
+        {
+            if (stopKey == null || _graph == null || !_graph.Rerender()) return false;
+            var land = KeyGraph.StopLanding(_graph.Current, _graph.State, stopKey);
+            if (land == null) return false;
+            var from = _graph.CurrentNode;
+            if (!_graph.Focus(land.Id)) return false;
+            var node = _graph.CurrentNode;
+            if (node == null) return false;
+            // Spoken as a move from wherever focus was, the node itself included: the key answers
+            // "where is the board" with the control it lands on, even when that is the focused one.
+            PlayHover(node);
+            FireFocus(node);
+            Speak(ComposeMove(ReferenceEquals(from, node) ? null : from, node, entry: false), interrupt: true);
+            _lastSpokenKey = node.Id;
+            _lastSpokenNode = node;
+            return true;
+        }
+
         /// <summary>The live render + focused node id (dev inspection).</summary>
         public GraphRender CurrentRender => _graph?.Current;
         public ControlId FocusedNodeId => _graph?.CurrentNode?.Id;

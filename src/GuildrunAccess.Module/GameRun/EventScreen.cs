@@ -48,6 +48,23 @@ namespace GuildrunAccess.Module.GameRun
             return e != null && e.gameObject.activeInHierarchy && !e._isCovered;
         }
 
+        // Alt+B: the first choice while the event offers any (the story stop's own landing is its
+        // description), else the story stop as it stands (the outcome, then Proceed).
+        protected override ElementAction PanelJump
+        {
+            get
+            {
+                var e = EventUI;
+                if (e == null || !Navigation.HasStop("story")) return null;
+                var choices = Choices(e);
+                var first = choices.Count > 0 ? ChoiceId(choices[0]) : null;
+                return JumpKeys.To(JumpKeys.Board, Strings.EventChoices, true, () =>
+                {
+                    if (first == null || !Navigation.MoveTo(first)) Navigation.JumpToStop("story");
+                });
+            }
+        }
+
         protected override string PanelBackLabel
         {
             get { var e = EventUI; return e != null ? GameNodes.LabelOf(e._proceedButton) ?? base.PanelBackLabel : base.PanelBackLabel; }

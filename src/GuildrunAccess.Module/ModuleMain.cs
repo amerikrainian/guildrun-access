@@ -108,6 +108,11 @@ namespace GuildrunAccess.Module
             InputManager.Register(UiActions.End, "Jump to last", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.End));
             InputManager.Register(UiActions.RegionPrev, "Previous section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.UpArrow, alt: true));
             InputManager.Register(UiActions.RegionNext, "Next section", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.DownArrow, alt: true));
+            // The run's jump keys: a landing on a Tab-stop from anywhere on the screen, answered by the
+            // focused screen (JumpKeys) where that stop is up and by nothing else: no handler here.
+            InputManager.Register(JumpKeys.Board, "Jump to board", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.B, alt: true));
+            InputManager.Register(JumpKeys.Party, "Jump to party", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.T, alt: true));
+            InputManager.Register(JumpKeys.Items, "Jump to items and relics", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.I, alt: true));
             // The run's board, a pointy-top hex grid: Q E A D Z C step focus to the focused cell's six
             // neighbours (the letters' layout on the keyboard is the hexagon's: no cell lies straight up
             // or down), Shift+the same letter moves the focused hero there. The board section answers

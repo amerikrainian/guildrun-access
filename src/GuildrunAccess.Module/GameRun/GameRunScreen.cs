@@ -78,6 +78,9 @@ namespace GuildrunAccess.Module.GameRun
                     nav._settingsButton.onClick.Invoke();
                 else RunSettingsScreen.Open();
             });
+            // Alt+B the board, Alt+T the party, Alt+I the items and relics: each where its stop is up.
+            foreach (var jump in JumpKeys.Stops((JumpKeys.Board, "board", Strings.RunBoard), (JumpKeys.Party, "party", Strings.RunParty), (JumpKeys.Items, "inventory", Strings.RunInventory)))
+                yield return jump;
         }
     }
 }

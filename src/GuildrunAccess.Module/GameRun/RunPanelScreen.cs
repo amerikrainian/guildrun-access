@@ -46,6 +46,18 @@ namespace GuildrunAccess.Module.GameRun
         /// presses (the shop's and an event's Proceed), the pause menu where it opens that.</summary>
         protected virtual string PanelBackLabel => Strings.Get("bind.ui.back");
 
+        /// <summary>The panel's own main stop, where Alt+B lands here in place of the board it covers
+        /// (the shop's offers, an event's story and choices, the crossroads' paths); null for none.</summary>
+        protected virtual object PanelStop => null;
+
+        /// <summary>What <see cref="PanelStop"/> is called in the key help ("Jump to offers").</summary>
+        protected virtual string PanelStopLabel => null;
+
+        /// <summary>Alt+B on this panel: the landing on <see cref="PanelStop"/>, or null while it is
+        /// not up. A panel with a better landing than the stop's own (an event's first choice)
+        /// overrides this.</summary>
+        protected virtual ElementAction PanelJump => JumpKeys.Stop(JumpKeys.Board, PanelStop, PanelStopLabel);
+
         protected override IEnumerable<ElementAction> OwnActions()
         {
             yield return new ElementAction(ActionIds.Back, Actions.Moves.Pending ? Strings.HelpCancelMove : PanelBackLabel, _ =>
@@ -53,6 +65,11 @@ namespace GuildrunAccess.Module.GameRun
                 if (Actions.Moves.Pending) { Actions.Moves.Cancel(); return; }
                 PanelBack();
             });
+            // Alt+B the panel's own stop, Alt+T the party, Alt+I the items and relics: each where up.
+            var panel = PanelJump;
+            if (panel != null) yield return panel;
+            foreach (var jump in JumpKeys.Stops((JumpKeys.Party, "party", Strings.RunParty), (JumpKeys.Items, "inventory", Strings.RunInventory)))
+                yield return jump;
         }
     }
 }

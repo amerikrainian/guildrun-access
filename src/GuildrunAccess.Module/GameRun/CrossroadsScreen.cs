@@ -50,6 +50,10 @@ namespace GuildrunAccess.Module.GameRun
         protected override void PanelBack() => RunSettingsScreen.Open();
         protected override string PanelBackLabel => Strings.HelpPause;
 
+        // Alt+B: the paths.
+        protected override object PanelStop => "paths";
+        protected override string PanelStopLabel => Strings.CrossroadsPaths;
+
         private sealed class PathsSection : ScreenSection
         {
             public override void Build(GraphBuilder b)
