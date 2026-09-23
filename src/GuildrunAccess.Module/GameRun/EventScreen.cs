@@ -42,10 +42,17 @@ namespace GuildrunAccess.Module.GameRun
             }
         }
 
+        // Covered by a picker (a rank-up an event choice granted) the event yields to it; a picker the
+        // player HID (its Hide button) leaves the event covered but the picker object inactive, so no
+        // screen would be up: the event is the player's again then, its menu stop carrying the
+        // picker's Show button (MenuSection), the choice still owed.
         public override bool IsActive()
         {
             var e = EventUI;
-            return e != null && e.gameObject.activeInHierarchy && !e._isCovered;
+            if (e == null || !e.gameObject.activeInHierarchy) return false;
+            if (!e._isCovered) return true;
+            var nav = GameScopes.Controller<Ember.Scopes.GameRun.UI.Navigation.NavigationUIController>();
+            return nav != null && nav._isChoiceHidden && GameNodes.IsShown(nav._choiceNavigationButton);
         }
 
         // Alt+B: the first choice while the event offers any (the story stop's own landing is its
