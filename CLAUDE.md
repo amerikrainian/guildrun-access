@@ -76,6 +76,13 @@ failure is invisible to the player, so every catch logs, and nothing caches game
 - `check_members.py` — every game type and `_field` the module names that the current dump no longer
   has, with the files that use them: the first pass at what an update renamed. The build against the
   regenerated proxies is the final word; `show.py` / `holders.py` find where a member went.
+- `dump_diff.py [--all] [--grep RE] [--no-members] [--no-sizes]` — what an update changed, the parked
+  `game/il2cppdump.prev` against the current dump, game assemblies only (~7 s): types added and
+  removed, members added and removed (offsets and RVAs stripped), and method bodies that changed SIZE
+  (RVA to the next RVA), which is how a behaviour change behind an unchanged signature shows (build
+  25604606: the compendium's class-icon click, the tooltip sources). Some sizes are noise (folded
+  bodies such as `get_Priority`); read each candidate with `disasm.py --calls`. The old
+  `GameAssembly.dll` is not kept, so only the new body can be disassembled.
 - `show.py Type [Type...] [--grep RE] [--all] [--raw]` — a type's fields (with offsets), properties,
   methods and enum values, with its namespace and assembly. Nested names work (`HeroPanelView.TrackedStatDisplay`).
 - `holders.py Type [--game-only]` — who holds a field of that type (how to reach a service or view
@@ -101,6 +108,7 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   `POST /input` skip to a floor's crossroads or the shop when a stage is all you need.
 
 Typical update loop: `dump_game.py --keep --check` -> fix what it lists (`show.py`, `holders.py`) ->
+`dump_diff.py`, `disasm.py --calls` on what it lists that the mod reads ->
 `dev.py launch` (proxies regenerate) -> `dotnet build` -> `dev.py reload` -> `run_driver.py` through a run.
 
 ## Build & deploy
