@@ -89,8 +89,10 @@ failure is invisible to the player, so every catch logs, and nothing caches game
   from a scene scan) and which methods take it (what to hook for a notification or event).
 - `census.py [--report]` — rebuild `types.tsv`; `--report` is the obfuscation/name-quality census.
 - `disasm.py Type.Method [...] [--calls]` (run with `uv run --with capstone python ...`) — the native
-  body of a game method from `GameAssembly.dll` at the dump's RVA, calls resolved to dump names and
-  field reads annotated; `--calls` is the dozen-line shape. The dump has no bodies: this is how a
+  body of a game method from `GameAssembly.dll` at the dump's RVA, whole (up to the next method's
+  RVA, the size `dump_diff.py` compares, never just to the first `ret`: early returns and cold paths
+  follow it), calls resolved to dump names and field reads annotated; `--calls` is the shape in a
+  few dozen lines. The dump has no bodies: this is how a
   game rule (what Quit to Menu does, what gates a save) is read without guessing. Lambdas and
   coroutines by their dump names (`NavigationUIController.<OnStart>b__50_8`,
   `RunSessionService.<GoBackToMenuAsync>d__39.MoveNext`). `--callers` (no capstone needed) is the

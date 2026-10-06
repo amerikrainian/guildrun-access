@@ -4,9 +4,13 @@
     uv run python tools/python/disasm.py Type.Method [Type.Method ...] --callers
 
 The dump has no method bodies (IL2CPP), only each method's RVA and file offset; this reads the
-bytes at that offset and prints x64 assembly up to the first ret, with every direct call or jump
+bytes at that offset and prints the whole body as x64 assembly, with every direct call or jump
 target resolved to its dump name, and `[reg + off]` reads annotated with the method's own class
-field at that offset (a heuristic: only the first field of that offset, never for rsp/rbp). Names
+field at that offset (a heuristic: only the first field of that offset, never for rsp/rbp). The body
+ends where the next method of the dump begins (the size dump_diff.py compares), its trailing int3
+padding dropped: a body has early returns and cold paths after them, so the first ret is no end.
+Code the dump does not list (runtime helpers, generic instances) can follow a method, so a body that
+runs past --bytes (default 64 KiB) is cut there and says so. Names
 are the dump's: `MainMenuUIController.UpdateButtonStates`, a lambda
 `NavigationUIController.<OnStart>b__50_8`, a coroutine `RunSessionService.<GoBackToMenuAsync>d__39.MoveNext`.
 --calls keeps only the resolved calls and field lines: the method's shape in a dozen lines. This is
@@ -94,7 +98,7 @@ def main() -> int:
     ap.add_argument("names", nargs="+", help="Type.Method names as dump.cs spells them")
     ap.add_argument("--calls", action="store_true", help="only the lines with a resolved call/jump or a field read")
     ap.add_argument("--callers", action="store_true", help="who calls the method: every direct call/jump site, by containing method")
-    ap.add_argument("--bytes", type=int, default=0x2000, help="bytes to read past the method start (default 8 KiB)")
+    ap.add_argument("--bytes", type=int, default=0x10000, help="the most bytes of a body to read (default 64 KiB)")
     args = ap.parse_args()
 
     capstone = None
@@ -129,6 +133,7 @@ def main() -> int:
         return status
 
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+    starts = sorted(rva_to_name)
 
     for name in args.names:
         if name not in targets:
@@ -137,8 +142,13 @@ def main() -> int:
             continue
         rva, offset = targets[name]
         owner = name.rsplit(".", 1)[0]
-        print(f"=== {name}  RVA 0x{rva:X}  offset 0x{offset:X}")
-        for insn in md.disasm(data[offset:offset + args.bytes], rva):
+        i = bisect.bisect_right(starts, rva)
+        size = starts[i] - rva if i < len(starts) else args.bytes
+        cut = size > args.bytes
+        size = min(size, args.bytes)
+        body = data[offset:offset + size].rstrip(bytes([0xCC]))
+        print(f"=== {name}  RVA 0x{rva:X}  offset 0x{offset:X}  {len(body)} bytes")
+        for insn in md.disasm(body, rva):
             note = ""
             if insn.mnemonic in ("call", "jmp") and insn.op_str.startswith("0x"):
                 target = rva_to_name.get(int(insn.op_str, 16))
@@ -151,8 +161,8 @@ def main() -> int:
                     note += "    ; " + owner + "." + field
             if not args.calls or note:
                 print(f"  {insn.address:08X}  {insn.mnemonic:<8} {insn.op_str}{note}")
-            if insn.mnemonic in ("ret", "int3"):
-                break
+        if cut:
+            print(f"  (cut at {args.bytes} bytes: the next method of the dump starts 0x{starts[i] - rva:X} in)")
     return status
 
 
