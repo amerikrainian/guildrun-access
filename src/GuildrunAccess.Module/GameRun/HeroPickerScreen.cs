@@ -18,7 +18,8 @@ namespace GuildrunAccess.Module.GameRun
     /// cards as the shared hero grid (<see cref="HeroCardNodes.AddGrid"/>), each hero's line naming the
     /// relic bundled with it before the stats (the offer is the pair), with an extra relic row in the
     /// buffers for its description and tooltip, Enter recruiting through the card's own selection
-    /// button, and the reroll button (when offered) as the last stop. The game shows nothing else
+    /// button, then the profile's Boss Tokens and the reroll button (when offered) below the heroes in
+    /// the same stop. The game shows nothing else
     /// here, no HUD and no Settings button, but its Escape still opens the pause menu: so does ours.
     /// </summary>
     public sealed class HeroPickerScreen : Screen
@@ -79,9 +80,8 @@ namespace GuildrunAccess.Module.GameRun
             // The profile's Boss Tokens, which the game shows nowhere on this panel (the reroll's
             // cost is the only sign of them, and only while there is one to spend): "Boss Token: 2",
             // the token by the game's own word (the reroll tooltip's bold term), the count live from
-            // the progression data the reroll itself reads. The actions stop opens with it, the
-            // reroll after it when offered.
-            b.BeginStop("actions");
+            // the progression data the reroll itself reads. Both follow the heroes in their stop:
+            // the count, then the reroll when offered.
             string tokens = TokensLine(c, reroll);
             if (tokens != null)
                 b.AddItem(ControlId.Structural("heropicker:tokens"), GameNodes.Text(() => TokensLine(c, reroll) ?? tokens));
