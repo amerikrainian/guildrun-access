@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.1.2
+
+- Hero reroll is now in the same tab stop as heroes when it's available; it used to be in a tab stop of its own which was unintuitive.
+
 ## V0.1.1
 
 - ctrl+b says which boss this act ends on.
