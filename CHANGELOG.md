@@ -3,6 +3,7 @@
 ## V0.1.3
 
 - Fixed party slots being stale in a shop after selling a hero.
+- Selling heroes and items tells you their price.
 
 ## V0.1.2
 
