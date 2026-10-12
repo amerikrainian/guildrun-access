@@ -111,11 +111,20 @@ namespace GuildrunAccess.Module.GameRun
             }
             // In the shop, the hero itself sells (what dragging it onto the selling panel does). The
             // sale alone leaves the hero's slot drawn as it was: the drag's pointer-up redraws the
-            // party panel (`BottomHeroPanelUIController.UpdateSlots`), so the menu does too.
+            // party panel (`BottomHeroPanelUIController.UpdateSlots`), so the menu does too. The price
+            // is the hero's rank's (what the selling panel shows while a hero is dragged over it).
             if (shop != null && shop._shopService != null)
             {
                 var service = shop._shopService;
-                options.Add(new ChoiceOption(Strings.RunSell(heroName), () =>
+                int price = -1;
+                try
+                {
+                    var hero = RunData.Hero(heroId);
+                    if (hero != null && shop._shopReader != null) price = shop._shopReader.GetHeroSellPrice(hero.Rank);
+                }
+                catch (Exception e) { CoreLog.Warning("Hero sell price: " + e.Message); }
+                string label = price >= 0 ? Strings.RunSellFor(heroName, price) : Strings.RunSell(heroName);
+                options.Add(new ChoiceOption(label, () =>
                 {
                     if (RunData.RefuseOnlyHeroSale()) return;
                     try { service.SellHero(heroId); RunData.Party?.UpdateSlots(); Speech.Say(Strings.RunSold(heroName), interrupt: true); }
