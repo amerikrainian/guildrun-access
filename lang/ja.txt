@@ -165,6 +165,7 @@ run.party_slot=パーティースロット {0}
 run.reserve_slot=リザーブスロット {0}
 run.slot_empty=空き
 run.item_slot_empty=空きアイテムスロット
+run.item_slot=スロット {0}
 run.gold=ゴールド
 run.shards=シャード
 run.difficulty=難易度

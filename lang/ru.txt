@@ -165,6 +165,7 @@ run.party_slot=слот отряда {0}
 run.reserve_slot=слот резерва {0}
 run.slot_empty=пусто
 run.item_slot_empty=пустой слот под предмет
+run.item_slot=слот {0}
 run.gold=золото
 run.shards=кристаллы
 run.difficulty=сложность

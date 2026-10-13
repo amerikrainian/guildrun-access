@@ -84,7 +84,8 @@ namespace GuildrunAccess.Module.GameRun
             if (panel == null || !panel.gameObject.activeInHierarchy) return;
             var views = panel.HeroViews;
             if (views == null) return;
-            b.PushContext(label, Strings.RoleList);
+            // No positions: every slot names its own number, and a hero's row has no count of its own.
+            b.PushContext(label, Strings.RoleList, positions: false);
             int n = 0;
             foreach (var v in views)
             {
@@ -92,26 +93,93 @@ namespace GuildrunAccess.Module.GameRun
                 n++;
                 int index = n;
                 var view = v;
-                b.AddItem(ControlId.Structural("run:" + key + ":" + view.GetInstanceID()), new NodeVtable
+                Func<string> slotLabel = () => reserve ? Strings.RunReserveSlot(index) : Strings.RunPartySlot(index);
+                string id = "run:" + key + ":" + view.GetInstanceID();
+                if (view.IsEmpty)
+                {
+                    b.StartRow(key);
+                    b.AddItem(ControlId.Structural(id), new NodeVtable
+                    {
+                        Announcements = new List<NodeAnnouncement>
+                        {
+                            new NodeAnnouncement(slotLabel, kind: AnnouncementKinds.Label),
+                            new NodeAnnouncement(() => Strings.RunSlotEmpty, kind: AnnouncementKinds.Value),
+                        },
+                    });
+                    b.EndRow();
+                    continue;
+                }
+                // A hero is a row: the hero, then its item slots ("slot 1, empty"), Up/Down keeping the
+                // column between heroes. The row's context is "party slot 1, Nyx", spoken on entering
+                // the row on one of its slots; on the hero itself the hero's own label says it.
+                Func<string> heroLabel = () => slotLabel() + ", " + (RunData.HeroLabel(view) ?? Strings.RunParty);
+                b.PushContext(heroLabel(), positions: false);
+                b.StartRow(key);
+                b.AddItem(ControlId.Structural(id), new NodeVtable
                 {
                     Announcements = new List<NodeAnnouncement>
                     {
-                        new NodeAnnouncement(() => reserve ? Strings.RunReserveSlot(index) : Strings.RunPartySlot(index), kind: AnnouncementKinds.Label),
-                        new NodeAnnouncement(() => view.IsEmpty ? Strings.RunSlotEmpty : RunLabels.SlotSummary(view), live: true, kind: AnnouncementKinds.Value),
+                        new NodeAnnouncement(heroLabel, kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => RunLabels.SlotSummary(view, name: false), live: true, kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => RunLabels.SlotSummary(view),
                     OnActivate = () => _actions.OpenHeroMenu(view, reserve),
                     // Backspace opens the hero's compendium page, as on its card.
-                    OnSecondary = view.IsEmpty ? (System.Action)null : () => { if (RunData.TryHeroId(view, out var id)) HeroActions.OpenCompendium(id); },
+                    OnSecondary = () => { if (RunData.TryHeroId(view, out var hero)) HeroActions.OpenCompendium(hero); },
                     // Landing shows the hero's card in the sidebar, as hovering the slot does; the line
                     // and the buffers read it.
-                    OnFocus = () => { if (RunData.TryHeroId(view, out var id)) HeroActions.PeekHero(id); },
+                    OnFocus = () => Peek(view),
                     Details = () => SlotDetails(view),
                     Subject = () => view,
                     SideLines = HeroLines.SideOfSlots(() => SlotRows(view), () => view._itemSlotViews),
                 });
+                if (view._itemSlotViews != null)
+                {
+                    int number = 0;
+                    foreach (var s in view._itemSlotViews)
+                    {
+                        if (s == null || !s.gameObject.activeInHierarchy) continue;
+                        number++;
+                        int slotNumber = number;
+                        var slot = s;
+                        b.AddItem(ControlId.Structural(id + ":slot:" + slotNumber), ItemSlot(view, slot, slotNumber));
+                    }
+                }
+                b.EndRow();
+                b.PopContext();
             }
             b.PopContext();
+        }
+
+        // "slot 2, Hammer": one of a hero's item slots, by position (leftmost first, as the game counts
+        // them); its item's tooltip and quests are its buffers, the hero's the others, the glance
+        // keys read the hero. Enter on an item is that item's part of the hero's menu.
+        private NodeVtable ItemSlot(BottomHeroView view, Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView slot, int number)
+        {
+            Func<IEnumerable<Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView>> slots
+                = () => ItemNodes.HasItem(slot) ? new[] { slot } : (IEnumerable<Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView>)view._itemSlotViews;
+            var side = HeroLines.SideOfSlots(() => SlotRows(view), slots);
+            return new NodeVtable
+            {
+                Announcements = new List<NodeAnnouncement>
+                {
+                    new NodeAnnouncement(() => Strings.RunItemSlot(number), kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(() => ItemNodes.ItemName(slot) ?? Strings.RunSlotEmpty, live: true, kind: AnnouncementKinds.Value),
+                },
+                SearchText = () => ItemNodes.ItemName(slot),
+                OnActivate = ItemNodes.HasItem(slot) ? () => _actions.OpenItemMenu(view, slot) : (Action)null,
+                OnFocus = () => Peek(view),
+                Details = () => ItemNodes.HasItem(slot) ? TooltipReader.Lines(slot._tooltipRaycastTarget) : new List<string>(),
+                Subject = () => view,
+                // The item buffer is the hero's items wherever in the row focus is.
+                SideLines = buffer => buffer == GuildrunAccess.Core.Buffers.BufferKeys.Item
+                    ? ItemNodes.ItemTooltips(view._itemSlotViews) : side(buffer),
+            };
+        }
+
+        private static void Peek(BottomHeroView view)
+        {
+            if (RunData.TryHeroId(view, out var id)) HeroActions.PeekHero(id);
         }
     }
 }

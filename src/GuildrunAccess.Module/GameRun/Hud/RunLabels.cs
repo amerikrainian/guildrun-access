@@ -28,16 +28,17 @@ namespace GuildrunAccess.Module.GameRun
 
         /// <summary>A slot's hero: "Irini, health 650, mana 45 of 85, Limitless, Passive Ability, wearing
         /// Freezing Tome": name, then its vitals while it stands on the board, then its abilities and items,
-        /// the shape every control standing for a hero has.</summary>
-        public static string SlotSummary(BottomHeroView view)
+        /// the shape every control standing for a hero has; without the name when <paramref name="name"/>
+        /// is false (the party row, whose label names the hero).</summary>
+        public static string SlotSummary(BottomHeroView view, bool name = true)
         {
             var parts = new List<string>();
-            string name = RunData.HeroName(view);
+            string heroName = RunData.HeroName(view);
             string label = RunData.HeroLabel(view);
-            if (!string.IsNullOrEmpty(label)) parts.Add(label);
+            if (name && !string.IsNullOrEmpty(label)) parts.Add(label);
             string vitals = BoardSection.VitalsOf(view);
             if (!string.IsNullOrEmpty(vitals)) parts.Add(vitals);
-            var card = HeroActions.ShownHeroCard(name);
+            var card = HeroActions.ShownHeroCard(heroName);
             string brief = card != null ? HeroCardNodes.StatsBrief(card, vitals: vitals == null) : null;
             if (!string.IsNullOrEmpty(brief)) parts.Add(brief);
             string abilities = HeroCardNodes.AbilitiesLine(view._abilitiesView);

@@ -165,6 +165,7 @@ run.party_slot=Gruppenplatz {0}
 run.reserve_slot=Reserveplatz {0}
 run.slot_empty=leer
 run.item_slot_empty=leerer Gegenstandsplatz
+run.item_slot=Platz {0}
 run.gold=Gold
 run.shards=Splitter
 run.difficulty=Schwierigkeit

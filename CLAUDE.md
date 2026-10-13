@@ -506,7 +506,9 @@ resolves from the application scope's container), unused so far.
    lists the profile's count, then the reroll, "Boss Token: 2", which the game shows nowhere on the panel: the token named by the reroll
    tooltip's bold term, the count live off the picker's registry service's `_progressionReader`,
    whether or not the reroll is offered), run HUD (placement grid with keyboard moves, party/reserve
-   with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
+   (a hero per row, `PartySection`: the hero, then its item slots, "slot 1, empty", Up/Down keeping
+   the column, the row's context "party slot 2, Reyna" spoken on landing on a slot; Enter on an item
+   is its part of the hero's menu, `HeroActions.OpenItemMenu`) with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
    `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
    of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is
    `GetFreeItemSlotCount`. A SPECIFIC slot is a target of its own ("Nyx, slot 2", the item there as

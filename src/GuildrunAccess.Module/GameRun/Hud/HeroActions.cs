@@ -79,36 +79,7 @@ namespace GuildrunAccess.Module.GameRun
             }
             var shop = ShopScreen.Open();
             if (view != null && view._itemSlotViews != null)
-            {
-                var hero = RunData.Hero(heroId);
-                int slots = RunData.SlotCount(hero);
-                foreach (var slot in view._itemSlotViews)
-                {
-                    if (!RunData.TryItemId(slot, out var itemId)) continue;
-                    string itemName = ItemNodes.ItemName(slot) ?? Strings.RunItems;
-                    var id = itemId;
-                    options.Add(new ChoiceOption(Strings.RunUnequip(itemName), () =>
-                    {
-                        if (RunData.Unequip(heroId, id)) Speech.Say(Strings.RunUnequipped(itemName), interrupt: true);
-                    }));
-                    // "Move Hammer to slot 1": the item to another of the hero's slots (what dragging
-                    // it there does), trading places with the item wearing it. Where a hero reads
-                    // its slots by position, the order is the point.
-                    int own = slot.SlotIndex;
-                    for (int index = 0; index < slots; index++)
-                    {
-                        if (index == own) continue;
-                        int target = index;
-                        string other = RunData.TryItemAt(hero, index, out var otherId) ? RunData.ItemName(RunData.Item(otherId)) : null;
-                        options.Add(new ChoiceOption(Strings.RunMoveToSlot(itemName, index + 1), () =>
-                        {
-                            if (RunData.MoveItemTo(heroId, id, target)) Speech.Say(Strings.RunMovedToSlot(itemName, target + 1), interrupt: true);
-                            else Speech.Say(Strings.RunMoveFailed, interrupt: true);
-                        }, other ?? Strings.RunSlotEmpty));
-                    }
-                    if (shop != null) options.Add(SellItemOption(shop, id, itemName));
-                }
-            }
+                foreach (var slot in view._itemSlotViews) AddItemOptions(options, heroId, slot, shop);
             // In the shop, the hero itself sells (what dragging it onto the selling panel does). The
             // sale alone leaves the hero's slot drawn as it was: the drag's pointer-up redraws the
             // party panel (`BottomHeroPanelUIController.UpdateSlots`), so the menu does too. The price
@@ -132,6 +103,47 @@ namespace GuildrunAccess.Module.GameRun
                 }));
             }
             ChoiceSubmenuScreen.Open(Strings.RunHeroActions(RunData.HeroLabel(heroId) ?? heroName), options);
+        }
+
+        /// <summary>Enter on one of a hero's item slots: that item's part of the hero's menu (unequip,
+        /// move to another slot, sell in the shop); nothing for an empty slot.</summary>
+        public void OpenItemMenu(BottomHeroView view, PlaceholderSlotView slot)
+        {
+            if (view == null || view.IsEmpty || !RunData.TryHeroId(view, out var heroId) || !RunData.TryItemId(slot, out _)) return;
+            var options = new List<ChoiceOption>();
+            AddItemOptions(options, heroId, slot, ShopScreen.Open());
+            ChoiceSubmenuScreen.Open(Strings.RunHeroActions(ItemNodes.ItemName(slot) ?? Strings.RunItems), options);
+        }
+
+        // What can be done with the item in one of a hero's slots: unequip it, move it to each other
+        // slot of the hero, sell it while the shop is up. Nothing for an empty slot.
+        private static void AddItemOptions(List<ChoiceOption> options, HeroId heroId, PlaceholderSlotView slot, ShopUIController shop)
+        {
+            if (!RunData.TryItemId(slot, out var itemId)) return;
+            var hero = RunData.Hero(heroId);
+            int slots = RunData.SlotCount(hero);
+            string itemName = ItemNodes.ItemName(slot) ?? Strings.RunItems;
+            var id = itemId;
+            options.Add(new ChoiceOption(Strings.RunUnequip(itemName), () =>
+            {
+                if (RunData.Unequip(heroId, id)) Speech.Say(Strings.RunUnequipped(itemName), interrupt: true);
+            }));
+            // "Move Hammer to slot 1": the item to another of the hero's slots (what dragging
+            // it there does), trading places with the item wearing it. Where a hero reads
+            // its slots by position, the order is the point.
+            int own = slot.SlotIndex;
+            for (int index = 0; index < slots; index++)
+            {
+                if (index == own) continue;
+                int target = index;
+                string other = RunData.TryItemAt(hero, index, out var otherId) ? RunData.ItemName(RunData.Item(otherId)) : null;
+                options.Add(new ChoiceOption(Strings.RunMoveToSlot(itemName, index + 1), () =>
+                {
+                    if (RunData.MoveItemTo(heroId, id, target)) Speech.Say(Strings.RunMovedToSlot(itemName, target + 1), interrupt: true);
+                    else Speech.Say(Strings.RunMoveFailed, interrupt: true);
+                }, other ?? Strings.RunSlotEmpty));
+            }
+            if (shop != null) options.Add(SellItemOption(shop, id, itemName));
         }
 
         // ---- equip ----

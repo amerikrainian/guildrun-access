@@ -242,6 +242,7 @@ namespace GuildrunAccess.Core.Strings
             D("run.reserve_slot", "reserve slot {0}"),
             D("run.slot_empty", "empty"),
             D("run.item_slot_empty", "empty item slot"),
+            D("run.item_slot", "slot {0}"),
             D("run.gold", "gold"),
             D("run.shards", "shards"),
             D("run.difficulty", "difficulty"),
@@ -785,6 +786,7 @@ namespace GuildrunAccess.Core.Strings
         public static string RunReserveSlot(int index) => F("run.reserve_slot", index);
         public static string RunSlotEmpty => Get("run.slot_empty");
         public static string RunItemSlotEmpty => Get("run.item_slot_empty");
+        public static string RunItemSlot(int index) => F("run.item_slot", index);
         public static string RunGold => Get("run.gold");
         public static string RunShards => Get("run.shards");
         public static string RunDifficulty => Get("run.difficulty");

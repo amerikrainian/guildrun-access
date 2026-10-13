@@ -165,6 +165,7 @@ run.party_slot=队伍栏位{0}
 run.reserve_slot=备战席栏位{0}
 run.slot_empty=空
 run.item_slot_empty=空物品栏位
+run.item_slot=栏位{0}
 run.gold=金币
 run.shards=碎晶
 run.difficulty=难度

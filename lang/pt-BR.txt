@@ -165,6 +165,7 @@ run.party_slot=espaço {0} do grupo
 run.reserve_slot=espaço {0} da reserva
 run.slot_empty=vazio
 run.item_slot_empty=espaço vazio para item
+run.item_slot=espaço {0}
 run.gold=ouro
 run.shards=cristais
 run.difficulty=dificuldade

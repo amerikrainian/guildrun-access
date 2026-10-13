@@ -165,6 +165,7 @@ run.party_slot=équipe, emplacement {0}
 run.reserve_slot=réserve, emplacement {0}
 run.slot_empty=vide
 run.item_slot_empty=emplacement d'objet vide
+run.item_slot=emplacement {0}
 run.gold=or
 run.shards=fragments
 run.difficulty=difficulté

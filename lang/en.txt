@@ -167,6 +167,7 @@ run.party_slot=party slot {0}
 run.reserve_slot=reserve slot {0}
 run.slot_empty=empty
 run.item_slot_empty=empty item slot
+run.item_slot=slot {0}
 run.gold=gold
 run.shards=shards
 run.difficulty=difficulty
