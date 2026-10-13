@@ -303,7 +303,9 @@ by a key; everything a control carries beyond its focus line waits in a buffer, 
 keys: digits 1-6 speak one fact group of the unit the focused control concerns (`NodeVtable.Subject`,
 set wherever the hero buffer finds a hero; `GameRun/UnitGlance`), in place, focus unmoved: 1 vitals,
 2 attack/magic/defense, 3 attack speed/crit/range/move speed, 4 sustain (nonzero), 5 statuses, 6 the
-target; Shift+2/3/4 add each stat's breakdown. Live from the simulation entity and the bar while the
+target; Shift+2/3/4 add each stat's breakdown; Alt+1 to Alt+6 the item in that slot of a hero the
+player owns ("Hourglass", "empty"; `UnitGlance.SlotLine`, off the hero's party or reserve slot,
+silent past its last slot and for offered heroes). Live from the simulation entity and the bar while the
 unit stands on the board, else the registry sheet, else a data-less card's own panels (shop, picker).
 Read stats as the `CharacterStat` struct off `CharacterStatsComponent`'s properties, NEVER through
 the `IReadOnlyCharacterStat` proxy `GetStat` returns (it misreads the boxed struct: the value carries

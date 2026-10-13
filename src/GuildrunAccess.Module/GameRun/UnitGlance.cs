@@ -80,6 +80,26 @@ namespace GuildrunAccess.Module.GameRun
             return Resolve(subject(), out var target) ? Line(target, group, detail) : null;
         }
 
+        /// <summary>Alt+1 to Alt+6: what the focused hero wears in that slot, counted as the party slot
+        /// shows them, leftmost first ("Hammer", or "empty"). Read off the hero's party or reserve
+        /// slot, which keeps its items drawn through a fight. Null (silent) when the focused control
+        /// concerns no hero the player owns, or the hero has no such slot.</summary>
+        public static string SlotLine(int number)
+        {
+            var subject = Navigation.FocusedNode?.Vtable?.Subject;
+            if (subject == null || !Resolve(subject(), out var target) || !target.HasHero) return null;
+            var view = RunData.ViewOf(target.Hero);
+            var slots = view != null ? view._itemSlotViews : null;
+            if (slots == null) return null;
+            int n = 0;
+            foreach (var slot in slots)
+            {
+                if (slot == null || !slot.gameObject.activeInHierarchy) continue;
+                if (++n == number) return ItemNodes.ItemName(slot) ?? Strings.RunSlotEmpty;
+            }
+            return null;
+        }
+
         private static bool Resolve(object subject, out Target t)
         {
             t = default;

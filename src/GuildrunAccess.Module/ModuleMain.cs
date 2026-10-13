@@ -171,6 +171,13 @@ namespace GuildrunAccess.Module
             Glance("glance.attack.detail", "Unit attack, magic and defense, with breakdown", KeyCode.Alpha2, KeyCode.Keypad2, () => UnitGlance.LineFor(UnitGlance.Group.Attack, detail: true), shift: true);
             Glance("glance.tempo.detail", "Unit attack speed, crit, range and move speed, with breakdown", KeyCode.Alpha3, KeyCode.Keypad3, () => UnitGlance.LineFor(UnitGlance.Group.Tempo, detail: true), shift: true);
             Glance("glance.sustain.detail", "Unit regen, omnivamp and resistances, with breakdown", KeyCode.Alpha4, KeyCode.Keypad4, () => UnitGlance.LineFor(UnitGlance.Group.Sustain, detail: true), shift: true);
+            // Alt+1 to Alt+6: the item in that slot of the focused hero (a hero has six at most).
+            for (int slot = 1; slot <= 6; slot++)
+            {
+                int number = slot;
+                Glance("glance.slot" + number, "Item in slot " + number, () => UnitGlance.SlotLine(number))
+                    .AddBinding(new KeyboardBinding(KeyCode.Alpha0 + number, alt: true));
+            }
             Glance("run.shards", "Shards", RunGlance.ShardsLine).AddBinding(new KeyboardBinding(KeyCode.S, ctrl: true));
             Glance("run.position", "Board position", RunGlance.PositionLine).AddBinding(new KeyboardBinding(KeyCode.C, ctrl: true));
             Glance("run.timer", "Battle timer", RunGlance.TimerLine).AddBinding(new KeyboardBinding(KeyCode.T, ctrl: true));

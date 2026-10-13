@@ -1,5 +1,11 @@
 # Changelog
 
+## V0.1.4
+
+- Ctrl+q should now do what it's supposed to, which is pick up on ability quests. No more scrolling up in the buffer, hopefully.
+- Item slots have been rearranged into horizontal strips so that getting to a hero is a little quicker.
+- Per request, Alt+f starts a fight when you're on the main setup screen regardless of where you are.
+
 ## V0.1.3
 
 - Fixed party slots being stale in a shop after selling a hero.
