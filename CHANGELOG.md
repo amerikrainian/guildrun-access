@@ -6,7 +6,7 @@
 - Item slots have been rearranged into horizontal strips so that getting to a particular hero is a little quicker.
 - Per request, Alt+f starts a fight when you're on the main setup screen regardless of where you are.
 - Per super popular request, alt+digits now tells you what your hero is wearing on that slot. Alt+shift+digits gives you item details without the keyword definitions. Those still stay in the items buffer.
-- Equipping a hero now jumps your focus to them rather than reserve.
+- Equipping a hero now jumps your focus to their now equipped slot rather than reserve.
 
 ## V0.1.3
 
