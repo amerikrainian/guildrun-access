@@ -148,7 +148,8 @@ namespace GuildrunAccess.Module.GameRun
 
         // ---- equip ----
 
-        /// <summary>Enter on a reserve item: pick the hero to equip it to (what dragging it onto a hero does).</summary>
+        /// <summary>Enter on a reserve item: pick the hero's slot to equip it to (what dragging it onto
+        /// that slot does), a row per hero.</summary>
         public void OpenEquipMenu(PlaceholderSlotView slot)
         {
             if (!RunData.TryItemId(slot, out var itemId)) return;
@@ -197,28 +198,18 @@ namespace GuildrunAccess.Module.GameRun
                 if (!RunData.TryHeroId(view, out var heroId)) continue;
                 string heroName = RunData.HeroName(view) ?? Strings.RunParty;
                 var id = heroId;
-                // A hero with every slot taken is listed but not a target (the mouse cannot drop
-                // there either): the registry would take the item and lose it (see RunData.Equip).
                 var hero = RunData.Hero(heroId);
-                bool free = RunData.HasFreeSlot(hero);
-                string wearing = RunLabels.Wearing(view._itemSlotViews);
-                string detail = free ? wearing : wearing == null ? Strings.RunSlotsFull : wearing + ", " + Strings.RunSlotsFull;
                 string label = RunData.HeroLabel(view) ?? heroName;
-                options.Add(new ChoiceOption(label, () =>
-                {
-                    Speech.Say(RunData.Equip(id, itemId) ? Strings.RunEquipped(itemName, heroName) : Strings.RunEquipFailed, interrupt: true);
-                }, detail, enabled: free, row: label));
-                // Then, across the hero's row, its slots one by one ("slot 2, Hammer"), what dropping
-                // the item on that slot does: into an empty one, or in place of the item there, which
-                // goes back to the reserve (so a full hero is still a target, slot by slot). Where a
-                // hero reads its slots by position, the slot is the choice. A lone empty slot adds
-                // nothing to the hero's own line and is left out.
+                // The hero's row is its slots one by one ("slot 2, Hammer"), what dropping the item on
+                // that slot does: into an empty one, or in place of the item there, which goes back
+                // to the reserve (so a full hero is still a target, slot by slot). Where a hero reads
+                // its slots by position, the slot is the choice. The game's other drop, on the hero's
+                // figure, is the first empty slot here, so it has no line of its own.
                 int slots = RunData.SlotCount(hero);
                 for (int index = 0; index < slots; index++)
                 {
                     int target = index;
                     string worn = RunData.TryItemAt(hero, index, out var wornId) ? RunData.ItemName(RunData.Item(wornId)) : null;
-                    if (slots == 1 && worn == null) continue;
                     options.Add(new ChoiceOption(Strings.RunItemSlot(index + 1), () =>
                     {
                         if (!RunData.MoveItemTo(id, itemId, target)) { Speech.Say(Strings.RunEquipFailed, interrupt: true); return; }

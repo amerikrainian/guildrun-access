@@ -330,7 +330,6 @@ hero.no_items=keine Gegenstände
 run.equip_to=Mit {0} ausrüsten
 run.equipped={1} mit {0} ausgerüstet
 run.equip_failed=Ausrüsten fehlgeschlagen
-run.slots_full=Gegenstandsplätze voll
 run.hero_actions={0}
 run.inspect=Untersuchen
 run.inspect_failed=Untersuchen fehlgeschlagen

@@ -19,13 +19,6 @@ namespace GuildrunAccess.Module.GameRun
             return items == null ? name : name + ", " + Strings.RunWearing(items);
         }
 
-        /// <summary>"wearing Freezing Tome", or null when the slots hold nothing (a list entry's detail).</summary>
-        public static string Wearing(IEnumerable<PlaceholderSlotView> itemSlots)
-        {
-            string items = ItemNodes.ItemNames(itemSlots);
-            return items == null ? null : Strings.RunWearing(items);
-        }
-
         /// <summary>A slot's hero: "Irini, health 650, mana 45 of 85, Limitless, Passive Ability, wearing
         /// Freezing Tome": name, then its vitals while it stands on the board, then its abilities and items,
         /// the shape every control standing for a hero has; without the name when <paramref name="name"/>

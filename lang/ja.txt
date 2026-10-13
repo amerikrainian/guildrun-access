@@ -330,7 +330,6 @@ hero.no_items=アイテムなし
 run.equip_to={0} の装備先
 run.equipped={0} を {1} に装備
 run.equip_failed=装備できませんでした
-run.slots_full=アイテムスロットに空きなし
 run.hero_actions={0}
 run.inspect=調べる
 run.inspect_failed=調べられませんでした

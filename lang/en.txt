@@ -332,7 +332,6 @@ hero.no_items=no items
 run.equip_to=Equip {0} to
 run.equipped={0} equipped to {1}
 run.equip_failed=could not equip
-run.slots_full=item slots full
 run.hero_actions={0}
 run.inspect=Inspect
 run.inspect_failed=could not inspect

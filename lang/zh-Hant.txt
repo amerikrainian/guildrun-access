@@ -330,7 +330,6 @@ hero.no_items=無物品
 run.equip_to=將{0}裝備至
 run.equipped={0}已裝備至{1}
 run.equip_failed=裝備失敗
-run.slots_full=物品欄位已滿
 run.hero_actions={0}
 run.inspect=檢視
 run.inspect_failed=檢視失敗

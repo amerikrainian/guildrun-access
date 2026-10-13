@@ -330,7 +330,6 @@ hero.no_items=sin objetos
 run.equip_to=Equipar {0} a
 run.equipped={1} equipa {0}
 run.equip_failed=no se ha podido equipar
-run.slots_full=espacios de objetos llenos
 run.hero_actions={0}
 run.inspect=Inspeccionar
 run.inspect_failed=no se ha podido inspeccionar

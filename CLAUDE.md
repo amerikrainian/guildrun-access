@@ -513,12 +513,14 @@ resolves from the application scope's container), unused so far.
    whether or not the reroll is offered), run HUD (placement grid with keyboard moves, party/reserve
    (a hero per row, `PartySection`: the hero, then its item slots, "slot 1, empty", Up/Down keeping
    the column, the row's context "party slot 2, Reyna" spoken on landing on a slot; Enter on an item
-   is its part of the hero's menu, `HeroActions.OpenItemMenu`) with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
-   `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
-   of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is
-   `GetFreeItemSlotCount`. A SPECIFIC slot is a target of its own ("slot 2", the item there as
-   the detail, across the hero's row in the equip menu: `ChoiceOption.Row` makes the options that
-   share a caption one row, the caption spoken on entering it; "Move Hammer to slot 1" in the hero's menu):
+   is its part of the hero's menu, `HeroActions.OpenItemMenu`) with equip/unequip menus. The equip menu targets SLOTS only, a row
+   per hero ("slot 2", the item there as the detail; `ChoiceOption.Row` makes the options that share
+   a caption one row, the caption spoken on entering it); the game's other drop, onto the hero's
+   figure (`ItemDragSubController.TryDropItemToCharacter`), is just the first empty slot, so it has
+   no line. Never call the registry's `EquipItem` without a slot: it checks no room itself (only the
+   drag does) and with none takes the item out of the reserve and loses it; `HeroData.
+   EquippedItemCount` is the slot list's length, room is `GetFreeItemSlotCount`. In the hero's menu,
+   "Move Hammer to slot 1"):
    the drag's drop on a slot is the registry's three-argument `MoveItem(item, hero, index)`, which
    equips into an empty slot, trades the reserve item for the one wearing it (that one to the
    reserve), or moves a worn item between the hero's own slots, swapping with an occupant

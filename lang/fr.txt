@@ -330,7 +330,6 @@ hero.no_items=aucun objet
 run.equip_to=Équiper {0} sur
 run.equipped={1} équipe {0}
 run.equip_failed=équipement impossible
-run.slots_full=emplacements d'objet pleins
 run.hero_actions={0}
 run.inspect=Inspecter
 run.inspect_failed=inspection impossible

@@ -330,7 +330,6 @@ hero.no_items=нет предметов
 run.equip_to=Кому экипировать предмет {0}
 run.equipped=экипировано: {0}, герой: {1}
 run.equip_failed=не удалось экипировать
-run.slots_full=слоты под предметы заполнены
 run.hero_actions={0}
 run.inspect=Осмотр
 run.inspect_failed=не удалось осмотреть
