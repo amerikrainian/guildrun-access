@@ -336,7 +336,6 @@ run.inspect=Inspecter
 run.inspect_failed=inspection impossible
 run.unequip=Retirer {0}
 run.unequipped={0}: retrait
-run.hero_slot={0}, emplacement {1}
 run.move_to_slot=Déplacer {0} vers l'emplacement {1}
 run.moved_to_slot={0} passe à l'emplacement {1}
 run.sell=Vendre {0}

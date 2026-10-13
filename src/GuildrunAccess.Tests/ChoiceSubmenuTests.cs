@@ -161,6 +161,84 @@ namespace GuildrunAccess.Tests
             });
         }
 
+        // An item's "equip to" list as rows: each hero, then its slots; the item's sale a line of its own.
+        private sealed class EquipScreen : Screen
+        {
+            public string Picked;
+
+            public override string Key => "test.equip";
+            public override bool IsActive() => true;
+
+            public override void Build(GraphBuilder b)
+            {
+                b.AddItem(ControlId.Structural("quiver"), new NodeVtable
+                {
+                    Announcements = new[] { new NodeAnnouncement(() => "Quiver", kind: AnnouncementKinds.Label) },
+                    OnActivate = () => ChoiceSubmenuScreen.Open("Equip Quiver to", new List<ChoiceOption>
+                    {
+                        new ChoiceOption("Kai", () => Picked = "Kai", row: "Kai"),
+                        new ChoiceOption("slot 1", () => Picked = "Kai 1", "empty", row: "Kai"),
+                        new ChoiceOption("slot 2", () => Picked = "Kai 2", "Hammer", row: "Kai"),
+                        new ChoiceOption("Reyna", () => Picked = "Reyna", row: "Reyna"),
+                        new ChoiceOption("slot 1", () => Picked = "Reyna 1", "empty", row: "Reyna"),
+                        new ChoiceOption("Sell Quiver", () => Picked = "sell"),
+                    }),
+                });
+            }
+        }
+
+        [Fact]
+        public void RowsWalkAcrossAHerosSlotsAndNameTheHeroOnEnteringItsRow()
+        {
+            var spoken = new List<string>();
+            var input = new FakeNavInput { FrameCount = 1 };
+            var previous = Navigation.Active;
+            Speech.Speak = (t, i) => spoken.Add(t);
+            NavInput.Current = input;
+            GraphAnnouncer.PositionText = (i, n) => i + " of " + n;
+            Navigation.Active = new GraphNavigator();
+            var screen = new EquipScreen();
+            try
+            {
+                ScreenManager.Register(screen);
+                Tick(input);
+                spoken.Clear();
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Activate)));
+                Tick(input);
+                // The hero's own label is the row's caption: said once.
+                Assert.Equal(new[] { "Equip Quiver to, list, Kai, button" }, spoken.ToArray());
+                spoken.Clear();
+
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Right)));
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Right)));
+                Assert.Equal(new[] { "slot 1, button, empty", "slot 2, button, Hammer" }, spoken.ToArray());
+                spoken.Clear();
+
+                // Down keeps the column where the next row reaches it, else lands on its hero.
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Down)));
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Right)));
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Up)));
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Down)));
+                Assert.Equal(new[] { "Reyna, button", "slot 1, button, empty", "Kai, slot 1, button, empty", "Reyna, slot 1, button, empty" }, spoken.ToArray());
+                spoken.Clear();
+
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Down)));
+                Assert.Equal(new[] { "Sell Quiver, button" }, spoken.ToArray());
+
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Up)));
+                Assert.True(Navigation.DispatchJustPressed(Action(UiActions.Activate)));
+                Tick(input);
+                Assert.Equal("Reyna", screen.Picked);
+            }
+            finally
+            {
+                ScreenManager.Shutdown();
+                Navigation.Active = previous;
+                Speech.Speak = (t, i) => { };
+                GraphAnnouncer.PositionText = null;
+            }
+        }
+
         [Fact]
         public void AnOuterScreenChangeStillReadsTheFullPath()
         {

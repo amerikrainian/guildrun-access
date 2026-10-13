@@ -338,7 +338,6 @@ run.inspect=Inspect
 run.inspect_failed=could not inspect
 run.unequip=Unequip {0}
 run.unequipped={0} unequipped
-run.hero_slot={0}, slot {1}
 run.move_to_slot=Move {0} to slot {1}
 run.moved_to_slot={0} moved to slot {1}
 run.sell=Sell {0}

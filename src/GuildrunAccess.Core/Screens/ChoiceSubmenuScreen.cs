@@ -16,13 +16,19 @@ namespace GuildrunAccess.Core.Screens
         public string Detail;
         public bool Enabled = true;
         public Action OnSelect;
+        /// <summary>The caption of the horizontal row this option belongs to, or null for a line of its
+        /// own: consecutive options with one caption form a row ("Logan, Warrior, rank C": the hero,
+        /// then "slot 1", "slot 2"), Up/Down keeping the column between rows, the caption spoken when
+        /// focus enters the row (unless the option landed on already says it).</summary>
+        public string Row;
 
-        public ChoiceOption(string label, Action onSelect, string detail = null, bool enabled = true)
+        public ChoiceOption(string label, Action onSelect, string detail = null, bool enabled = true, string row = null)
         {
             Label = label;
             OnSelect = onSelect;
             Detail = detail;
             Enabled = enabled;
+            Row = row;
         }
     }
 
@@ -80,10 +86,18 @@ namespace GuildrunAccess.Core.Screens
         public override void Build(GraphBuilder b)
         {
             if (_speakTitle) b.PushContext(_title, Strings.RoleList);
+            string row = null;
             for (int i = 0; i < _options.Count; i++)
             {
                 int idx = i;
                 var option = _options[i];
+                if (option.Row != row)
+                {
+                    if (row != null) { b.EndRow(); b.PopContext(); }
+                    row = option.Row;
+                    // A row's slots name their own numbers: no positions within it.
+                    if (row != null) { b.PushContext(row, positions: false); b.StartRow("choice:rows"); }
+                }
                 // Snapshots are safe: the submenu is ephemeral (a fresh instance per open, closed by the
                 // selection itself), so an option cannot change while it lives.
                 b.AddItem(ControlId.Structural("choice:" + i), new NodeVtable
@@ -105,6 +119,7 @@ namespace GuildrunAccess.Core.Screens
                     },
                 });
             }
+            if (row != null) { b.EndRow(); b.PopContext(); }
             if (_speakTitle) b.PopContext();
             if (_current >= 0 && _current < _options.Count)
                 b.SetStart(ControlId.Structural("choice:" + _current)); // land on the current option

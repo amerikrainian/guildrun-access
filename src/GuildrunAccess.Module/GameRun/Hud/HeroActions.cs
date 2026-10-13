@@ -207,24 +207,24 @@ namespace GuildrunAccess.Module.GameRun
                 options.Add(new ChoiceOption(label, () =>
                 {
                     Speech.Say(RunData.Equip(id, itemId) ? Strings.RunEquipped(itemName, heroName) : Strings.RunEquipFailed, interrupt: true);
-                }, detail, enabled: free));
-                // Then the hero's slots one by one, "Nyx, slot 2", what dropping the item on that
-                // slot does: into an empty one, or in place of the item there, which goes back to
-                // the reserve (so a full hero is still a target, slot by slot). Where a hero reads
-                // its slots by position, the slot is the choice. A lone empty slot adds nothing to
-                // the hero's own line and is left out.
+                }, detail, enabled: free, row: label));
+                // Then, across the hero's row, its slots one by one ("slot 2, Hammer"), what dropping
+                // the item on that slot does: into an empty one, or in place of the item there, which
+                // goes back to the reserve (so a full hero is still a target, slot by slot). Where a
+                // hero reads its slots by position, the slot is the choice. A lone empty slot adds
+                // nothing to the hero's own line and is left out.
                 int slots = RunData.SlotCount(hero);
                 for (int index = 0; index < slots; index++)
                 {
                     int target = index;
                     string worn = RunData.TryItemAt(hero, index, out var wornId) ? RunData.ItemName(RunData.Item(wornId)) : null;
                     if (slots == 1 && worn == null) continue;
-                    options.Add(new ChoiceOption(Strings.RunHeroSlot(label, index + 1), () =>
+                    options.Add(new ChoiceOption(Strings.RunItemSlot(index + 1), () =>
                     {
                         if (!RunData.MoveItemTo(id, itemId, target)) { Speech.Say(Strings.RunEquipFailed, interrupt: true); return; }
                         Speech.Say(Strings.RunEquipped(itemName, heroName), interrupt: true);
                         if (worn != null) Speech.Say(Strings.RunUnequipped(worn));
-                    }, worn ?? Strings.RunSlotEmpty));
+                    }, worn ?? Strings.RunSlotEmpty, row: label));
                 }
             }
         }

@@ -516,8 +516,9 @@ resolves from the application scope's container), unused so far.
    is its part of the hero's menu, `HeroActions.OpenItemMenu`) with equip/unequip menus: a hero with every slot taken is listed disabled, since the registry's
    `EquipItem` checks no slot itself, only the game's drag does, and with none it takes the item out
    of the reserve and loses it; `HeroData.EquippedItemCount` is the slot list's length, room is
-   `GetFreeItemSlotCount`. A SPECIFIC slot is a target of its own ("Nyx, slot 2", the item there as
-   the detail, in the equip menu after the hero's line; "Move Hammer to slot 1" in the hero's menu):
+   `GetFreeItemSlotCount`. A SPECIFIC slot is a target of its own ("slot 2", the item there as
+   the detail, across the hero's row in the equip menu: `ChoiceOption.Row` makes the options that
+   share a caption one row, the caption spoken on entering it; "Move Hammer to slot 1" in the hero's menu):
    the drag's drop on a slot is the registry's three-argument `MoveItem(item, hero, index)`, which
    equips into an empty slot, trades the reserve item for the one wearing it (that one to the
    reserve), or moves a worn item between the hero's own slots, swapping with an occupant
