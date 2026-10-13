@@ -131,6 +131,8 @@ namespace GuildrunAccess.Module
             InputManager.Register(JumpKeys.Board, "Jump to board", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.B, alt: true));
             InputManager.Register(JumpKeys.Party, "Jump to party", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.T, alt: true));
             InputManager.Register(JumpKeys.Items, "Jump to items and relics", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.I, alt: true));
+            // Alt+F presses the placement's Fight button, answered by the run screen's actions section.
+            InputManager.Register(ActionsSection.Fight, "Fight", InputCategory.UI).AddBinding(new KeyboardBinding(KeyCode.F, alt: true));
             // The run's board, a pointy-top hex grid: Q E A D Z C step focus to the focused cell's six
             // neighbours (the letters' layout on the keyboard is the hexagon's: no cell lies straight up
             // or down), Shift+the same letter moves the focused hero there. The board section answers

@@ -296,7 +296,9 @@ event's first choice, `RunPanelScreen.PanelStop` / `PanelJump`): UI actions with
 by the focused screen through `GetActions` only while the stop is in the render (`Navigation.HasStop`),
 landing as Tab would (`Navigator.JumpToStop`: the stop's remembered position, spoken as a move, the
 focused control re-read when pressed on its own stop), so the key help lists a jump exactly where it
-lands somewhere. Space is unbound: nothing is read on demand
+lands somewhere. Alt+F presses the placement's Fight button (`BoardController._startBattleButton`)
+from anywhere on the run screen, the same kind of handler-less key, offered by `ActionsSection.
+GetActions` while the button is shown and interactable. Space is unbound: nothing is read on demand
 by a key; everything a control carries beyond its focus line waits in a buffer, except the glance
 keys: digits 1-6 speak one fact group of the unit the focused control concerns (`NodeVtable.Subject`,
 set wherever the hero buffer finds a hero; `GameRun/UnitGlance`), in place, focus unmoved: 1 vitals,
