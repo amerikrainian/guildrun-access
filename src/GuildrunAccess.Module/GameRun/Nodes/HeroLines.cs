@@ -37,11 +37,20 @@ namespace GuildrunAccess.Module.GameRun
 
         /// <summary>A hero whose items stand in slots (a card, a party slot, a health bar): the item
         /// buffer is their tooltips and the quest buffer their quests, the Rift Seal's charges
-        /// among them.</summary>
-        public static Func<string, IEnumerable<string>> SideOfSlots(Func<IEnumerable<string>> hero, Func<IEnumerable<PlaceholderSlotView>> slots)
+        /// among them, after the quests of the hero's own abilities under <paramref name="abilities"/>
+        /// (a card, a slot's abilities view) when given.</summary>
+        public static Func<string, IEnumerable<string>> SideOfSlots(Func<IEnumerable<string>> hero, Func<IEnumerable<PlaceholderSlotView>> slots,
+            Func<UnityEngine.Component> abilities = null)
         {
-            var side = Side(hero, () => ItemNodes.ItemTooltips(slots()), () => ItemNodes.QuestLines(slots()));
-            return key => key == BufferKeys.QuestBrief ? ItemNodes.QuestLines(slots(), rewards: false) : side(key);
+            Func<bool, List<string>> quests = rewards =>
+            {
+                var root = abilities != null ? abilities() : null;
+                var lines = root != null ? HeroCardNodes.AbilityQuestLines(root, rewards) : new List<string>();
+                lines.AddRange(ItemNodes.QuestLines(slots(), rewards));
+                return lines;
+            };
+            var side = Side(hero, () => ItemNodes.ItemTooltips(slots()), () => quests(true));
+            return key => key == BufferKeys.QuestBrief ? quests(false) : side(key);
         }
 
         /// <summary>A hero card, the rows of the hero buffer everywhere: "Karsu, Duelist, Frost", its

@@ -376,7 +376,10 @@ is the WHOLE hero, `HeroLines.ForCard`: name with tags and rank, the full stats 
 line, then every tooltip of the card, `HeroCardNodes.Tooltips`: abilities, class and archetype tags,
 stats, a keyword's definition given once across the abilities and tags; the control buffer of a hero
 control holds the same tooltips, so neither buffer sends the player to the other), **quests**
-(right after hero, empty and so skipped for most controls: the quests of the items the hero wears, or
+(right after hero, empty and so skipped for most controls: the quests of the hero's abilities
+(`HeroCardNodes.AbilityQuestLines`, the `abilities` root `HeroLines.SideOfSlots` is given: Logan's
+"Execution: Quest: Deal [2.5K, 20K, 40K] damage with this ability, 0 / 2.5K", a line per reward tier
+after it) and of the items it wears, on the hero picker the bundled relic's too (`GridRow.Quests`), or
 of the focused item or relic, `ItemNodes.QuestLines`: "Rift Seal: Tank or Vanguard, 1 / 3", "Hourglass:
 Quest: Trigger Stall 5 times from any source, 0 / 5" with the reward on the line after), **relics**
 (the run's, one line each), **party** and **enemies** (one line per unit, placement and fights),
@@ -599,7 +602,9 @@ resolves from the application scope's container), unused so far.
    draws one as a `ConditionalBonusView` section (its text, a locked or an unlocked icon: done) and a
    `QuestProgressView` after it (the bar's text, "0 / 100"), an ordinary quest's requirement being the
    description section right before the bonus (a separator in between means it is not: the Rift
-   Seal's three charges stand under one). `TooltipReader.Lines` folds the pair into one line
+   Seal's three charges stand under one). A TIERED quest (Logan's ability) is one requirement over
+   several bonuses with ONE progress bar after the last: `Quests` folds that run of bonuses into one
+   `Quest` whose `Rewards` each keep their own state. `TooltipReader.Lines` folds the pair into one line
    ("Tank or Vanguard, 0 / 3, complete"): read apart, the counts are bare numbers, and equal ones
    fold into one in a buffer. TextMesh Pro draws a written-out "\n" as a line break, so `AddLines`
    splits on it too (the Rift Seal's description has two). Reusable readers: `GameRun/Nodes/HeroCardNodes`, `ItemNodes`,

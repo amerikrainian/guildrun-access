@@ -98,7 +98,10 @@ namespace GuildrunAccess.Module.GameRun
             return lines;
         }
 
-        private static void AddQuestLines(List<string> lines, string owner, Ember.Scopes.Application.UI.Tooltips.TooltipRaycastTarget target, bool rewards)
+        /// <summary>The quests a tooltip shows, each opened by <paramref name="owner"/> (the item, relic
+        /// or ability that carries it): in the buffer's lines when <paramref name="rewards"/>, else
+        /// the glance's one line.</summary>
+        public static void AddQuestLines(List<string> lines, string owner, Ember.Scopes.Application.UI.Tooltips.TooltipRaycastTarget target, bool rewards)
         {
             var quests = TooltipReader.Quests(target);
             if (quests.Count == 0) return;
@@ -116,8 +119,12 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var quest in quests)
             {
                 lines.Add(string.IsNullOrWhiteSpace(owner) ? quest.Line : Strings.QuestOfItem(owner, quest.Line));
-                // The label of a quest that states its requirement apart is its reward.
-                if (quest.Requirement != null && !string.IsNullOrWhiteSpace(quest.Label)) lines.Add(quest.Label);
+                // The label of a quest that states its requirement apart is its reward; a tiered
+                // quest's rewards each say whether they are won.
+                if (quest.Requirement == null) continue;
+                foreach (var reward in quest.Rewards)
+                    if (!string.IsNullOrWhiteSpace(reward.Text))
+                        lines.Add(quest.Rewards.Count > 1 ? Strings.QuestLine(reward.Text, null, reward.Complete) : reward.Text);
             }
         }
 

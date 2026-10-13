@@ -97,26 +97,38 @@ namespace GuildrunAccess.Module.UI
         // ---- quests ----
 
         /// <summary>A quest a tooltip shows: an item's or a relic's ("Quest: Inflict 100 Poison.", its
-        /// reward, "0 / 100"), or one of the Rift Seal's three charges ("Tank or Vanguard", "0 / 3").
-        /// The game draws each as a conditional-bonus section (a text with a locked or an unlocked
-        /// icon) and a progress bar after it; an ordinary quest's requirement is the description
-        /// section just before.</summary>
+        /// reward, "0 / 100"), an ability's in tiers (Logan's Execution: "Quest: Deal [2.5K, 20K, 40K]
+        /// damage with this ability.", a reward per tier, "0 / 2.5K"), or one of the Rift Seal's three
+        /// charges ("Tank or Vanguard", "0 / 3"). The game draws each reward as a conditional-bonus
+        /// section (a text with a locked or an unlocked icon) and the quest's progress bar after the
+        /// last; an ordinary quest's requirement is the description section just before.</summary>
         public sealed class Quest
         {
             /// <summary>What must be done ("Quest: Inflict 100 Poison."), when the game says it apart
             /// from the label; null for a charge of the Rift Seal, whose label says it.</summary>
             public string Requirement;
-            /// <summary>The conditional bonus' text: the reward of an ordinary quest, the classes of a
-            /// Rift Seal charge.</summary>
-            public string Label;
+            /// <summary>The conditional bonuses: one for an ordinary quest (its reward) or a Rift Seal
+            /// charge (its classes), one per tier for a tiered quest.</summary>
+            public readonly List<Reward> Rewards = new List<Reward>();
             /// <summary>The progress bar's text ("0 / 100"), or null when the game draws none.</summary>
             public string Progress;
-            /// <summary>Whether the game shows the bonus unlocked.</summary>
-            public bool Complete;
+
+            /// <summary>The first bonus' text: the reward of an ordinary quest, the classes of a Rift
+            /// Seal charge.</summary>
+            public string Label => Rewards.Count > 0 ? Rewards[0].Text : null;
+            /// <summary>Whether the game shows every bonus unlocked.</summary>
+            public bool Complete => Rewards.Count > 0 && Rewards.TrueForAll(r => r.Complete);
 
             /// <summary>The quest in a line: what to do (else the label), the count, the state. A
             /// requirement's own full stop goes, so the count does not follow ".,".</summary>
             public string Line => Strings.QuestLine((Requirement ?? Label ?? "").TrimEnd('.', ' '), Progress, Complete);
+        }
+
+        /// <summary>One reward of a quest: its text and whether the game shows it unlocked.</summary>
+        public sealed class Reward
+        {
+            public string Text;
+            public bool Complete;
         }
 
         /// <summary>The quests the control's tooltip shows, in its order; empty when it has none.</summary>
@@ -131,9 +143,19 @@ namespace GuildrunAccess.Module.UI
             for (int i = 0; i < sections.Count; i++)
             {
                 if (sections[i].Kind != SectionKind.Bonus) continue;
-                var quest = new Quest { Label = sections[i].Text, Progress = sections[i].Progress, Complete = sections[i].Complete };
+                var quest = new Quest { Progress = sections[i].Progress };
+                quest.Rewards.Add(new Reward { Text = sections[i].Text, Complete = sections[i].Complete });
                 // The requirement stands right before the bonus, as a description of its own.
                 if (i > 0 && sections[i - 1].Kind == SectionKind.Text) quest.Requirement = sections[i - 1].Text;
+                // A tiered quest's rewards follow one another under the one requirement, its progress
+                // bar after the last. (Each Rift Seal charge has a bar of its own and no requirement.)
+                if (quest.Requirement != null)
+                    while (quest.Progress == null && i + 1 < sections.Count && sections[i + 1].Kind == SectionKind.Bonus)
+                    {
+                        i++;
+                        quest.Rewards.Add(new Reward { Text = sections[i].Text, Complete = sections[i].Complete });
+                        quest.Progress = sections[i].Progress;
+                    }
                 quests.Add(quest);
             }
             return quests;

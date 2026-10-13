@@ -377,7 +377,8 @@ namespace GuildrunAccess.Module.GameRun
                 Details = () => CellDetails(cell),
                 Subject = () => CellSubject(cell),
                 SideLines = HeroLines.SideOfSlots(() => CellHeroLines(cell),
-                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? view._itemSlotViews : null; }),
+                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? view._itemSlotViews : null; },
+                    () => { var view = RunData.TryHeroAt(cell, out var id) ? RunData.ViewOf(id) : null; return view != null ? view._abilitiesView : null; }),
             };
         }
 
@@ -444,6 +445,14 @@ namespace GuildrunAccess.Module.GameRun
                 if (view != null && view._itemSlotViews != null) return view._itemSlotViews;
             }
             return u.Bar._itemSlotViews;
+        }
+
+        // A fighting hero's abilities, off its party slot (an enemy's carry no quests).
+        private static UnityEngine.Component UnitAbilities(Unit u)
+        {
+            if (!u.IsHero || u.View == null || !Nullables.TryGet(() => u.View.HeroId, out Ember.Scopes.GameRun.GameRegistry.Data.Characters.HeroId hero)) return null;
+            var view = RunData.ViewOf(hero);
+            return view != null ? view._abilitiesView : null;
         }
 
         // The sidebar's enemy card when it shows this unit (matched by enemy id: a nameless enemy has no
@@ -625,7 +634,7 @@ namespace GuildrunAccess.Module.GameRun
                     OnSecondary = u.IsHero ? () => OpenCompendium(u.View) : (System.Action)null,
                     Details = () => UnitDetails(u),
                     Subject = () => u.View,
-                    SideLines = HeroLines.SideOfSlots(() => UnitHeroLines(u), () => UnitSlots(u)),
+                    SideLines = HeroLines.SideOfSlots(() => UnitHeroLines(u), () => UnitSlots(u), () => UnitAbilities(u)),
                 });
             }
             b.SetRegion(null);

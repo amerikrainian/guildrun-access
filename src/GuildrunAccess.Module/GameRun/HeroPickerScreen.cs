@@ -68,7 +68,8 @@ namespace GuildrunAccess.Module.GameRun
             var rows = new List<HeroCardNodes.GridRow>();
             if (anyRelic)
                 rows.Add(new HeroCardNodes.GridRow("relic", () => Strings.HeroRelic,
-                    card => RelicLine(ChoiceOf(choices, card)), card => RelicTooltip(ChoiceOf(choices, card))));
+                    card => RelicLine(ChoiceOf(choices, card)), card => RelicTooltip(ChoiceOf(choices, card)),
+                    (card, rewards) => RelicQuests(ChoiceOf(choices, card), rewards)));
 
             HeroCardNodes.AddGrid(b, "hero", cards, i => () => Select(choices[i]), i => RelicSuffix(choices[i]), rows.ToArray());
 
@@ -225,6 +226,10 @@ namespace GuildrunAccess.Module.GameRun
             if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(desc)) return Strings.HeroNoRelic;
             return string.IsNullOrWhiteSpace(desc) ? name : name + ", " + desc;
         }
+
+        // The bundled relic's quests, which come with the hero.
+        private static List<string> RelicQuests(InitialHeroChoiceView v, bool rewards)
+            => HasRelic(v) ? ItemNodes.QuestLines(v._relicView, rewards) : null;
 
         private static List<string> RelicTooltip(InitialHeroChoiceView v)
         {

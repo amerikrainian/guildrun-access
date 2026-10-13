@@ -278,7 +278,8 @@ namespace GuildrunAccess.Module.GameRun
                 Subject = () => HeroSlot(view),
                 SideLines = HeroLines.SideOfSlots(
                     () => { var slot = HeroSlot(view); return slot != null ? HeroLines.ForSlot(slot, BoardSection.VitalsOf(slot)) : null; },
-                    () => { var slot = HeroSlot(view); return slot != null ? slot._itemSlotViews : null; }),
+                    () => { var slot = HeroSlot(view); return slot != null ? slot._itemSlotViews : null; },
+                    () => { var slot = HeroSlot(view); return slot != null ? slot._abilitiesView : null; }),
             };
         }
 
@@ -328,7 +329,8 @@ namespace GuildrunAccess.Module.GameRun
                 Subject = () => SummaryHeroSlot(summary),
                 SideLines = HeroLines.SideOfSlots(
                     () => { var slot = SummaryHeroSlot(summary); return slot != null ? HeroLines.ForSlot(slot, BoardSection.VitalsOf(slot)) : null; },
-                    () => { var slot = SummaryHeroSlot(summary); return slot != null ? slot._itemSlotViews : null; }),
+                    () => { var slot = SummaryHeroSlot(summary); return slot != null ? slot._itemSlotViews : null; },
+                    () => { var slot = SummaryHeroSlot(summary); return slot != null ? slot._abilitiesView : null; }),
             };
         }
     }

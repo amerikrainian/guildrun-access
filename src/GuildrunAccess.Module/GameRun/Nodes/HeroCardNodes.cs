@@ -265,6 +265,16 @@ namespace GuildrunAccess.Module.GameRun
             return lines;
         }
 
+        /// <summary>The quests of the abilities under the root (Logan's Execution grows in tiers), each
+        /// opened by its ability's name, in the quest buffer's lines or the glance's.</summary>
+        public static List<string> AbilityQuestLines(UnityEngine.Component root, bool rewards = true)
+        {
+            var lines = new List<string>();
+            foreach (var a in Abilities(root))
+                ItemNodes.AddQuestLines(lines, TooltipReader.Title(a._tooltipRaycastTarget), a._tooltipRaycastTarget, rewards);
+            return lines;
+        }
+
         // ---- the hero list ----
 
         /// <summary>An extra row a screen adds to a hero's buffers: a captioned line for the hero buffer
@@ -275,13 +285,18 @@ namespace GuildrunAccess.Module.GameRun
             public Func<string> Caption;
             public Func<HeroCardView, string> Text;
             public Func<HeroCardView, IEnumerable<string>> Tooltip;
+            /// <summary>The row's quests (a bundled relic's), the buffer's lines or, when the flag is
+            /// false, the glance's; null for none.</summary>
+            public Func<HeroCardView, bool, List<string>> Quests;
 
-            public GridRow(string key, Func<string> caption, Func<HeroCardView, string> text, Func<HeroCardView, IEnumerable<string>> tooltip)
+            public GridRow(string key, Func<string> caption, Func<HeroCardView, string> text, Func<HeroCardView, IEnumerable<string>> tooltip,
+                Func<HeroCardView, bool, List<string>> quests = null)
             {
                 Key = key;
                 Caption = caption;
                 Text = text;
                 Tooltip = tooltip;
+                Quests = quests;
             }
         }
 
@@ -344,7 +359,26 @@ namespace GuildrunAccess.Module.GameRun
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => CardDetails(card, extras),
                 Subject = () => card,
-                SideLines = HeroLines.SideOfSlots(() => CardRows(card, extras), () => Slots(card)),
+                SideLines = WithExtraQuests(HeroLines.SideOfSlots(() => CardRows(card, extras), () => Slots(card), () => card), card, extras),
+            };
+        }
+
+        // The quests of the extras (a picker's bundled relic) after the card's own, in the quest
+        // buffer and the glance.
+        private static Func<string, IEnumerable<string>> WithExtraQuests(Func<string, IEnumerable<string>> side, HeroCardView card, GridRow[] extras)
+        {
+            if (extras == null || !Array.Exists(extras, r => r != null && r.Quests != null)) return side;
+            return key =>
+            {
+                bool brief = key == GuildrunAccess.Core.Buffers.BufferKeys.QuestBrief;
+                if (!brief && key != GuildrunAccess.Core.Buffers.BufferKeys.Quest) return side(key);
+                var lines = new List<string>(side(key) ?? new string[0]);
+                foreach (var r in extras)
+                {
+                    var more = r != null && r.Quests != null ? r.Quests(card, !brief) : null;
+                    if (more != null) lines.AddRange(more);
+                }
+                return lines;
             };
         }
 
@@ -410,7 +444,7 @@ namespace GuildrunAccess.Module.GameRun
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => tooltip != null ? tooltip() : null,
                 Subject = () => card,
-                SideLines = HeroLines.SideOfSlots(() => HeroLines.ForCard(card), () => Slots(card)),
+                SideLines = HeroLines.SideOfSlots(() => HeroLines.ForCard(card), () => Slots(card), () => card),
             };
         }
     }

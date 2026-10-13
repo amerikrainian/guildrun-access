@@ -131,7 +131,7 @@ namespace GuildrunAccess.Module.GameRun
                     OnFocus = () => Peek(view),
                     Details = () => SlotDetails(view),
                     Subject = () => view,
-                    SideLines = HeroLines.SideOfSlots(() => SlotRows(view), () => view._itemSlotViews),
+                    SideLines = HeroLines.SideOfSlots(() => SlotRows(view), () => view._itemSlotViews, () => view._abilitiesView),
                 });
                 if (view._itemSlotViews != null)
                 {
@@ -158,7 +158,8 @@ namespace GuildrunAccess.Module.GameRun
         {
             Func<IEnumerable<Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView>> slots
                 = () => ItemNodes.HasItem(slot) ? new[] { slot } : (IEnumerable<Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView>)view._itemSlotViews;
-            var side = HeroLines.SideOfSlots(() => SlotRows(view), slots);
+            // The quests are the item's own, an empty slot's the hero's.
+            var side = HeroLines.SideOfSlots(() => SlotRows(view), slots, () => ItemNodes.HasItem(slot) ? null : view._abilitiesView);
             return new NodeVtable
             {
                 Announcements = new List<NodeAnnouncement>
