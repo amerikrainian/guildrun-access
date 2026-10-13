@@ -2,9 +2,10 @@
 
 ## V0.1.4
 
-- Ctrl+q should now do what it's supposed to, which is pick up on ability quests. No more scrolling up in the buffer, hopefully.
-- Item slots have been rearranged into horizontal strips so that getting to a hero is a little quicker.
+- Ctrl+q should now do what it's supposed to, which is pick up on ability quests. No more scrolling up in the buffer at the start of the run, hopefully.
+- Item slots have been rearranged into horizontal strips so that getting to a particular hero is a little quicker.
 - Per request, Alt+f starts a fight when you're on the main setup screen regardless of where you are.
+- Per super popular request, alt+digits now tells you what your hero is wearing on that slot. Alt+shift+digits gives you item details without the keyword definitions. Those still stay in the buffer.
 
 ## V0.1.3
 

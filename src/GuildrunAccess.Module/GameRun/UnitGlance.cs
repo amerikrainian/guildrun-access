@@ -86,6 +86,36 @@ namespace GuildrunAccess.Module.GameRun
         /// concerns no hero the player owns, or the hero has no such slot.</summary>
         public static string SlotLine(int number)
         {
+            var slot = FocusedHeroSlot(number);
+            return slot == null ? null : ItemNodes.ItemName(slot) ?? Strings.RunSlotEmpty;
+        }
+
+        /// <summary>Alt+Shift+1 to 6: the same slot's item as its tooltip reads on hover, one line
+        /// ("Hourglass. Rare Item. +25 Starting Mana. Quest: ..., 0 / 5. After Stall (30), ..."): the
+        /// summary, its quest with the count and the reward, without the game's hint to hold Shift;
+        /// the keyword and stat definitions stay in the items buffer. "empty" for an empty slot, silent where <see cref="SlotLine"/> is.</summary>
+        public static string SlotDetailLine(int number)
+        {
+            var slot = FocusedHeroSlot(number);
+            if (slot == null) return null;
+            if (!ItemNodes.HasItem(slot)) return Strings.RunSlotEmpty;
+            var sb = new System.Text.StringBuilder();
+            foreach (var raw in GuildrunAccess.Module.UI.TooltipReader.Lines(slot._tooltipRaycastTarget, details: false))
+            {
+                string line = raw != null ? raw.Trim() : null;
+                if (string.IsNullOrEmpty(line)) continue;
+                if (sb.Length > 0) sb.Append(' ');
+                sb.Append(line);
+                // Lines are sentences of their own: one that ends without a stop gets one.
+                char last = line[line.Length - 1];
+                if (last != '.' && last != '!' && last != '?' && last != '\u3002') sb.Append('.');
+            }
+            return sb.Length > 0 ? sb.ToString() : ItemNodes.ItemName(slot);
+        }
+
+        // The focused hero's numbered item slot (one-based, leftmost first, the shown ones), or null.
+        private static Ember.Scopes.GameRun.UI.Slots.PlaceholderSlotView FocusedHeroSlot(int number)
+        {
             var subject = Navigation.FocusedNode?.Vtable?.Subject;
             if (subject == null || !Resolve(subject(), out var target) || !target.HasHero) return null;
             var view = RunData.ViewOf(target.Hero);
@@ -95,7 +125,7 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var slot in slots)
             {
                 if (slot == null || !slot.gameObject.activeInHierarchy) continue;
-                if (++n == number) return ItemNodes.ItemName(slot) ?? Strings.RunSlotEmpty;
+                if (++n == number) return slot;
             }
             return null;
         }

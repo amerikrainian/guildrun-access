@@ -305,7 +305,10 @@ set wherever the hero buffer finds a hero; `GameRun/UnitGlance`), in place, focu
 2 attack/magic/defense, 3 attack speed/crit/range/move speed, 4 sustain (nonzero), 5 statuses, 6 the
 target; Shift+2/3/4 add each stat's breakdown; Alt+1 to Alt+6 the item in that slot of a hero the
 player owns ("Hourglass", "empty"; `UnitGlance.SlotLine`, off the hero's party or reserve slot,
-silent past its last slot and for offered heroes). Live from the simulation entity and the bar while the
+silent past its last slot and for offered heroes), Alt+Shift+1 to 6 that item's tooltip as hover shows it
+(`UnitGlance.SlotDetailLine`: `TooltipReader.Lines(details: false)`, which drops the game's "Hold
+[Shift] for more detail", `TooltipConfig.InactiveExtraInfoText`; the definitions stay in the items
+buffer). Live from the simulation entity and the bar while the
 unit stands on the board, else the registry sheet, else a data-less card's own panels (shop, picker).
 Read stats as the `CharacterStat` struct off `CharacterStatsComponent`'s properties, NEVER through
 the `IReadOnlyCharacterStat` proxy `GetStat` returns (it misreads the boxed struct: the value carries

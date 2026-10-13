@@ -80,8 +80,11 @@ namespace GuildrunAccess.Module.UI
             // others inactive; that flag is the filter. (The section tuple's mode field does not read
             // back reliably through the interop value tuple.)
             view.SetDetailsMode(details);
+            // The summary ends on the game's "Hold [Shift] for more detail", which is about the mouse.
+            string hint = details ? null : ShiftHint();
             foreach (var section in Sections(view))
             {
+                if (hint != null && section.Kind == SectionKind.Text && AnyTag.Replace(section.Text, "").Trim() == hint) continue;
                 // A quest's sections are one line: its label with its count and its state ("Tank or
                 // Vanguard, 0 / 3"). Read apart, the counts are bare numbers, and equal ones fold
                 // into one in a buffer (the Rift Seal's three "0 / 3").
@@ -220,6 +223,24 @@ namespace GuildrunAccess.Module.UI
             for (int i = 0; i < list.Count; i++)
                 if (list[i].Kind == SectionKind.Progress) list[i] = new Section { Kind = SectionKind.Text, Text = Strings.QuestProgressAlone(list[i].Text) };
             return list;
+        }
+
+        // The game's hint under a summary tooltip ("Hold [Shift] for more detail": the tooltip
+        // config's inactive extra-info text), tags stripped; null when unreadable.
+        private static string ShiftHint()
+        {
+            try
+            {
+                var controller = Controller();
+                var config = controller != null ? controller._tooltipConfig : null;
+                var text = config != null && config.InactiveExtraInfoText != null ? config.InactiveExtraInfoText.GetLocalizedString() : null;
+                return string.IsNullOrWhiteSpace(text) ? null : AnyTag.Replace(text, "").Trim();
+            }
+            catch (Exception e)
+            {
+                CoreLog.Warning("TooltipReader: the Shift hint: " + e.Message);
+                return null;
+            }
         }
 
         // ---- flexible tooltip objects ----
