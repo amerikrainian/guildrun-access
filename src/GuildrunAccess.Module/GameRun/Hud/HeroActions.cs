@@ -10,6 +10,7 @@ using Ember.Scopes.GameRun.UI.EnemyCard;
 using Ember.Scopes.GameRun.UI.Slots;
 using Ember.Scopes.GameRun.UI.Slots.HeroPanel;
 using GuildrunAccess.Core;
+using GuildrunAccess.Core.Graph;
 using GuildrunAccess.Core.Screens;
 using GuildrunAccess.Core.Strings;
 using GuildrunAccess.Core.UI;
@@ -158,8 +159,8 @@ namespace GuildrunAccess.Module.GameRun
             var party = RunData.Party;
             if (party != null)
             {
-                AddEquipTargets(options, party._activeHeroPanel, itemId, itemName);
-                AddEquipTargets(options, party._reserveHeroPanel, itemId, itemName);
+                AddEquipTargets(options, party._activeHeroPanel, false, itemId, itemName);
+                AddEquipTargets(options, party._reserveHeroPanel, true, itemId, itemName);
             }
             var shop = ShopScreen.Open();
             if (shop != null) options.Add(SellItemOption(shop, itemId, itemName));
@@ -189,7 +190,7 @@ namespace GuildrunAccess.Module.GameRun
             }, enabled: service != null);
         }
 
-        private static void AddEquipTargets(List<ChoiceOption> options, BottomHeroPanelView panel, ItemId itemId, string itemName)
+        private void AddEquipTargets(List<ChoiceOption> options, BottomHeroPanelView panel, bool reserve, ItemId itemId, string itemName)
         {
             if (panel == null || !panel.gameObject.activeInHierarchy || panel.HeroViews == null) return;
             foreach (var view in panel.HeroViews)
@@ -215,6 +216,9 @@ namespace GuildrunAccess.Module.GameRun
                         if (!RunData.MoveItemTo(id, itemId, target)) { Speech.Say(Strings.RunEquipFailed, interrupt: true); return; }
                         Speech.Say(Strings.RunEquipped(itemName, heroName), interrupt: true);
                         if (worn != null) Speech.Say(Strings.RunUnequipped(worn));
+                        // The item has left the items list, and focus with it: land on the slot it
+                        // went to, in its hero's row, not on whatever the list leaves nearest.
+                        LandOn(PartySection.SlotId(view, reserve, target + 1));
                     }, worn ?? Strings.RunSlotEmpty, row: label));
                 }
             }
@@ -325,6 +329,32 @@ namespace GuildrunAccess.Module.GameRun
             return shown != null && heroName != null && shown.StartsWith(heroName, StringComparison.Ordinal) ? card : null;
         }
 
+        // ---- the landing after a menu ----
+
+        // A control to land on once the menu that asked for it has closed (closing re-attaches the
+        // navigator, which drops a request made before it).
+        private ControlId _landOn;
+        private int _landDeadline;
+        private const int LandingFrames = 30;
+
+        private void LandOn(ControlId id)
+        {
+            _landOn = id;
+            _landDeadline = NavInput.Current.FrameCount + LandingFrames;
+        }
+
+        private void ApplyLanding()
+        {
+            if (_landOn == null) return;
+            if (Navigation.BoundScreen is ChoiceSubmenuScreen)
+            {
+                if (NavInput.Current.FrameCount >= _landDeadline) _landOn = null;
+                return;
+            }
+            Navigation.FocusNode(_landOn);
+            _landOn = null;
+        }
+
         // The card's name row is the landing; the card may take a frame or two to show.
         private const int InspectLandingFrames = 60;
         private bool _inspectPending;
@@ -333,6 +363,7 @@ namespace GuildrunAccess.Module.GameRun
 
         public override void OnUpdate()
         {
+            ApplyLanding();
             if (!_inspectPending) return;
             var sidebar = Sidebar;
             UnityEngine.Component card = sidebar == null ? null
@@ -356,6 +387,7 @@ namespace GuildrunAccess.Module.GameRun
         {
             Moves.Cancel(silent: true);
             _inspectPending = false;
+            _landOn = null;
         }
     }
 }

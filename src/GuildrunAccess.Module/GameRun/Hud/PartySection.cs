@@ -94,7 +94,7 @@ namespace GuildrunAccess.Module.GameRun
                 int index = n;
                 var view = v;
                 Func<string> slotLabel = () => reserve ? Strings.RunReserveSlot(index) : Strings.RunPartySlot(index);
-                string id = "run:" + key + ":" + view.GetInstanceID();
+                string id = HeroKey(view, reserve);
                 if (view.IsEmpty)
                 {
                     b.StartRow(key);
@@ -142,7 +142,7 @@ namespace GuildrunAccess.Module.GameRun
                         number++;
                         int slotNumber = number;
                         var slot = s;
-                        b.AddItem(ControlId.Structural(id + ":slot:" + slotNumber), ItemSlot(view, slot, slotNumber));
+                        b.AddItem(SlotId(view, reserve, slotNumber), ItemSlot(view, slot, slotNumber));
                     }
                 }
                 b.EndRow();
@@ -177,6 +177,11 @@ namespace GuildrunAccess.Module.GameRun
                     ? ItemNodes.ItemTooltips(view._itemSlotViews) : side(buffer),
             };
         }
+
+        private static string HeroKey(BottomHeroView view, bool reserve) => "run:" + (reserve ? "reserve" : "party") + ":" + view.GetInstanceID();
+
+        /// <summary>The id of a hero's numbered item slot in its row (one-based), for a landing on it.</summary>
+        internal static ControlId SlotId(BottomHeroView view, bool reserve, int number) => ControlId.Structural(HeroKey(view, reserve) + ":slot:" + number);
 
         private static void Peek(BottomHeroView view)
         {

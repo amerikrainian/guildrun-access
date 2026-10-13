@@ -520,7 +520,9 @@ resolves from the application scope's container), unused so far.
    the column, the row's context "party slot 2, Reyna" spoken on landing on a slot; Enter on an item
    is its part of the hero's menu, `HeroActions.OpenItemMenu`) with equip/unequip menus. The equip menu targets SLOTS only, a row
    per hero ("slot 2", the item there as the detail; `ChoiceOption.Row` makes the options that share
-   a caption one row, the caption spoken on entering it); the game's other drop, onto the hero's
+   a caption one row, the caption spoken on entering it), and an equip lands focus on the slot the
+   item went to in the party stop (`HeroActions.LandOn`, applied from `OnUpdate` once the menu is
+   gone: closing it re-attaches the navigator, which drops an earlier `FocusNode`); the game's other drop, onto the hero's
    figure (`ItemDragSubController.TryDropItemToCharacter`), is just the first empty slot, so it has
    no line. Never call the registry's `EquipItem` without a slot: it checks no room itself (only the
    drag does) and with none takes the item out of the reserve and loses it; `HeroData.
