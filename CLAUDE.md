@@ -387,7 +387,9 @@ control holds the same tooltips, so neither buffer sends the player to the other
 after it) and of the items it wears, on the hero picker the bundled relic's too (`GridRow.Quests`), or
 of the focused item or relic, `ItemNodes.QuestLines`: "Rift Seal: Tank or Vanguard, 1 / 3", "Hourglass:
 Quest: Trigger Stall 5 times from any source, 0 / 5" with the reward on the line after), **relics**
-(the run's, one line each), **party** and **enemies** (one line per unit, placement and fights),
+(the run's, one line each; on the first hero picker the focused offer's bundled relic comes first,
+its tooltip lines through the relic row's `GridRow.Buffer` key, since `PickSelection` grants it to the
+run, `IPlayerService.GrantRelic`, and it belongs to no hero once picked), **party** and **enemies** (one line per unit, placement and fights),
 **combat** (the battle events log, following its latest line). Conventions: a tooltip is ONE line,
 never joined with others; helpers return `List<string>` (`ItemTooltips`, `AbilitiesTooltips`,
 `SlotTooltips`...); a node's details go in `Details = () => ...`, never spoken directly. An item's

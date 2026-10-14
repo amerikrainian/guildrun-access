@@ -16,8 +16,9 @@ namespace GuildrunAccess.Module.UI
     /// The mod's buffer roster and its review keys (Ctrl plus arrows), the Harkest Dungeon pattern:
     /// review lists for the information a focus announcement leaves out. In cycling order: the
     /// focused control's own lines (its head, then one line per tooltip), the hero it concerns, the
-    /// quests of its items, the items it carries, the run's relics, the party and the enemies of a fight (one line per unit),
-    /// and the battle events log, which follows its latest line. Every buffer reads live on each
+    /// quests of its items, the items it carries, the relic it offers (a picker's bundled one) and
+    /// the run's relics, the party and the enemies of a fight (one line per unit), and the battle
+    /// events log, which follows its latest line. Every buffer reads live on each
     /// keypress; a focus change re-homes review to the control's buffer and rewinds the control-fed
     /// ones, since a new control is new content. An empty buffer is skipped by the review keys.
     /// </summary>
@@ -26,7 +27,7 @@ namespace GuildrunAccess.Module.UI
         public static BufferManager Manager { get; private set; }
         public static BufferControls Controls { get; private set; }
 
-        private static Buffer _ui, _hero, _quest, _item;
+        private static Buffer _ui, _hero, _quest, _item, _relic;
         private static ControlId _homed;
 
         public static void Init()
@@ -46,7 +47,9 @@ namespace GuildrunAccess.Module.UI
             _item = Manager.Add(new Buffer(BufferKeys.Item, () => Strings.BufferItem));
             _item.SetSource(() => NodeLines.SideLines(Navigation.FocusedNode, BufferKeys.Item));
 
-            Manager.Add(new Buffer(BufferKeys.Relic, () => Strings.BufferRelic)).SetSource(RelicLines);
+            // The relic the focused control offers (a picker hero's bundled one), then the run's.
+            _relic = Manager.Add(new Buffer(BufferKeys.Relic, () => Strings.BufferRelic));
+            _relic.SetSource(() => Concat(NodeLines.SideLines(Navigation.FocusedNode, BufferKeys.Relic), RelicLines()));
             Manager.Add(new Buffer(BufferKeys.Party, () => Strings.BufferParty)).SetSource(() => BoardSection.UnitLines(heroes: true));
             Manager.Add(new Buffer(BufferKeys.Enemies, () => Strings.BufferEnemies)).SetSource(() => BoardSection.UnitLines(heroes: false));
             var combat = Manager.Add(new Buffer(BufferKeys.Combat, () => Strings.BufferCombat));
@@ -66,6 +69,7 @@ namespace GuildrunAccess.Module.UI
             _hero.Reset();
             _quest.Reset();
             _item.Reset();
+            _relic.Reset();
             Manager.SetCurrent(BufferKeys.Ui);
         }
 
@@ -81,6 +85,12 @@ namespace GuildrunAccess.Module.UI
                 if (lines.Count == 0) { yield return ItemNodes.RelicName(relic); continue; }
                 foreach (var line in lines) yield return line;
             }
+        }
+
+        private static IEnumerable<string> Concat(IEnumerable<string> first, IEnumerable<string> second)
+        {
+            foreach (var line in first) yield return line;
+            foreach (var line in second) yield return line;
         }
 
         // The battle events log, oldest first (the buffer follows the latest line); a run's alone, so

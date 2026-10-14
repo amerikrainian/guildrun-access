@@ -278,7 +278,8 @@ namespace GuildrunAccess.Module.GameRun
         // ---- the hero list ----
 
         /// <summary>An extra row a screen adds to a hero's buffers: a captioned line for the hero buffer
-        /// ("relic, Starter Kit: Sustained Shard Boost") and its tooltip lines for the control buffer.</summary>
+        /// ("relic, Starter Kit: Sustained Shard Boost") and its tooltip lines for the control buffer,
+        /// and, under <see cref="Buffer"/>, a buffer of its own.</summary>
         public sealed class GridRow
         {
             public string Key;
@@ -288,15 +289,19 @@ namespace GuildrunAccess.Module.GameRun
             /// <summary>The row's quests (a bundled relic's), the buffer's lines or, when the flag is
             /// false, the glance's; null for none.</summary>
             public Func<HeroCardView, bool, List<string>> Quests;
+            /// <summary>The buffer the row also fills with its tooltip lines (a bundled relic's, the
+            /// relics buffer); null for none.</summary>
+            public string Buffer;
 
             public GridRow(string key, Func<string> caption, Func<HeroCardView, string> text, Func<HeroCardView, IEnumerable<string>> tooltip,
-                Func<HeroCardView, bool, List<string>> quests = null)
+                Func<HeroCardView, bool, List<string>> quests = null, string buffer = null)
             {
                 Key = key;
                 Caption = caption;
                 Text = text;
                 Tooltip = tooltip;
                 Quests = quests;
+                Buffer = buffer;
             }
         }
 
@@ -359,17 +364,19 @@ namespace GuildrunAccess.Module.GameRun
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => CardDetails(card, extras),
                 Subject = () => card,
-                SideLines = WithExtraQuests(HeroLines.SideOfSlots(() => CardRows(card, extras), () => Slots(card), () => card), card, extras),
+                SideLines = WithExtras(HeroLines.SideOfSlots(() => CardRows(card, extras), () => Slots(card), () => card), card, extras),
             };
         }
 
         // The quests of the extras (a picker's bundled relic) after the card's own, in the quest
-        // buffer and the glance.
-        private static Func<string, IEnumerable<string>> WithExtraQuests(Func<string, IEnumerable<string>> side, HeroCardView card, GridRow[] extras)
+        // buffer and the glance; an extra's own buffer its lines.
+        private static Func<string, IEnumerable<string>> WithExtras(Func<string, IEnumerable<string>> side, HeroCardView card, GridRow[] extras)
         {
-            if (extras == null || !Array.Exists(extras, r => r != null && r.Quests != null)) return side;
+            if (extras == null || !Array.Exists(extras, r => r != null && (r.Quests != null || r.Buffer != null))) return side;
             return key =>
             {
+                var own = Array.Find(extras, r => r != null && r.Buffer != null && r.Buffer == key);
+                if (own != null) return ExtraLines(own, card);
                 bool brief = key == GuildrunAccess.Core.Buffers.BufferKeys.QuestBrief;
                 if (!brief && key != GuildrunAccess.Core.Buffers.BufferKeys.Quest) return side(key);
                 var lines = new List<string>(side(key) ?? new string[0]);
@@ -381,6 +388,11 @@ namespace GuildrunAccess.Module.GameRun
                 return lines;
             };
         }
+
+        // An extra's lines in its own buffer: its tooltip (none for a card the extra is missing from,
+        // whose text then says so: "no relic" is not a relic).
+        private static IEnumerable<string> ExtraLines(GridRow row, HeroCardView card)
+            => (row.Tooltip != null ? row.Tooltip(card) : null) ?? new List<string>();
 
         // The hero buffer: the whole hero (name, stats, abilities, every tooltip), then each extra as
         // "caption, text" with its tooltip lines under it.

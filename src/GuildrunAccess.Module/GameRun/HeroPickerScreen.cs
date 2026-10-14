@@ -62,14 +62,15 @@ namespace GuildrunAccess.Module.GameRun
             b.PushContext(PickerTitle(c) ?? Strings.ScreenChooseHero, Strings.RoleList, positions: false);
             b.BeginStop("heroes");
 
-            // The relic row only when the offer bundles relics (the tutorial run has none).
+            // The relic row only when the offer bundles relics (the tutorial run has none); the relic
+            // is in the relics buffer too.
             bool anyRelic = false;
             foreach (var v in choices) if (HasRelic(v)) { anyRelic = true; break; }
             var rows = new List<HeroCardNodes.GridRow>();
             if (anyRelic)
                 rows.Add(new HeroCardNodes.GridRow("relic", () => Strings.HeroRelic,
                     card => RelicLine(ChoiceOf(choices, card)), card => RelicTooltip(ChoiceOf(choices, card)),
-                    (card, rewards) => RelicQuests(ChoiceOf(choices, card), rewards)));
+                    (card, rewards) => RelicQuests(ChoiceOf(choices, card), rewards), GuildrunAccess.Core.Buffers.BufferKeys.Relic));
 
             HeroCardNodes.AddGrid(b, "hero", cards, i => () => Select(choices[i]), i => RelicSuffix(choices[i]), rows.ToArray());
 
