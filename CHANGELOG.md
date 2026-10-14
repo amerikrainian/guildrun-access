@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.1.5
+
+- On the hero picker screen, Alt+r now tells you the focused hero relics. They also have their own separate buffer, if you want to look at them that way. Now you should not have to scroll up in the buffer, we promise.
+
 ## V0.1.4
 
 - Ctrl+q should now do what it's supposed to, which is pick up on ability quests. No more scrolling up in the buffer at the start of the run, hopefully.
