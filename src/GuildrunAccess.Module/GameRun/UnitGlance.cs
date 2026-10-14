@@ -99,8 +99,14 @@ namespace GuildrunAccess.Module.GameRun
             var slot = FocusedHeroSlot(number);
             if (slot == null) return null;
             if (!ItemNodes.HasItem(slot)) return Strings.RunSlotEmpty;
+            return Sentences(GuildrunAccess.Module.UI.TooltipReader.Lines(slot._tooltipRaycastTarget, details: false)) ?? ItemNodes.ItemName(slot);
+        }
+
+        /// <summary>Tooltip lines as one line of sentences; null for none.</summary>
+        public static string Sentences(IEnumerable<string> lines)
+        {
             var sb = new System.Text.StringBuilder();
-            foreach (var raw in GuildrunAccess.Module.UI.TooltipReader.Lines(slot._tooltipRaycastTarget, details: false))
+            foreach (var raw in lines)
             {
                 string line = raw != null ? raw.Trim() : null;
                 if (string.IsNullOrEmpty(line)) continue;
@@ -110,7 +116,7 @@ namespace GuildrunAccess.Module.GameRun
                 char last = line[line.Length - 1];
                 if (last != '.' && last != '!' && last != '?' && last != '\u3002') sb.Append('.');
             }
-            return sb.Length > 0 ? sb.ToString() : ItemNodes.ItemName(slot);
+            return sb.Length > 0 ? sb.ToString() : null;
         }
 
         // The focused hero's numbered item slot (one-based, leftmost first, the shown ones), or null.

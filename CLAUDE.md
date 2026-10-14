@@ -308,7 +308,9 @@ player owns ("Hourglass", "empty"; `UnitGlance.SlotLine`, off the hero's party o
 silent past its last slot and for offered heroes), Alt+Shift+1 to 6 that item's tooltip as hover shows it
 (`UnitGlance.SlotDetailLine`: `TooltipReader.Lines(details: false)`, which drops the game's "Hold
 [Shift] for more detail", `TooltipConfig.InactiveExtraInfoText`; the definitions stay in the items
-buffer). Live from the simulation entity and the bar while the
+buffer), Alt+R the same for the bundled relic of the focused first-picker offer
+(`HeroPickerScreen.RelicGlanceLine`, both joined by `UnitGlance.Sentences`; silent elsewhere: the
+picker is the one place a relic comes with a hero, and a picked one is the run's). Live from the simulation entity and the bar while the
 unit stands on the board, else the registry sheet, else a data-less card's own panels (shop, picker).
 Read stats as the `CharacterStat` struct off `CharacterStatsComponent`'s properties, NEVER through
 the `IReadOnlyCharacterStat` proxy `GetStat` returns (it misreads the boxed struct: the value carries

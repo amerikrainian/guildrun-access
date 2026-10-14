@@ -228,6 +228,24 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(desc) ? name : name + ", " + desc;
         }
 
+        /// <summary>Alt+R: the focused offer's bundled relic as its tooltip reads on hover, one line
+        /// ("Poison Vessel. Common Relic. Quest: Inflict 100 Poison. Heroes gain 20 Attack Speed and
+        /// 15 Crit."), the keyword definitions left to the relics buffer, as Alt+Shift+digit leaves an
+        /// item's to the items buffer. The first picker is the one place a relic comes with a hero
+        /// (picked, it is the run's). Silent off the picker and on an offer with no relic.</summary>
+        public static string RelicGlanceLine()
+        {
+            var c = Picker;
+            if (c == null || c._panelParent == null || !c._panelParent.activeInHierarchy) return null;
+            var subject = Navigation.FocusedNode?.Vtable?.Subject;
+            var card = subject != null ? subject() as HeroCardView : null;
+            if (card == null) return null;
+            var v = ChoiceOf(Choices(c), card);
+            if (!HasRelic(v) || v._relicView == null) return null;
+            return UnitGlance.Sentences(TooltipReader.Lines(v._relicView._tooltipRaycastTarget, details: false))
+                ?? ItemNodes.RelicName(v._relicView);
+        }
+
         // The bundled relic's quests, which come with the hero.
         private static List<string> RelicQuests(InitialHeroChoiceView v, bool rewards)
             => HasRelic(v) ? ItemNodes.QuestLines(v._relicView, rewards) : null;
