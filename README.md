@@ -5,6 +5,8 @@ users.
 
 Be warned! The game is in EA and frequently receives updates; expect the mod to lag behind and/or change as the game evoles.
 
+Docs: <https://amerikrainian.com/guildrun-access/>
+
 ## Install
 
 Download `GuildrunAccessInstaller.exe` from the
