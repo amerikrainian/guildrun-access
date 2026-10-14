@@ -3,9 +3,9 @@
 A [Guildrun](https://store.steampowered.com/app/4425970/) mod that makes the game playable by blind
 users.
 
-Be warned! The game is in EA and frequently receives updates; expect the mod to lag behind and/or change as the game evoles.
+Be warned! The game is in EA and frequently receives updates; expect the mod to lag behind and/or change as the game evolves.
 
-Docs: <https://amerikrainian.com/guildrun-access/>
+Docs are [here](https://amerikrainian.com/guildrun-access/)
 
 ## Install
 
