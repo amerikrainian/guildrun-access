@@ -339,6 +339,12 @@ namespace GuildrunAccess.Module.GameRun
         /// </summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
             Func<int, Action> activate, Func<int, string> nameSuffix, params GridRow[] extras)
+            => AddGrid(b, keyPrefix, cards, activate, null, nameSuffix, extras);
+
+        /// <summary>The same with <paramref name="namePrefix"/> before the name when it says anything
+        /// (the shop's "Not enough Shards").</summary>
+        public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
+            Func<int, Action> activate, Func<int, string> namePrefix, Func<int, string> nameSuffix, params GridRow[] extras)
         {
             if (cards == null || cards.Count == 0) return;
             for (int i = 0; i < cards.Count; i++)
@@ -349,7 +355,10 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(GridId(keyPrefix, i), HeroNode(card,
                     () =>
                     {
-                        var parts = new List<string> { NameAndClass(card, nameSuffix != null ? nameSuffix(index) : null) };
+                        var parts = new List<string>();
+                        string prefix = namePrefix != null ? namePrefix(index) : null;
+                        if (!string.IsNullOrEmpty(prefix)) parts.Add(prefix);
+                        parts.Add(NameAndClass(card, nameSuffix != null ? nameSuffix(index) : null));
                         string stats = StatsBrief(card, vitals: true);
                         if (!string.IsNullOrEmpty(stats)) parts.Add(stats);
                         return string.Join(", ", parts);

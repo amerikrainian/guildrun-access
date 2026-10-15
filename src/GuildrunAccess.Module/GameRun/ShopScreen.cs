@@ -23,6 +23,7 @@ namespace GuildrunAccess.Module.GameRun
     /// too), each a container only while it has something left to buy: a sold-out container is gone,
     /// and with all three gone the stop is. A hero is the shared hero line with its price; an item or
     /// relic carries name, cost, sale tag and description (the full tooltip in the control buffer).
+    /// An offer the shards do not cover opens with the game's "Not enough Shards".
     /// Then the actions (reroll, freeze, the key fragment offer, proceed) and the run HUD the shop
     /// leaves on screen (the party, the inventory, info, map, sidebar, menu), where a hero's or item's
     /// menu offers Sell.
@@ -97,6 +98,7 @@ namespace GuildrunAccess.Module.GameRun
                     b.StartColumn();
                     HeroCardNodes.AddGrid(b, "shop:hero", cards,
                         i => () => Buy(views[i]),
+                        i => ShortOf(PriceNumber(HeroCardNodes.Price(cards[i]))),
                         i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; });
                     b.EndColumn();
                     b.PopContext();
@@ -215,6 +217,37 @@ namespace GuildrunAccess.Module.GameRun
             return HeroCardNodes.Price(card) == null;
         }
 
+        // "Not enough Shards" (the game's own dialog title, its full stop dropped: it leads a line here)
+        // while the shards do not cover the cost, else null. The game draws nothing for it on the offer
+        // and tells only after the click, with that dialog; its check is the same comparison
+        // (ShopItemView.OnPointerClick: shards below the cost).
+        private static string ShortOf(int? cost)
+        {
+            if (cost == null) return null;
+            var shop = Shop;
+            var reader = shop != null ? shop._playerReader : null;
+            var shards = reader != null ? reader.CurrentShards : null;
+            if (shards == null || shards.CurrentValue >= cost.Value) return null;
+            string title = shop._localization != null ? shop._localization.NotEnoughGoldTitle : null;
+            return string.IsNullOrWhiteSpace(title) ? null : title.Trim().TrimEnd('.', '。', '!', '！');
+        }
+
+        // The number of a hero card's drawn price ("<sprite name=Shard_S> 15"): the last run of digits.
+        // The card's HeroChoice.Cost is a Nullable<int> through the interop, which misreads.
+        private static int? PriceNumber(string price)
+        {
+            if (price == null) return null;
+            int end = price.Length - 1;
+            while (end >= 0 && !char.IsDigit(price[end])) end--;
+            if (end < 0) return null;
+            int start = end;
+            while (start > 0 && char.IsDigit(price[start - 1])) start--;
+            return int.TryParse(price.Substring(start, end - start + 1), out int n) ? n : (int?)null;
+        }
+
+        private static string Prefixed(string prefix, string text)
+            => string.IsNullOrEmpty(prefix) ? text : string.IsNullOrEmpty(text) ? prefix : prefix + ", " + text;
+
         private static string Caption(Button button, string fallback)
         {
             string text = GameNodes.LabelOf(button);
@@ -257,8 +290,8 @@ namespace GuildrunAccess.Module.GameRun
             {
                 Announcements = new List<NodeAnnouncement>
                 {
-                    GameNodes.LabelPart(() => item._itemNameText != null && !string.IsNullOrWhiteSpace(item._itemNameText.text)
-                        ? item._itemNameText.text : TooltipReader.Title(item._tooltipRaycastTarget)),
+                    GameNodes.LabelPart(() => Prefixed(ShortOf(item._cost), item._itemNameText != null && !string.IsNullOrWhiteSpace(item._itemNameText.text)
+                        ? item._itemNameText.text : TooltipReader.Title(item._tooltipRaycastTarget))),
                     new NodeAnnouncement(() => item._itemCostText != null && !string.IsNullOrWhiteSpace(item._itemCostText.text)
                         ? Strings.ShopCost(item._itemCostText.text) : null, live: true, kind: AnnouncementKinds.Value),
                     new NodeAnnouncement(() => SaleTag(discount), live: true, kind: AnnouncementKinds.Value),
