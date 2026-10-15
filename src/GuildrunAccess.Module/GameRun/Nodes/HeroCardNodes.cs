@@ -23,23 +23,32 @@ namespace GuildrunAccess.Module.GameRun
     {
         // ---- live readers over a card ----
 
-        /// <summary>"Kai, Warrior, Shield, rank C": the name, the rendered class/archetype tags, and the
-        /// rank the card's badge shows.</summary>
-        public static string NameAndClass(HeroCardView card)
+        /// <summary>"Kai, rank C, Warrior, Shield": the name, the rank the card's badge shows, and the
+        /// rendered class/archetype tags.</summary>
+        public static string NameAndClass(HeroCardView card) => NameAndClass(card, null);
+
+        // The same with <paramref name="middle"/> (a price, a bundled relic) after the rank and before
+        // the tags: a hero's tags run to seven words, and the deciding facts must not wait behind them.
+        private static string NameAndClass(HeroCardView card, string middle)
         {
             if (card == null) return null;
             var sb = new StringBuilder();
             if (card._nameText != null) sb.Append(card._nameText.text);
-            foreach (var name in TagNames(card))
-            {
-                if (sb.Length > 0) sb.Append(", ");
-                sb.Append(name);
-            }
             string rank = Rank(card);
             if (rank != null)
             {
                 if (sb.Length > 0) sb.Append(", ");
                 sb.Append(Strings.HeroRank(rank));
+            }
+            if (!string.IsNullOrEmpty(middle))
+            {
+                if (sb.Length > 0) sb.Append(", ");
+                sb.Append(middle);
+            }
+            foreach (var name in TagNames(card))
+            {
+                if (sb.Length > 0) sb.Append(", ");
+                sb.Append(name);
             }
             return sb.ToString();
         }
@@ -320,8 +329,8 @@ namespace GuildrunAccess.Module.GameRun
 
         /// <summary>
         /// Declare hero cards as one vertical list inside the current Tab-stop, one control per hero:
-        /// "Sal, Mage, Frost, cost Shard 15, health 725, mana 100, Magic 25, Crit 15, ..." (the
-        /// <paramref name="nameSuffix"/>, a price, before the stats; only the non-zero stats). The rest
+        /// "Sal, rank C, cost Shard 15, Mage, Frost, health 725, mana 100, Magic 25, Crit 15, ..." (the
+        /// <paramref name="nameSuffix"/>, a price, after the rank and before the tags; only the non-zero stats). The rest
         /// waits in the buffers: the control buffer reads the full stats line, then every ability's,
         /// tag's and stat's tooltip lines (then the extras' tooltips); the hero buffer the whole hero
         /// (<see cref="HeroLines.ForCard"/>: name, stats, abilities, the same tooltips), then any
@@ -340,9 +349,7 @@ namespace GuildrunAccess.Module.GameRun
                 b.AddItem(GridId(keyPrefix, i), HeroNode(card,
                     () =>
                     {
-                        var parts = new List<string> { NameAndClass(card) };
-                        string suffix = nameSuffix != null ? nameSuffix(index) : null;
-                        if (!string.IsNullOrEmpty(suffix)) parts.Add(suffix);
+                        var parts = new List<string> { NameAndClass(card, nameSuffix != null ? nameSuffix(index) : null) };
                         string stats = StatsBrief(card, vitals: true);
                         if (!string.IsNullOrEmpty(stats)) parts.Add(stats);
                         return string.Join(", ", parts);

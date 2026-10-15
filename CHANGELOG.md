@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.1.6
+
+- Reordered hero info so that you don't have to sit through tags to e.g., hear hero price.
+
 ## V0.1.5
 
 - On the hero picker screen, Alt+r now tells you the focused hero relics. They also have their own separate buffer, if you want to look at them that way. Now you should not have to scroll up in the buffer, we promise.
