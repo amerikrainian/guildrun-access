@@ -2,7 +2,8 @@
 
 ## V0.1.6
 
-- Reordered hero info so that you don't have to sit through tags to e.g., hear hero price.
+- Reordered hero info so that you don't have to sit through tags to hear hero price.
+- Mark items you can't afford with a prefix.
 
 ## V0.1.5
 
