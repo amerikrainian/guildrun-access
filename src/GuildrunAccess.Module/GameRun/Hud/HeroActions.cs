@@ -155,12 +155,13 @@ namespace GuildrunAccess.Module.GameRun
         {
             if (!RunData.TryItemId(slot, out var itemId)) return;
             string itemName = ItemNodes.ItemName(slot) ?? Strings.RunItems;
+            int position = ItemPosition(slot);
             var options = new List<ChoiceOption>();
             var party = RunData.Party;
             if (party != null)
             {
-                AddEquipTargets(options, party._activeHeroPanel, false, itemId, itemName);
-                AddEquipTargets(options, party._reserveHeroPanel, true, itemId, itemName);
+                AddEquipTargets(options, party._activeHeroPanel, false, itemId, itemName, position);
+                AddEquipTargets(options, party._reserveHeroPanel, true, itemId, itemName, position);
             }
             var shop = ShopScreen.Open();
             if (shop != null) options.Add(SellItemOption(shop, itemId, itemName));
@@ -190,7 +191,17 @@ namespace GuildrunAccess.Module.GameRun
             }, enabled: service != null);
         }
 
-        private void AddEquipTargets(List<ChoiceOption> options, BottomHeroPanelView panel, bool reserve, ItemId itemId, string itemName)
+        // The item's place in the items list (zero-based), where focus returns while the list holds others.
+        private static int ItemPosition(PlaceholderSlotView slot)
+        {
+            var slots = InventorySection.ItemSlots();
+            int id = slot.GetInstanceID();
+            for (int i = 0; i < slots.Count; i++)
+                if (slots[i].GetInstanceID() == id) return i;
+            return 0;
+        }
+
+        private void AddEquipTargets(List<ChoiceOption> options, BottomHeroPanelView panel, bool reserve, ItemId itemId, string itemName, int position)
         {
             if (panel == null || !panel.gameObject.activeInHierarchy || panel.HeroViews == null) return;
             foreach (var view in panel.HeroViews)
@@ -216,9 +227,18 @@ namespace GuildrunAccess.Module.GameRun
                         if (!RunData.MoveItemTo(id, itemId, target)) { Speech.Say(Strings.RunEquipFailed, interrupt: true); return; }
                         Speech.Say(Strings.RunEquipped(itemName, heroName), interrupt: true);
                         if (worn != null) Speech.Say(Strings.RunUnequipped(worn));
-                        // The item has left the items list, and focus with it: land on the slot it
-                        // went to, in its hero's row, not on whatever the list leaves nearest.
-                        LandOn(PartySection.SlotId(view, reserve, target + 1));
+                        // The item has left the items list. While the list holds others (a traded
+                        // item among them), focus stays in it, on the item that took this one's place
+                        // or the last; with none left, on the slot it went to, in its hero's row, not
+                        // on whatever the screen leaves nearest. Decided once the menu has closed,
+                        // from the reserve as it then stands.
+                        LandOn(() =>
+                        {
+                            var left = InventorySection.ItemSlots();
+                            return left.Count > 0
+                                ? InventorySection.ItemId(left[Math.Min(position, left.Count - 1)])
+                                : PartySection.SlotId(view, reserve, target + 1);
+                        });
                     }, worn ?? Strings.RunSlotEmpty, row: label));
                 }
             }
@@ -332,12 +352,12 @@ namespace GuildrunAccess.Module.GameRun
         // ---- the landing after a menu ----
 
         // A control to land on once the menu that asked for it has closed (closing re-attaches the
-        // navigator, which drops a request made before it).
-        private ControlId _landOn;
+        // navigator, which drops a request made before it), resolved when it is applied.
+        private Func<ControlId> _landOn;
         private int _landDeadline;
         private const int LandingFrames = 30;
 
-        private void LandOn(ControlId id)
+        private void LandOn(Func<ControlId> id)
         {
             _landOn = id;
             _landDeadline = NavInput.Current.FrameCount + LandingFrames;
@@ -351,8 +371,9 @@ namespace GuildrunAccess.Module.GameRun
                 if (NavInput.Current.FrameCount >= _landDeadline) _landOn = null;
                 return;
             }
-            Navigation.FocusNode(_landOn);
+            var landOn = _landOn;
             _landOn = null;
+            Navigation.FocusNode(landOn());
         }
 
         // The card's name row is the landing; the card may take a frame or two to show.

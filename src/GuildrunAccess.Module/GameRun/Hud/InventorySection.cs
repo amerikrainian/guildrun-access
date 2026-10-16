@@ -31,11 +31,7 @@ namespace GuildrunAccess.Module.GameRun
 
         private void AddItems(GraphBuilder b)
         {
-            var reserve = GameScopes.Controller<ItemReserveUIController>();
-            if (reserve == null || !reserve.gameObject.activeInHierarchy) return;
-            var slots = new List<PlaceholderSlotView>();
-            foreach (var slot in reserve.GetComponentsInChildren<PlaceholderSlotView>(false))
-                if (ItemNodes.HasItem(slot)) slots.Add(slot);
+            var slots = ItemSlots();
             if (slots.Count == 0) return;
             b.SetRegion("run:items");
             b.PushContext(Strings.RunItems, Strings.RoleList);
@@ -43,11 +39,26 @@ namespace GuildrunAccess.Module.GameRun
             foreach (var slot in slots)
             {
                 var s = slot;
-                b.AddItem(ControlId.Structural("run:item:" + slot.GetInstanceID()), ItemNodes.Slot(slot, () => _actions.OpenEquipMenu(s)));
+                b.AddItem(ItemId(slot), ItemNodes.Slot(slot, () => _actions.OpenEquipMenu(s)));
             }
             b.EndColumn();
             b.PopContext();
         }
+
+        /// <summary>The reserve's slots that hold an item, in order. The reserve keeps a fixed row of
+        /// slot views and packs its items to the front, so an item leaving it shifts the ones after it
+        /// into its view.</summary>
+        internal static List<PlaceholderSlotView> ItemSlots()
+        {
+            var slots = new List<PlaceholderSlotView>();
+            var reserve = GameScopes.Controller<ItemReserveUIController>();
+            if (reserve == null || !reserve.gameObject.activeInHierarchy) return slots;
+            foreach (var slot in reserve.GetComponentsInChildren<PlaceholderSlotView>(false))
+                if (ItemNodes.HasItem(slot)) slots.Add(slot);
+            return slots;
+        }
+
+        internal static ControlId ItemId(PlaceholderSlotView slot) => ControlId.Structural("run:item:" + slot.GetInstanceID());
 
         private static void AddRelics(GraphBuilder b)
         {
