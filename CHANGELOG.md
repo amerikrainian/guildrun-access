@@ -3,6 +3,7 @@
 ## V0.1.8
 
 - Your focus now stays in the same column when purchasing things in a shop if such a column still holds meaningful offers.
+- You shall no longer be told a board cell when hitting alt+f to start a fight as you go into battle.
 
 ## V0.1.7
 
