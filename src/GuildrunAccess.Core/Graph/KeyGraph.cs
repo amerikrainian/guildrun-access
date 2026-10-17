@@ -53,7 +53,9 @@ namespace GuildrunAccess.Core.Graph
         /// nothing (the caller should treat the graph as closed/empty).</summary>
         public bool Rerender()
         {
-            var focused = CurrentNode; // before the rebuild: the node focus may be about to lose
+            // Before the rebuild: the node focus may be about to lose. A new graph over a kept state
+            // has no render yet, so the state's own record of it stands in.
+            var focused = (_current ?? _state.LastRender)?.NodeAt(_state.CurKey);
             _current = _renderCallback();
             if (_current == null || _current.Nodes.Count == 0)
             {
@@ -69,6 +71,7 @@ namespace GuildrunAccess.Core.Graph
                 catch (Exception e) { CoreLog.Warning("KeyGraph: a node's VanishTo failed: " + e.Message); }
             }
             Reconcile(_current, _state);
+            _state.LastRender = _current;
             // A quiet node vanished from under focus: the landing it caused is not to be spoken.
             if (focused != null && focused.Vtable != null && focused.Vtable.QuietVanish
                 && !_current.Nodes.ContainsKey(focused.Id) && _state.CurKey != null && !_state.CurKey.Equals(focused.Id))

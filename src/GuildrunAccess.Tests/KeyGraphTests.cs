@@ -78,6 +78,36 @@ namespace GuildrunAccess.Tests
         }
 
         [Fact]
+        public void AVanishedNodeNamesItsSuccessorToAGraphBuiltAnewOverItsState()
+        {
+            // A screen covered by a dialog keeps its state but gets a new graph on its return: the
+            // node that went while the dialog was up still names where focus goes.
+            var state = new GraphState();
+            var items = new List<string> { "a", "b", "c" };
+            System.Func<KeyGraph> graph = () => new KeyGraph(() =>
+            {
+                var b = new GraphBuilder();
+                foreach (var i in items)
+                    b.AddItem(Id(i), new NodeVtable
+                    {
+                        Announcements = new[] { NodeAnnouncement.Static(i) },
+                        VanishTo = i == "b" ? () => Id("c") : (System.Func<ControlId>)null,
+                    });
+                return b.Build();
+            }, state);
+
+            var g = graph();
+            Assert.True(g.Rerender());
+            g.Move(GraphDir.Down); // on b, moved to without a rebuild
+            Assert.Equal(Id("b"), state.CurKey);
+
+            items.Remove("b");
+            var again = graph();
+            Assert.True(again.Rerender());
+            Assert.Equal(Id("c"), state.CurKey); // not a, the walk back's pick
+        }
+
+        [Fact]
         public void QuietVanishFlagsTheLandingOnlyWhenTheFocusedQuietNodeIsGone()
         {
             var state = new GraphState();

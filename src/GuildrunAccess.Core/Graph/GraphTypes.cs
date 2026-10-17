@@ -301,6 +301,11 @@ namespace GuildrunAccess.Core.Graph
         /// <summary>If set, focus jumps here on the next render when present (consumed either way).</summary>
         public ControlId NextSuggestedMove;
 
+        /// <summary>The last render, kept with the state so a graph built anew over it (the screen
+        /// re-attached after a dialog over it) still asks the focused node, gone meanwhile, for its
+        /// <see cref="NodeVtable.VanishTo"/>.</summary>
+        internal GraphRender LastRender;
+
         /// <summary>The logical column focus last sat on in a tabular row (see NodeVtable.Column), or
         /// -1. The reconcile fallback slides to this column when the focused row vanished.</summary>
         public int LastColumn = -1;

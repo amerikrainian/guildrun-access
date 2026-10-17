@@ -339,12 +339,14 @@ namespace GuildrunAccess.Module.GameRun
         /// </summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
             Func<int, Action> activate, Func<int, string> nameSuffix, params GridRow[] extras)
-            => AddGrid(b, keyPrefix, cards, activate, null, nameSuffix, extras);
+            => AddGrid(b, keyPrefix, cards, activate, null, nameSuffix, null, extras);
 
         /// <summary>The same with <paramref name="namePrefix"/> before the name when it says anything
-        /// (the shop's "Not enough Shards").</summary>
+        /// (the shop's "Not enough Shards"), and each card's <see cref="NodeVtable.VanishTo"/> from
+        /// <paramref name="vanishTo"/> (the shop's landing after a purchase).</summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
-            Func<int, Action> activate, Func<int, string> namePrefix, Func<int, string> nameSuffix, params GridRow[] extras)
+            Func<int, Action> activate, Func<int, string> namePrefix, Func<int, string> nameSuffix,
+            Func<int, Func<ControlId>> vanishTo, params GridRow[] extras)
         {
             if (cards == null || cards.Count == 0) return;
             for (int i = 0; i < cards.Count; i++)
@@ -363,13 +365,13 @@ namespace GuildrunAccess.Module.GameRun
                         if (!string.IsNullOrEmpty(stats)) parts.Add(stats);
                         return string.Join(", ", parts);
                     },
-                    action != null ? ControlTypes.Button : null, action, extras));
+                    action != null ? ControlTypes.Button : null, action, vanishTo != null ? vanishTo(index) : null, extras));
             }
         }
 
         // One hero as a control: its line; Enter runs the action; Backspace opens its compendium page;
         // the card fills the buffers.
-        private static NodeVtable HeroNode(HeroCardView card, Func<string> text, ControlType type, Action activate, GridRow[] extras)
+        private static NodeVtable HeroNode(HeroCardView card, Func<string> text, ControlType type, Action activate, Func<ControlId> vanishTo, GridRow[] extras)
         {
             return new NodeVtable
             {
@@ -377,6 +379,7 @@ namespace GuildrunAccess.Module.GameRun
                 Announcements = new List<NodeAnnouncement> { GameNodes.LabelPart(text) },
                 SearchText = () => NameAndClass(card),
                 OnActivate = activate,
+                VanishTo = vanishTo,
                 OnSecondary = () => OpenCompendium(card),
                 Details = () => CardDetails(card, extras),
                 Subject = () => card,

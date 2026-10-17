@@ -648,7 +648,11 @@ resolves from the application scope's container), unused so far.
    (`NodeVtable.QuietVanish`). A focused node that vanishes lands on the nearest survivor, which is
    the control BEFORE it; a placeholder names its successor instead (`NodeVtable.VanishTo`, asked at
    that rebuild and honoured when the node is in the new render): the leaderboard's "Loading..."
-   line names the first entry, so waiting on it lands on the loaded list, not back on the tab.
+   line names the first entry, so waiting on it lands on the loaded list, not back on the tab;
+   a shop offer names the offer now in its row of the same column (clamped), else that row of the
+   next column with offers, round to the heroes (`ShopScreen.LandingAfter`): the columns' reading
+   order interleaves them row by row, so the walk back left the column. The screen's `GraphState`
+   keeps its last render, so a node that went while a dialog covered the screen is still asked.
    A vertical move INTO a row lands on its first item unless the row names another
    (`GraphBuilder.StartRow(entry:)`, asked when the render is wired): a row of tabs that sits
    inside a stop, between a toggle and the content it switches, names its selected tab, since a tab

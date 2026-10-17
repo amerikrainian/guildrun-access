@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Ember.Scopes.GameRun.Shop.UI;
 using Ember.Scopes.GameRun.Shop.UI.Views;
@@ -80,16 +81,9 @@ namespace GuildrunAccess.Module.GameRun
                 if (shop == null) return;
 
                 // Heroes for sale: the shared list, price on the line.
+                var views = HeroOffers(shop);
                 var cards = new List<HeroCardView>();
-                var views = new List<HeroCardShopItemView>();
-                var heroes = shop._heroChoicesPanel;
-                if (heroes != null && heroes.gameObject.activeInHierarchy && heroes._heroCardShopItemViews != null)
-                    foreach (var v in heroes._heroCardShopItemViews)
-                    {
-                        if (v == null || !v.gameObject.activeInHierarchy || v._heroCardView == null || Sold(v)) continue;
-                        views.Add(v);
-                        cards.Add(v._heroCardView);
-                    }
+                foreach (var v in views) cards.Add(v._heroCardView);
                 b.BeginStop("shop:offers");
                 if (cards.Count > 0)
                 {
@@ -99,14 +93,15 @@ namespace GuildrunAccess.Module.GameRun
                     HeroCardNodes.AddGrid(b, "shop:hero", cards,
                         i => () => Buy(views[i]),
                         i => ShortOf(PriceNumber(HeroCardNodes.Price(cards[i]))),
-                        i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; });
+                        i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; },
+                        i => LandingAfter("heroes", i));
                     b.EndColumn();
                     b.PopContext();
                 }
 
                 // Items, then relics (the regular panels, or the super-shop ones when those are up).
-                AddOffers(b, "items", Strings.ShopItems, shop._itemToBuyPanel, shop._superShopItemToBuyPanel);
-                AddOffers(b, "relics", Strings.ShopRelics, shop._relicsToBuyPanel, shop._superShopRelicsToBuyPanel, shop._superShopTeamSizeRelicsToBuyPanel);
+                AddOffers(b, shop, "items", Strings.ShopItems);
+                AddOffers(b, shop, "relics", Strings.ShopRelics);
                 b.SetRegion(null);
 
                 // Actions.
@@ -254,13 +249,27 @@ namespace GuildrunAccess.Module.GameRun
             return string.IsNullOrWhiteSpace(text) || text == button.gameObject.name ? fallback : text;
         }
 
-        // The offers in whichever of the given panels is showing, as one column of the offers stop (none:
-        // no container). An offer is a row the game bound an
-        // item or relic entry to (SetShopItem / SetShopRelic): the panel prefab also ships template
-        // rows ("Very Long Item Name", cost 666) that stay active next to the real ones for the shop's
-        // first frames until ClearItems destroys them, and those carry no entry.
-        private static void AddOffers(GraphBuilder b, string key, string label, params ItemShopChoicesPanelView[] panels)
+        // The heroes still for sale, in the row's order.
+        private static List<HeroCardShopItemView> HeroOffers(ShopUIController shop)
         {
+            var views = new List<HeroCardShopItemView>();
+            var heroes = shop._heroChoicesPanel;
+            if (heroes != null && heroes.gameObject.activeInHierarchy && heroes._heroCardShopItemViews != null)
+                foreach (var v in heroes._heroCardShopItemViews)
+                    if (v != null && v.gameObject.activeInHierarchy && v._heroCardView != null && !Sold(v)) views.Add(v);
+            return views;
+        }
+
+        // The offers in whichever of a column's panels is showing (the regular one, or the super-shop
+        // ones when those are up). An offer is a row the game bound an item or relic entry to
+        // (SetShopItem / SetShopRelic): the panel prefab also ships template rows ("Very Long Item
+        // Name", cost 666) that stay active next to the real ones for the shop's first frames until
+        // ClearItems destroys them, and those carry no entry.
+        private static List<ShopItemView> ItemOffers(ShopUIController shop, string key)
+        {
+            var panels = key == "items"
+                ? new[] { shop._itemToBuyPanel, shop._superShopItemToBuyPanel }
+                : new[] { shop._relicsToBuyPanel, shop._superShopRelicsToBuyPanel, shop._superShopTeamSizeRelicsToBuyPanel };
             var items = new List<ShopItemView>();
             foreach (var panel in panels)
             {
@@ -268,12 +277,57 @@ namespace GuildrunAccess.Module.GameRun
                 foreach (var item in panel.GetComponentsInChildren<ShopItemView>(false))
                     if (item != null && item.gameObject.activeInHierarchy && IsOffer(item)) items.Add(item);
             }
+            return items;
+        }
+
+        private static ControlId OfferId(string key, ShopItemView item) => ControlId.Structural("shop:" + key + ":" + item.GetInstanceID());
+
+        // The offers stop's columns in the order Build declares them.
+        private static readonly string[] Columns = { "heroes", "items", "relics" };
+
+        private static List<ControlId> ColumnIds(ShopUIController shop, string key)
+        {
+            var ids = new List<ControlId>();
+            if (key == "heroes")
+            {
+                int count = HeroOffers(shop).Count;
+                for (int i = 0; i < count; i++) ids.Add(HeroCardNodes.GridId("shop:hero", i));
+            }
+            else
+                foreach (var item in ItemOffers(shop, key)) ids.Add(OfferId(key, item));
+            return ids;
+        }
+
+        // Where focus goes when the offer in that row of that column goes (bought, or replaced by a
+        // reroll): the offer now in the same row, the column's last when it got shorter; with the
+        // column sold out, the same row of the next column with offers, clamped as Right lands, round
+        // to the heroes after the relics. Without it the walk back through the stop's reading order,
+        // which interleaves the columns row by row, landed in the column to the left. A hero keeps
+        // its id by position, so a bought hero with others after it is no vanish: its successor
+        // takes the row and the id.
+        private static Func<ControlId> LandingAfter(string key, int row) => () =>
+        {
+            var shop = Shop;
+            if (shop == null) return null;
+            int start = Array.IndexOf(Columns, key);
+            for (int k = 0; k < Columns.Length; k++)
+            {
+                var ids = ColumnIds(shop, Columns[(start + k) % Columns.Length]);
+                if (ids.Count > 0) return ids[Math.Min(row, ids.Count - 1)];
+            }
+            return null;
+        };
+
+        // A column of the offers stop (none: no container).
+        private static void AddOffers(GraphBuilder b, ShopUIController shop, string key, string label)
+        {
+            var items = ItemOffers(shop, key);
             if (items.Count == 0) return;
             b.SetRegion("shop:" + key);
             b.PushContext(label, Strings.RoleList);
             b.StartColumn();
-            foreach (var item in items)
-                b.AddItem(ControlId.Structural("shop:" + key + ":" + item.GetInstanceID()), Offer(item));
+            for (int i = 0; i < items.Count; i++)
+                b.AddItem(OfferId(key, items[i]), Offer(items[i], LandingAfter(key, i)));
             b.EndColumn();
             b.PopContext();
         }
@@ -283,11 +337,12 @@ namespace GuildrunAccess.Module.GameRun
         // An item or relic for sale: "name, cost X, Sale, description"; Enter buys, the tooltip is its
         // buffer line. The sale tag is the discount view's own text (the game's "Sale", or its
         // mark-up word), shown only on a discounted offer.
-        private static NodeVtable Offer(ShopItemView item)
+        private static NodeVtable Offer(ShopItemView item, Func<ControlId> vanishTo)
         {
             var discount = item.GetComponentInChildren<Ember.Scopes.GameRun.UI.Common.DiscountView>(true);
             return new NodeVtable
             {
+                VanishTo = vanishTo,
                 Announcements = new List<NodeAnnouncement>
                 {
                     GameNodes.LabelPart(() => Prefixed(ShortOf(item._cost), item._itemNameText != null && !string.IsNullOrWhiteSpace(item._itemNameText.text)

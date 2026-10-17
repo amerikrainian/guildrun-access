@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.1.8
+
+- Your focus now stays in the same column when purchasing things in a shop if such a column still holds meaningful offers.
+
 ## V0.1.7
 
 - When equipping items, focus shall land on the items list if you still have them. If you do not, it will land on the equipped hero's slot, as it did in the previous version. Hopefully this passifies everybody
