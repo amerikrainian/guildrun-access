@@ -339,14 +339,16 @@ namespace GuildrunAccess.Module.GameRun
         /// </summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
             Func<int, Action> activate, Func<int, string> nameSuffix, params GridRow[] extras)
-            => AddGrid(b, keyPrefix, cards, activate, null, nameSuffix, null, extras);
+            => AddGrid(b, keyPrefix, cards, activate, null, nameSuffix, null, null, extras);
 
         /// <summary>The same with <paramref name="namePrefix"/> before the name when it says anything
-        /// (the shop's "Not enough Shards"), and each card's <see cref="NodeVtable.VanishTo"/> from
-        /// <paramref name="vanishTo"/> (the shop's landing after a purchase).</summary>
+        /// (the shop's "Not enough Shards"), each card's id from <paramref name="ids"/> instead of its
+        /// position (<see cref="GridId"/>), and its <see cref="NodeVtable.VanishTo"/> from
+        /// <paramref name="vanishTo"/>: the shop's offers, where a bought card goes and the one after
+        /// it takes its place, which by position would be the same control and so no landing.</summary>
         public static void AddGrid(GraphBuilder b, string keyPrefix, IReadOnlyList<HeroCardView> cards,
             Func<int, Action> activate, Func<int, string> namePrefix, Func<int, string> nameSuffix,
-            Func<int, Func<ControlId>> vanishTo, params GridRow[] extras)
+            Func<int, ControlId> ids, Func<int, Func<ControlId>> vanishTo, params GridRow[] extras)
         {
             if (cards == null || cards.Count == 0) return;
             for (int i = 0; i < cards.Count; i++)
@@ -354,7 +356,7 @@ namespace GuildrunAccess.Module.GameRun
                 int index = i;
                 var card = cards[i];
                 var action = activate != null ? activate(index) : null;
-                b.AddItem(GridId(keyPrefix, i), HeroNode(card,
+                b.AddItem(ids != null ? ids(i) : GridId(keyPrefix, i), HeroNode(card,
                     () =>
                     {
                         var parts = new List<string>();

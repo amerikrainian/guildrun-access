@@ -94,6 +94,7 @@ namespace GuildrunAccess.Module.GameRun
                         i => () => Buy(views[i]),
                         i => ShortOf(PriceNumber(HeroCardNodes.Price(cards[i]))),
                         i => { var price = HeroCardNodes.Price(cards[i]); return price != null ? Strings.ShopCost(price) : null; },
+                        i => HeroOfferId(views[i]),
                         i => LandingAfter("heroes", i));
                     b.EndColumn();
                     b.PopContext();
@@ -282,6 +283,10 @@ namespace GuildrunAccess.Module.GameRun
 
         private static ControlId OfferId(string key, ShopItemView item) => ControlId.Structural("shop:" + key + ":" + item.GetInstanceID());
 
+        // A hero offer by its view, not its position: the card bought goes and the next one takes its
+        // row, and by position that was the same control, so nothing was announced.
+        private static ControlId HeroOfferId(HeroCardShopItemView view) => ControlId.Structural("shop:hero:" + view.GetInstanceID());
+
         // The offers stop's columns in the order Build declares them.
         private static readonly string[] Columns = { "heroes", "items", "relics" };
 
@@ -289,10 +294,7 @@ namespace GuildrunAccess.Module.GameRun
         {
             var ids = new List<ControlId>();
             if (key == "heroes")
-            {
-                int count = HeroOffers(shop).Count;
-                for (int i = 0; i < count; i++) ids.Add(HeroCardNodes.GridId("shop:hero", i));
-            }
+                foreach (var view in HeroOffers(shop)) ids.Add(HeroOfferId(view));
             else
                 foreach (var item in ItemOffers(shop, key)) ids.Add(OfferId(key, item));
             return ids;
@@ -302,9 +304,7 @@ namespace GuildrunAccess.Module.GameRun
         // reroll): the offer now in the same row, the column's last when it got shorter; with the
         // column sold out, the same row of the next column with offers, clamped as Right lands, round
         // to the heroes after the relics. Without it the walk back through the stop's reading order,
-        // which interleaves the columns row by row, landed in the column to the left. A hero keeps
-        // its id by position, so a bought hero with others after it is no vanish: its successor
-        // takes the row and the id.
+        // which interleaves the columns row by row, landed in the column to the left.
         private static Func<ControlId> LandingAfter(string key, int row) => () =>
         {
             var shop = Shop;
